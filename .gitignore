@@ -1,0 +1,20 @@
+# environment files, anywhere in the repo
+**/.env
+
+# node dependencies, anywhere in the repo
+**/node_modules
+
+# Foundry build artifacts, contracts folder only
+contracts/lib/*
+!contracts/lib/openzeppelin-contracts
+!contracts/lib/forge-std
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# frontend build output
+frontend/dist/
+
+# OS/editor noise
+.DS_Store
+.vscode/
