@@ -31,6 +31,33 @@ contract BatchCustody {
 
     mapping(string => Batch) public batches;
 
+    event BatchCreated(
+        string indexed batchId,
+        address indexed farmer,
+        bytes32 harvestDataHash
+    );
+    event BatchListed(
+        string indexed batchId,
+        address indexed custodian,
+        bytes32 outgoingDataHash
+    );
+    event BatchClaimed(
+        string indexed batchId,
+        address indexed transporter,
+        bytes32 intakeDataHash
+    );
+    event HandoverInitiated(
+        string indexed batchId,
+        address indexed currentCustodian,
+        address indexed targetAddress,
+        bytes32 outgoingDataHash
+    );
+    event ReceiptConfirmed(
+        string indexed batchId,
+        address indexed newCustodian,
+        bytes32 intakeDataHash
+    );
+
     constructor(IParticipantRegistry _participantRegistry) {
         participantRegistry = _participantRegistry;
     }
