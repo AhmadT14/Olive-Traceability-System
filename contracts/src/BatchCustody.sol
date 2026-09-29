@@ -215,7 +215,7 @@ contract BatchCustody {
         participantRegistry = IParticipantRegistry(newRegistry);
     }
 
-    constructor(IParticipantRegistry _participantRegistry) {
-        participantRegistry = _participantRegistry;
+    constructor(address registryAddress) {
+        participantRegistry = IParticipantRegistry(registryAddress);
     }
 }
