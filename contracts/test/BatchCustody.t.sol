@@ -36,4 +36,52 @@ contract BatchCustodyTest is Test {
         registry.registerParticipant(retailer, registry.RETAILER_ROLE());
         vm.stopPrank();
     }
+
+    function test_CreateBatch_Success() public {
+        bytes32 harvestHash = keccak256("harvest-data-1"); // Stand-in for a hash the backend would compute from real farm_records data; contract only stores it opaquely
+
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", harvestHash);
+
+        (
+            BatchCustody.Status status,
+            BatchCustody.Stage stage,
+            address custodian,
+            address pendingTarget
+        ) = custody.batches("BATCH-001");
+
+        assertEq(uint8(status), uint8(BatchCustody.Status.Created));
+        assertEq(uint8(stage), uint8(BatchCustody.Stage.Farm));
+        assertEq(custodian, farmer);
+        assertEq(pendingTarget, address(0));
+    }
+
+    function test_CreateBatch_RevertsIfNotFarmer() public {
+        bytes32 harvestHash = keccak256("harvest-data-1");
+
+        vm.prank(transporter1);
+        vm.expectRevert("BatchCustody: caller is not a farmer");
+        custody.createBatch("BATCH-001", harvestHash);
+    }
+
+    function test_CreateBatch_RevertsIfBatchIdAlreadyExists() public {
+        bytes32 harvestHash = keccak256("harvest-data-1");
+
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", harvestHash);
+
+        vm.prank(farmer);
+        vm.expectRevert("BatchCustody: batch already exists");
+        custody.createBatch("BATCH-001", harvestHash);
+    }
+
+    function test_CreateBatch_EmitsEvent() public {
+        bytes32 harvestHash = keccak256("harvest-data-1");
+
+        vm.expectEmit(true, true, false, true);
+        emit BatchCustody.BatchCreated("BATCH-001", farmer, harvestHash);
+
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", harvestHash);
+    }
 }
