@@ -201,4 +201,68 @@ contract BatchCustodyTest is Test {
         vm.expectRevert("BatchCustody: batch already at final stage");
         custody.postForPickup("BATCH-001", h);
     }
+
+    function test_ClaimBatch_Success() public {
+        bytes32 h = keccak256("data");
+
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", h);
+        vm.prank(farmer);
+        custody.postForPickup("BATCH-001", h);
+
+        vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+
+        (
+            BatchCustody.Status status,
+            BatchCustody.Stage stage,
+            address custodianAddr,
+            address pendingTarget
+        ) = custody.batches("BATCH-001");
+
+        assertEq(uint8(status), uint8(BatchCustody.Status.Created));
+        assertEq(uint8(stage), uint8(BatchCustody.Stage.Farm));
+        assertEq(custodianAddr, transporter1);
+        assertEq(pendingTarget, address(0));
+    }
+
+    function test_ClaimBatch_RevertsIfNotTransporter() public {
+        bytes32 h = keccak256("data");
+
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", h);
+        vm.prank(farmer);
+        custody.postForPickup("BATCH-001", h);
+
+        vm.prank(mill);
+        vm.expectRevert("BatchCustody: caller is not a transporter");
+        custody.claimBatch("BATCH-001", h);
+    }
+
+    function test_ClaimBatch_RevertsIfNotListed() public {
+        bytes32 h = keccak256("data");
+
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", h);
+
+        vm.prank(transporter1);
+        vm.expectRevert("BatchCustody: batch not listed for pickup");
+        custody.claimBatch("BATCH-001", h);
+    }
+
+    function test_ClaimBatch_RevertsIfAlreadyClaimed() public {
+        bytes32 h = keccak256("data");
+
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", h);
+        vm.prank(farmer);
+        custody.postForPickup("BATCH-001", h);
+
+        vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+
+        vm.prank(transporter2);
+        vm.expectRevert("BatchCustody: batch not listed for pickup");
+        custody.claimBatch("BATCH-001", h);
+    }
 }
