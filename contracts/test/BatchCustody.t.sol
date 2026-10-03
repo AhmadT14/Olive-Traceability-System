@@ -144,62 +144,70 @@ contract BatchCustodyTest is Test {
     }
 
     function test_PostForPickup_RevertsIfAtFinalStage() public {
-        bytes32 h = keccak256("data"); // For testing purposes only
+        bytes32 h = keccak256("data");
+        _walkToRetailer("BATCH-001", h);
 
-        // Farm -> Mill
-        vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
-        vm.prank(transporter1);
-        custody.claimBatch("BATCH-001", h);
-        vm.prank(transporter1);
-        custody.initiateHandover("BATCH-001", mill, h);
-        vm.prank(mill);
-        custody.confirmReceipt("BATCH-001", h);
-
-        // Mill -> Storage
-        vm.prank(mill);
-        custody.postForPickup("BATCH-001", h);
-        vm.prank(transporter1);
-        custody.claimBatch("BATCH-001", h);
-        vm.prank(transporter1);
-        custody.initiateHandover("BATCH-001", storageFacility, h);
-        vm.prank(storageFacility);
-        custody.confirmReceipt("BATCH-001", h);
-
-        // Storage -> Exporter
-        vm.prank(storageFacility);
-        custody.postForPickup("BATCH-001", h);
-        vm.prank(transporter1);
-        custody.claimBatch("BATCH-001", h);
-        vm.prank(transporter1);
-        custody.initiateHandover("BATCH-001", exporter, h);
-        vm.prank(exporter);
-        custody.confirmReceipt("BATCH-001", h);
-
-        // Exporter -> Importer
-        vm.prank(exporter);
-        custody.postForPickup("BATCH-001", h);
-        vm.prank(transporter1);
-        custody.claimBatch("BATCH-001", h);
-        vm.prank(transporter1);
-        custody.initiateHandover("BATCH-001", importer, h);
-        vm.prank(importer);
-        custody.confirmReceipt("BATCH-001", h);
-
-        // Importer -> Retailer
-        vm.prank(importer);
-        custody.postForPickup("BATCH-001", h);
-        vm.prank(transporter1);
-        custody.claimBatch("BATCH-001", h);
-        vm.prank(transporter1);
-        custody.initiateHandover("BATCH-001", retailer, h);
-        vm.prank(retailer);
-        custody.confirmReceipt("BATCH-001", h);
         vm.prank(retailer);
         vm.expectRevert("BatchCustody: batch already at final stage");
         custody.postForPickup("BATCH-001", h);
+    }
+
+    function test_Retailer_CannotPostForPickup() public {
+        bytes32 h = keccak256("data");
+        _walkToRetailer("BATCH-001", h);
+
+        vm.prank(retailer);
+        vm.expectRevert("BatchCustody: batch already at final stage");
+        custody.postForPickup("BATCH-001", h);
+    }
+
+    function _walkToRetailer(string memory batchId, bytes32 h) internal {
+        vm.prank(farmer);
+        custody.createBatch(batchId, h);
+        vm.prank(farmer);
+        custody.postForPickup(batchId, h);
+        vm.prank(transporter1);
+        custody.claimBatch(batchId, h);
+        vm.prank(transporter1);
+        custody.initiateHandover(batchId, mill, h);
+        vm.prank(mill);
+        custody.confirmReceipt(batchId, h);
+
+        vm.prank(mill);
+        custody.postForPickup(batchId, h);
+        vm.prank(transporter1);
+        custody.claimBatch(batchId, h);
+        vm.prank(transporter1);
+        custody.initiateHandover(batchId, storageFacility, h);
+        vm.prank(storageFacility);
+        custody.confirmReceipt(batchId, h);
+
+        vm.prank(storageFacility);
+        custody.postForPickup(batchId, h);
+        vm.prank(transporter1);
+        custody.claimBatch(batchId, h);
+        vm.prank(transporter1);
+        custody.initiateHandover(batchId, exporter, h);
+        vm.prank(exporter);
+        custody.confirmReceipt(batchId, h);
+
+        vm.prank(exporter);
+        custody.postForPickup(batchId, h);
+        vm.prank(transporter1);
+        custody.claimBatch(batchId, h);
+        vm.prank(transporter1);
+        custody.initiateHandover(batchId, importer, h);
+        vm.prank(importer);
+        custody.confirmReceipt(batchId, h);
+
+        vm.prank(importer);
+        custody.postForPickup(batchId, h);
+        vm.prank(transporter1);
+        custody.claimBatch(batchId, h);
+        vm.prank(transporter1);
+        custody.initiateHandover(batchId, retailer, h);
+        vm.prank(retailer);
+        custody.confirmReceipt(batchId, h);
     }
 
     function test_ClaimBatch_Success() public {
@@ -365,5 +373,155 @@ contract BatchCustodyTest is Test {
         vm.prank(transporter1);
         vm.expectRevert("BatchCustody: target is not the next stage");
         custody.initiateHandover("BATCH-001", exporter, h);
+    }
+
+    function test_InitiateHandover_CannotTargetfarmer() public {
+        bytes32 h = keccak256("data");
+
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", h);
+        vm.prank(farmer);
+        custody.postForPickup("BATCH-001", h);
+        vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+
+        vm.prank(transporter1);
+        vm.expectRevert("BatchCustody: target is not the next stage");
+        custody.initiateHandover("BATCH-001", farmer, h);
+    }
+
+    function test_InitiateHandover_CannottargetTransporter() public {
+        bytes32 h = keccak256("data");
+
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", h);
+        vm.prank(farmer);
+        custody.postForPickup("BATCH-001", h);
+        vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+
+        vm.prank(transporter1);
+        vm.expectRevert("BatchCustody: target is not the next stage");
+        custody.initiateHandover("BATCH-001", transporter2, h);
+    }
+
+    function test_ConfirmReceipt_Success() public {
+        bytes32 h = keccak256("data");
+
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", h);
+        vm.prank(farmer);
+        custody.postForPickup("BATCH-001", h);
+        vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+        vm.prank(transporter1);
+        custody.initiateHandover("BATCH-001", mill, h);
+
+        vm.prank(mill);
+        custody.confirmReceipt("BATCH-001", h);
+
+        (
+            BatchCustody.Status status,
+            BatchCustody.Stage stage,
+            address custodianAddr,
+            address pendingTarget
+        ) = custody.batches("BATCH-001");
+
+        assertEq(uint8(status), uint8(BatchCustody.Status.Created));
+        assertEq(uint8(stage), uint8(BatchCustody.Stage.Mill));
+        assertEq(custodianAddr, mill);
+        assertEq(pendingTarget, address(0));
+    }
+
+    function test_ConfirmReceipt_RevertsIfNotPending() public {
+        bytes32 h = keccak256("data");
+
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", h);
+        vm.prank(farmer);
+        custody.postForPickup("BATCH-001", h);
+        vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+
+        vm.prank(mill);
+        vm.expectRevert("BatchCustody: batch not pending handover");
+        custody.confirmReceipt("BATCH-001", h);
+    }
+
+    function test_ConfirmReceipt_RevertsIfNotPendingTarget() public {
+        bytes32 h = keccak256("data");
+
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", h);
+        vm.prank(farmer);
+        custody.postForPickup("BATCH-001", h);
+        vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+        vm.prank(transporter1);
+        custody.initiateHandover("BATCH-001", mill, h);
+
+        vm.prank(storageFacility);
+        vm.expectRevert("BatchCustody: caller is not the pending target");
+        custody.confirmReceipt("BATCH-001", h);
+    }
+
+    function test_ConfirmReceipt_AdvancesStageCorrectly() public {
+        bytes32 h = keccak256("data");
+
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", h);
+        vm.prank(farmer);
+        custody.postForPickup("BATCH-001", h);
+        vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+        vm.prank(transporter1);
+        custody.initiateHandover("BATCH-001", mill, h);
+        vm.prank(mill);
+        custody.confirmReceipt("BATCH-001", h);
+
+        (
+            ,
+            BatchCustody.Stage stageAfterMill,
+            address custodianAfterMill,
+
+        ) = custody.batches("BATCH-001");
+        assertEq(uint8(stageAfterMill), uint8(BatchCustody.Stage.Mill));
+        assertEq(custodianAfterMill, mill);
+
+        vm.prank(mill);
+        custody.postForPickup("BATCH-001", h);
+        vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+        vm.prank(transporter1);
+        custody.initiateHandover("BATCH-001", storageFacility, h);
+        vm.prank(storageFacility);
+        custody.confirmReceipt("BATCH-001", h);
+
+        (
+            ,
+            BatchCustody.Stage stageAfterStorage,
+            address custodianAfterStorage,
+
+        ) = custody.batches("BATCH-001");
+        assertEq(uint8(stageAfterStorage), uint8(BatchCustody.Stage.Storage));
+        assertEq(custodianAfterStorage, storageFacility);
+
+        vm.prank(storageFacility);
+        custody.postForPickup("BATCH-001", h);
+        vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+        vm.prank(transporter1);
+        custody.initiateHandover("BATCH-001", exporter, h);
+        vm.prank(exporter);
+        custody.confirmReceipt("BATCH-001", h);
+
+        (
+            ,
+            BatchCustody.Stage stageAfterExporter,
+            address custodianAfterExporter,
+
+        ) = custody.batches("BATCH-001");
+        assertEq(uint8(stageAfterExporter), uint8(BatchCustody.Stage.Exporter));
+        assertEq(custodianAfterExporter, exporter);
     }
 }
