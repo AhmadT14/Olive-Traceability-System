@@ -19,6 +19,12 @@ services:
       - "3000:3000"
     depends_on:
       - postgres
+
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    entrypoint: ["anvil", "--host", "0.0.0.0"]
+    ports:
+      - "8545:8545"
  
 volumes:
   postgres-data:

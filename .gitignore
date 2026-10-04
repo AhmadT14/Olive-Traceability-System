@@ -11,6 +11,8 @@ contracts/lib/*
 contracts/out/
 contracts/cache/
 contracts/broadcast/
+contracts/cache/
+contracts/out/
 
 # frontend build output
 frontend/dist/
