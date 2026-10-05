@@ -9,6 +9,7 @@ const schema = z.object({
   REGISTRY_ADDRESS: address,
   BATCH_CUSTODY_ADDRESS: address,
   DEPLOY_BLOCK: z.coerce.number().int().default(0),
+  PORT: z.coerce.number().int().default(3000),
 });
 
 export const config = schema.parse(process.env);

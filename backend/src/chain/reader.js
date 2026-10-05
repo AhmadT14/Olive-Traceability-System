@@ -1,5 +1,5 @@
 import { id } from "ethers";
-import { registry, batchCustody } from "./contracts.js";
+import { registry, batchCustody, provider } from "./contracts.js";
 import { Status, Stage } from "./enums.js";
 
 const ROLE_NAMES = [
@@ -28,4 +28,23 @@ export async function getBatch(batchId) {
 
 export function hasRole(roleName, address) {
   return registry.hasRole(ROLES[roleName], address);
+}
+
+export async function decodeTx(txHash) {
+  const receipt = await provider.getTransactionReceipt(txHash);
+  if (!receipt) return null;
+
+  const events = receipt.logs
+    .filter(
+      (log) => log.address.toLowerCase() === batchCustody.target.toLowerCase(),
+    )
+    .map((log) => batchCustody.interface.parseLog(log))
+    .filter(Boolean)
+    .map((parsed) => ({ name: parsed.name, args: parsed.args }));
+
+  return {
+    success: receipt.status === 1,
+    blockNumber: receipt.blockNumber,
+    events,
+  };
 }
