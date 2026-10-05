@@ -1,6 +1,7 @@
 import { id } from "ethers";
 import { registry, batchCustody, provider } from "./contracts.js";
 import { Status, Stage } from "./enums.js";
+import { config } from "../config.js";
 
 const ROLE_NAMES = [
   "FARMER",
@@ -47,4 +48,23 @@ export async function decodeTx(txHash) {
     blockNumber: receipt.blockNumber,
     events,
   };
+}
+
+export async function getBatchHistory(batchId) {
+  const logs = await batchCustody.queryFilter("*", config.DEPLOY_BLOCK);
+
+  const topic = id(batchId);
+
+  return logs
+    .filter((log) => log.topics[1] === topic)
+    .map((log) => ({
+      name: log.fragment.name,
+      txHash: log.transactionHash,
+      blockNumber: log.blockNumber,
+      args: Object.fromEntries(
+        log.args
+          .toArray()
+          .map((value, i) => [log.fragment.inputs[i].name, String(value)]),
+      ),
+    }));
 }
