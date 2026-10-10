@@ -5,6 +5,8 @@ import chainRoutes from "./routes/chain.routes.js";
 import txRoutes from "./routes/tx.routes.js";
 import historyRoutes from "./routes/history.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import batchesRoutes from "./routes/batches.routes.js";
+import millRoutes from "./routes/mill.routes.js";
 
 const app = express();
 app.use(express.json());
@@ -18,6 +20,8 @@ app.use(participantsRoutes);
 app.use(txRoutes);
 app.use(historyRoutes);
 app.use(authRoutes);
+app.use(batchesRoutes);
+app.use(millRoutes);
 
 app.listen(config.PORT, () => {
   console.log(`Server is running on port ${config.PORT}`);

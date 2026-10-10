@@ -39,9 +39,16 @@ export async function decodeTx(txHash) {
     .filter(
       (log) => log.address.toLowerCase() === batchCustody.target.toLowerCase(),
     )
-    .map((log) => batchCustody.interface.parseLog(log))
-    .filter(Boolean)
-    .map((parsed) => ({ name: parsed.name, args: parsed.args }));
+    .map((log) => {
+      const parsed = batchCustody.interface.parseLog(log);
+      // topics is kept alongside the decoded args: batchId is `string
+      // indexed` on every BatchCustody event, so Solidity only stores its
+      // keccak256 in the topic — ethers can't reconstruct the original
+      // string from args, only the raw topic hash is usable (see how
+      // getBatchHistory below matches batchId, same reasoning).
+      return parsed && { name: parsed.name, args: parsed.args, topics: log.topics };
+    })
+    .filter(Boolean);
 
   return {
     success: receipt.status === 1,
