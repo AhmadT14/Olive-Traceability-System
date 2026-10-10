@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-# LOCAL ANVIL ONLY. Never use these keys on a real chain.
 set -e
 
 ADMIN_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266

@@ -10,6 +10,7 @@ const schema = z.object({
   BATCH_CUSTODY_ADDRESS: address,
   DEPLOY_BLOCK: z.coerce.number().int().default(0),
   PORT: z.coerce.number().int().default(3000),
+  JWT_SECRET: z.string().min(32),
 });
 
 export const config = schema.parse(process.env);
