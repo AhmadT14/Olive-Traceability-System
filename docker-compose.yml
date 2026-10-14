@@ -9,7 +9,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
- 
+
   backend:
     build: ./backend
     environment:
@@ -19,12 +19,14 @@ services:
       - "3000:3000"
     depends_on:
       - postgres
+    env_file:
+      - .env
 
   anvil:
     image: ghcr.io/foundry-rs/foundry:latest
     entrypoint: ["anvil", "--host", "0.0.0.0"]
     ports:
       - "8545:8545"
- 
+
 volumes:
   postgres-data:

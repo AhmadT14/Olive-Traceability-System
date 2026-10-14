@@ -4,6 +4,7 @@ import { createNonce, consumeNonce, buildMessage } from "../auth/nonces.js";
 import { hasRole, ROLES } from "../chain/reader.js";
 import jwt from "jsonwebtoken";
 import { config } from "../config.js";
+import { requireAuth } from "../auth/middleware.js";
 
 const router = Router();
 
@@ -51,6 +52,11 @@ router.post("/auth/nonce", (req, res) => {
 
   const nonce = createNonce(address);
   res.json({ address, nonce, message: buildMessage(nonce) });
+});
+
+router.get("/auth/me", requireAuth, (req, res) => {
+  if (req.user) res.json(req.user);
+  else return res.status(401).json({ error: "missing token" });
 });
 
 export default router;

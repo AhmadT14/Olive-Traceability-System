@@ -58,11 +58,9 @@ router.post("/batches/:id/mill-intake", async (req, res) => {
         .json({ error: "record does not match the on-chain hash" });
     }
     if (err instanceof EventNotFoundError) {
-      return res
-        .status(404)
-        .json({
-          error: "tx not found or has no ReceiptConfirmed event for this batch",
-        });
+      return res.status(404).json({
+        error: "tx not found or has no ReceiptConfirmed event for this batch",
+      });
     }
     console.error(err);
     return res.status(500).json({ error: "chain read failed" });
@@ -132,11 +130,9 @@ router.post("/batches/:id/mill-outgoing", async (req, res) => {
         .json({ error: "record does not match the on-chain hash" });
     }
     if (err instanceof EventNotFoundError) {
-      return res
-        .status(404)
-        .json({
-          error: "tx not found or has no BatchListed event for this batch",
-        });
+      return res.status(404).json({
+        error: "tx not found or has no BatchListed event for this batch",
+      });
     }
     console.error(err);
     return res.status(500).json({ error: "chain read failed" });
@@ -154,11 +150,9 @@ router.post("/batches/:id/mill-outgoing", async (req, res) => {
       .where(eq(millOliveRecords.batchId, batchId))
       .limit(1);
     if (intakeExists.length === 0) {
-      return res
-        .status(409)
-        .json({
-          error: "no mill intake recorded off-chain for this batch yet",
-        });
+      return res.status(409).json({
+        error: "no mill intake recorded off-chain for this batch yet",
+      });
     }
 
     const existing = await db
