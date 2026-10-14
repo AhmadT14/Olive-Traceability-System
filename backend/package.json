@@ -17,6 +17,7 @@
     "ethers": "^6.17.0",
     "express": "^5.2.1",
     "pg": "^8.13.0",
+    "prettier": "^3.9.10",
     "zod": "^4.6.5"
   },
   "devDependencies": {

@@ -2,9 +2,7 @@
   "version": "8",
   "dialect": "postgres",
   "id": "3f57207f-bd18-4ff3-8202-dbc26a94d388",
-  "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
-  ],
+  "prevIds": ["00000000-0000-0000-0000-000000000000"],
   "ddl": [
     {
       "isRlsEnabled": false,
@@ -2432,14 +2430,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "farmer"
-      ],
+      "columns": ["farmer"],
       "schemaTo": "public",
       "tableTo": "participants",
-      "columnsTo": [
-        "wallet_address"
-      ],
+      "columnsTo": ["wallet_address"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "batches_farmer_participants_wallet_address_fkey",
@@ -2449,14 +2443,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "batch_id"
-      ],
+      "columns": ["batch_id"],
       "schemaTo": "public",
       "tableTo": "batches",
-      "columnsTo": [
-        "batch_id"
-      ],
+      "columnsTo": ["batch_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "export_records_batch_id_batches_batch_id_fkey",
@@ -2466,14 +2456,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "schemaTo": "public",
       "tableTo": "participants",
-      "columnsTo": [
-        "wallet_address"
-      ],
+      "columnsTo": ["wallet_address"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "exporter_details_iFvZOo9wZaTB_fkey",
@@ -2483,14 +2469,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "batch_id"
-      ],
+      "columns": ["batch_id"],
       "schemaTo": "public",
       "tableTo": "batches",
-      "columnsTo": [
-        "batch_id"
-      ],
+      "columnsTo": ["batch_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "farm_records_batch_id_batches_batch_id_fkey",
@@ -2500,14 +2482,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "schemaTo": "public",
       "tableTo": "participants",
-      "columnsTo": [
-        "wallet_address"
-      ],
+      "columnsTo": ["wallet_address"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "farmer_details_wallet_address_participants_wallet_address_fkey",
@@ -2517,14 +2495,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "batch_id"
-      ],
+      "columns": ["batch_id"],
       "schemaTo": "public",
       "tableTo": "batches",
-      "columnsTo": [
-        "batch_id"
-      ],
+      "columnsTo": ["batch_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "import_records_batch_id_batches_batch_id_fkey",
@@ -2534,14 +2508,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "schemaTo": "public",
       "tableTo": "participants",
-      "columnsTo": [
-        "wallet_address"
-      ],
+      "columnsTo": ["wallet_address"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "importer_details_iFvZOo9wZaKg_fkey",
@@ -2551,14 +2521,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "schemaTo": "public",
       "tableTo": "participants",
-      "columnsTo": [
-        "wallet_address"
-      ],
+      "columnsTo": ["wallet_address"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "mill_bottler_details_O6TDAUXcOJxB_fkey",
@@ -2568,14 +2534,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "batch_id"
-      ],
+      "columns": ["batch_id"],
       "schemaTo": "public",
       "tableTo": "batches",
-      "columnsTo": [
-        "batch_id"
-      ],
+      "columnsTo": ["batch_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "mill_oil_records_batch_id_batches_batch_id_fkey",
@@ -2585,14 +2547,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "batch_id"
-      ],
+      "columns": ["batch_id"],
       "schemaTo": "public",
       "tableTo": "batches",
-      "columnsTo": [
-        "batch_id"
-      ],
+      "columnsTo": ["batch_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "mill_olive_records_batch_id_batches_batch_id_fkey",
@@ -2602,14 +2560,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "batch_id"
-      ],
+      "columns": ["batch_id"],
       "schemaTo": "public",
       "tableTo": "batches",
-      "columnsTo": [
-        "batch_id"
-      ],
+      "columnsTo": ["batch_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "retail_records_batch_id_batches_batch_id_fkey",
@@ -2619,14 +2573,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "schemaTo": "public",
       "tableTo": "participants",
-      "columnsTo": [
-        "wallet_address"
-      ],
+      "columnsTo": ["wallet_address"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "retailer_details_iFvZOo5NCRge_fkey",
@@ -2636,14 +2586,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "schemaTo": "public",
       "tableTo": "participants",
-      "columnsTo": [
-        "wallet_address"
-      ],
+      "columnsTo": ["wallet_address"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "storage_details_wallet_address_participants_wallet_address_fkey",
@@ -2653,14 +2599,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "batch_id"
-      ],
+      "columns": ["batch_id"],
       "schemaTo": "public",
       "tableTo": "batches",
-      "columnsTo": [
-        "batch_id"
-      ],
+      "columnsTo": ["batch_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "storage_records_batch_id_batches_batch_id_fkey",
@@ -2670,14 +2612,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "schemaTo": "public",
       "tableTo": "participants",
-      "columnsTo": [
-        "wallet_address"
-      ],
+      "columnsTo": ["wallet_address"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "transporter_details_g9ukyYK1dUZ4_fkey",
@@ -2687,14 +2625,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "batch_id"
-      ],
+      "columns": ["batch_id"],
       "schemaTo": "public",
       "tableTo": "batches",
-      "columnsTo": [
-        "batch_id"
-      ],
+      "columnsTo": ["batch_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "transporter_jobs_batch_id_batches_batch_id_fkey",
@@ -2704,14 +2638,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "source_party"
-      ],
+      "columns": ["source_party"],
       "schemaTo": "public",
       "tableTo": "participants",
-      "columnsTo": [
-        "wallet_address"
-      ],
+      "columnsTo": ["wallet_address"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "transporter_jobs_source_party_participants_wallet_address_fkey",
@@ -2721,14 +2651,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "destination_party"
-      ],
+      "columns": ["destination_party"],
       "schemaTo": "public",
       "tableTo": "participants",
-      "columnsTo": [
-        "wallet_address"
-      ],
+      "columnsTo": ["wallet_address"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "transporter_jobs_SBT76rscwi4R_fkey",
@@ -2738,14 +2664,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "transporter"
-      ],
+      "columns": ["transporter"],
       "schemaTo": "public",
       "tableTo": "participants",
-      "columnsTo": [
-        "wallet_address"
-      ],
+      "columnsTo": ["wallet_address"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "transporter_jobs_transporter_participants_wallet_address_fkey",
@@ -2755,14 +2677,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "batch_id"
-      ],
+      "columns": ["batch_id"],
       "schemaTo": "public",
       "tableTo": "batches",
-      "columnsTo": [
-        "batch_id"
-      ],
+      "columnsTo": ["batch_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "transporter_oil_records_batch_id_batches_batch_id_fkey",
@@ -2772,14 +2690,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "batch_id"
-      ],
+      "columns": ["batch_id"],
       "schemaTo": "public",
       "tableTo": "batches",
-      "columnsTo": [
-        "batch_id"
-      ],
+      "columnsTo": ["batch_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "transporter_olive_records_batch_id_batches_batch_id_fkey",
@@ -2788,9 +2702,7 @@
       "table": "transporter_olive_records"
     },
     {
-      "columns": [
-        "batch_id"
-      ],
+      "columns": ["batch_id"],
       "nameExplicit": false,
       "name": "batches_pkey",
       "schema": "public",
@@ -2798,9 +2710,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "event_tx_hash"
-      ],
+      "columns": ["event_tx_hash"],
       "nameExplicit": false,
       "name": "export_records_pkey",
       "schema": "public",
@@ -2808,9 +2718,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "nameExplicit": false,
       "name": "exporter_details_pkey",
       "schema": "public",
@@ -2818,9 +2726,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "event_tx_hash"
-      ],
+      "columns": ["event_tx_hash"],
       "nameExplicit": false,
       "name": "farm_records_pkey",
       "schema": "public",
@@ -2828,9 +2734,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "nameExplicit": false,
       "name": "farmer_details_pkey",
       "schema": "public",
@@ -2838,9 +2742,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "event_tx_hash"
-      ],
+      "columns": ["event_tx_hash"],
       "nameExplicit": false,
       "name": "import_records_pkey",
       "schema": "public",
@@ -2848,9 +2750,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "nameExplicit": false,
       "name": "importer_details_pkey",
       "schema": "public",
@@ -2858,9 +2758,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "nameExplicit": false,
       "name": "mill_bottler_details_pkey",
       "schema": "public",
@@ -2868,9 +2766,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "event_tx_hash"
-      ],
+      "columns": ["event_tx_hash"],
       "nameExplicit": false,
       "name": "mill_oil_records_pkey",
       "schema": "public",
@@ -2878,9 +2774,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "event_tx_hash"
-      ],
+      "columns": ["event_tx_hash"],
       "nameExplicit": false,
       "name": "mill_olive_records_pkey",
       "schema": "public",
@@ -2888,9 +2782,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "nameExplicit": false,
       "name": "participants_pkey",
       "schema": "public",
@@ -2898,9 +2790,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "event_tx_hash"
-      ],
+      "columns": ["event_tx_hash"],
       "nameExplicit": false,
       "name": "retail_records_pkey",
       "schema": "public",
@@ -2908,9 +2798,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "nameExplicit": false,
       "name": "retailer_details_pkey",
       "schema": "public",
@@ -2918,9 +2806,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "nameExplicit": false,
       "name": "storage_details_pkey",
       "schema": "public",
@@ -2928,9 +2814,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "event_tx_hash"
-      ],
+      "columns": ["event_tx_hash"],
       "nameExplicit": false,
       "name": "storage_records_pkey",
       "schema": "public",
@@ -2938,9 +2822,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "wallet_address"
-      ],
+      "columns": ["wallet_address"],
       "nameExplicit": false,
       "name": "transporter_details_pkey",
       "schema": "public",
@@ -2948,9 +2830,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "transporter_jobs_pkey",
       "schema": "public",
@@ -2958,9 +2838,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "event_tx_hash"
-      ],
+      "columns": ["event_tx_hash"],
       "nameExplicit": false,
       "name": "transporter_oil_records_pkey",
       "schema": "public",
@@ -2968,9 +2846,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "event_tx_hash"
-      ],
+      "columns": ["event_tx_hash"],
       "nameExplicit": false,
       "name": "transporter_olive_records_pkey",
       "schema": "public",

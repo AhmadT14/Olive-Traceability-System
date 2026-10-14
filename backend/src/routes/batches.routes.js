@@ -66,7 +66,9 @@ router.post("/batches", async (req, res) => {
       .where(eq(batches.batchId, batchId))
       .limit(1);
     if (existing.length > 0) {
-      return res.status(409).json({ error: "batch already recorded off-chain" });
+      return res
+        .status(409)
+        .json({ error: "batch already recorded off-chain" });
     }
 
     await db.transaction(async (tx) => {

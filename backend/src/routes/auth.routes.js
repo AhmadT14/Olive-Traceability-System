@@ -2,6 +2,8 @@ import { Router } from "express";
 import { isAddress, verifyMessage } from "ethers";
 import { createNonce, consumeNonce, buildMessage } from "../auth/nonces.js";
 import { hasRole, ROLES } from "../chain/reader.js";
+import jwt from "jsonwebtoken";
+import { config } from "../config.js";
 
 const router = Router();
 
@@ -22,14 +24,19 @@ router.post("/auth/login", async (req, res) => {
 
     const signer = verifyMessage(buildMessage(nonce), signature);
     if (signer.toLowerCase() !== address.toLowerCase()) {
-      return res.status(401).json({ error: "signature does not match address" });
+      return res
+        .status(401)
+        .json({ error: "signature does not match address" });
     }
 
     const names = Object.keys(ROLES);
     const results = await Promise.all(names.map((n) => hasRole(n, address)));
     const roles = names.filter((_, i) => results[i]);
 
-    res.json({ address, roles });
+    const token = jwt.sign({ address, roles }, config.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    res.json({ address, roles, token });
   } catch (err) {
     console.error(err);
     res.status(401).json({ error: "login failed" });

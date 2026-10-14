@@ -60,7 +60,9 @@ router.post("/batches/:id/mill-intake", async (req, res) => {
     if (err instanceof EventNotFoundError) {
       return res
         .status(404)
-        .json({ error: "tx not found or has no ReceiptConfirmed event for this batch" });
+        .json({
+          error: "tx not found or has no ReceiptConfirmed event for this batch",
+        });
     }
     console.error(err);
     return res.status(500).json({ error: "chain read failed" });
@@ -84,7 +86,9 @@ router.post("/batches/:id/mill-intake", async (req, res) => {
       .where(eq(millOliveRecords.eventTxHash, txHash))
       .limit(1);
     if (existing.length > 0) {
-      return res.status(409).json({ error: "record already recorded off-chain" });
+      return res
+        .status(409)
+        .json({ error: "record already recorded off-chain" });
     }
 
     await db.insert(millOliveRecords).values({
@@ -130,7 +134,9 @@ router.post("/batches/:id/mill-outgoing", async (req, res) => {
     if (err instanceof EventNotFoundError) {
       return res
         .status(404)
-        .json({ error: "tx not found or has no BatchListed event for this batch" });
+        .json({
+          error: "tx not found or has no BatchListed event for this batch",
+        });
     }
     console.error(err);
     return res.status(500).json({ error: "chain read failed" });
@@ -150,7 +156,9 @@ router.post("/batches/:id/mill-outgoing", async (req, res) => {
     if (intakeExists.length === 0) {
       return res
         .status(409)
-        .json({ error: "no mill intake recorded off-chain for this batch yet" });
+        .json({
+          error: "no mill intake recorded off-chain for this batch yet",
+        });
     }
 
     const existing = await db
@@ -159,7 +167,9 @@ router.post("/batches/:id/mill-outgoing", async (req, res) => {
       .where(eq(millOilRecords.eventTxHash, txHash))
       .limit(1);
     if (existing.length > 0) {
-      return res.status(409).json({ error: "record already recorded off-chain" });
+      return res
+        .status(409)
+        .json({ error: "record already recorded off-chain" });
     }
 
     await db.insert(millOilRecords).values({

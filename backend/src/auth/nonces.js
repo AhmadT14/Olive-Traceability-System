@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 
-const TTL_MS = 5 * 60 * 1000; 
-const store = new Map(); 
+const TTL_MS = 5 * 60 * 1000;
+const store = new Map();
 
 export function buildMessage(nonce) {
   return `Sign in to Olive Traceability.\nNonce: ${nonce}`;

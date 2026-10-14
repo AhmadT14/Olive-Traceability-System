@@ -59,7 +59,12 @@ const HASH_EVENTS = {
  * @throws {EventNotFoundError} if the tx has no matching event for this batch
  * @throws {HashMismatchError} if the hashes don't match
  */
-export async function verifyRecordAgainstChain(stageKey, txHash, batchId, record) {
+export async function verifyRecordAgainstChain(
+  stageKey,
+  txHash,
+  batchId,
+  record,
+) {
   const mapping = HASH_EVENTS[stageKey];
   if (!mapping) {
     throw new Error(
@@ -71,7 +76,12 @@ export async function verifyRecordAgainstChain(stageKey, txHash, batchId, record
   const expectedBatchTopic = id(batchId);
 
   if (!decoded || !decoded.success) {
-    throw new EventNotFoundError({ stageKey, txHash, eventName: mapping.event, batchId });
+    throw new EventNotFoundError({
+      stageKey,
+      txHash,
+      eventName: mapping.event,
+      batchId,
+    });
   }
 
   // topics[0] is the event signature hash; topics[1] is batchId, the first
@@ -80,7 +90,12 @@ export async function verifyRecordAgainstChain(stageKey, txHash, batchId, record
     (e) => e.name === mapping.event && e.topics[1] === expectedBatchTopic,
   );
   if (!match) {
-    throw new EventNotFoundError({ stageKey, txHash, eventName: mapping.event, batchId });
+    throw new EventNotFoundError({
+      stageKey,
+      txHash,
+      eventName: mapping.event,
+      batchId,
+    });
   }
 
   const onChainHash = String(match.args[mapping.arg]).toLowerCase();

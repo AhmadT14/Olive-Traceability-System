@@ -46,7 +46,9 @@ export async function decodeTx(txHash) {
       // keccak256 in the topic — ethers can't reconstruct the original
       // string from args, only the raw topic hash is usable (see how
       // getBatchHistory below matches batchId, same reasoning).
-      return parsed && { name: parsed.name, args: parsed.args, topics: log.topics };
+      return (
+        parsed && { name: parsed.name, args: parsed.args, topics: log.topics }
+      );
     })
     .filter(Boolean);
 
