@@ -1,4 +1,4 @@
-import { id } from "ethers";
+import { id, ZeroHash } from "ethers";
 import { registry, batchCustody, provider } from "./contracts.js";
 import { Status, Stage } from "./enums.js";
 import { config } from "../config.js";
@@ -31,6 +31,10 @@ export function hasRole(roleName, address) {
   return registry.hasRole(ROLES[roleName], address);
 }
 
+export function hasAdminRole(address) {
+  return registry.hasRole(ZeroHash, address);
+}
+
 export async function decodeTx(txHash) {
   const receipt = await provider.getTransactionReceipt(txHash);
   if (!receipt) return null;
@@ -49,6 +53,25 @@ export async function decodeTx(txHash) {
       return (
         parsed && { name: parsed.name, args: parsed.args, topics: log.topics }
       );
+    })
+    .filter(Boolean);
+
+  return {
+    success: receipt.status === 1,
+    blockNumber: receipt.blockNumber,
+    events,
+  };
+}
+
+export async function decodeRegistryTx(txHash) {
+  const receipt = await provider.getTransactionReceipt(txHash);
+  if (!receipt) return null;
+
+  const events = receipt.logs
+    .filter((log) => log.address.toLowerCase() === registry.target.toLowerCase())
+    .map((log) => {
+      const parsed = registry.interface.parseLog(log);
+      return parsed && { name: parsed.name, args: parsed.args };
     })
     .filter(Boolean);
 

@@ -3,9 +3,8 @@ import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db/db.js";
 import {
+  batchEvents,
   transporterJobs,
-  transporterOliveRecords,
-  transporterOilRecords,
 } from "../db/schema.js";
 import { decodeTx, getBatch, hasRole } from "../chain/reader.js";
 import { requireAuth } from "../auth/middleware.js";
@@ -136,9 +135,22 @@ router.post("/batches/:id/transporter-claim", requireAuth, async (req, res) => {
     }
 
     await db.transaction(async (tx) => {
+      await tx.insert(batchEvents).values({
+        eventTxHash: txHash,
+        batchId,
+        contractEvent: "BatchClaimed",
+        detailsType: `transporter_${productType}_pickup`,
+        payloadVersion: 1,
+        details: record,
+      });
+
       const updated = await tx
         .update(transporterJobs)
-        .set({ transporter: req.user.address.toLowerCase(), status: "claimed" })
+        .set({
+          transporter: req.user.address.toLowerCase(),
+          status: "claimed",
+          claimTxHash: txHash,
+        })
         .where(
           and(
             eq(transporterJobs.id, jobs[0].id),
@@ -150,24 +162,6 @@ router.post("/batches/:id/transporter-claim", requireAuth, async (req, res) => {
         throw new Error("job already claimed");
       }
 
-      const table = productType === "olive" ? transporterOliveRecords : transporterOilRecords;
-      const values = {
-        eventTxHash: txHash,
-        batchId,
-        truckDetails: record.truck_details,
-        quantityPickedUp: record.quantity_picked_up,
-        loadingDetails: record.loading_details,
-        transportConditions: record.transport_conditions,
-        notes: record.notes,
-      };
-      if (productType === "olive") {
-        values.pickupCondition = record.pickup_condition;
-        values.oliveCondition = record.olive_condition;
-      } else {
-        values.oilCondition = record.oil_condition;
-        values.packagingCondition = record.packaging_condition;
-      }
-      await tx.insert(table).values(values);
     });
   } catch (err) {
     if (err.message === "job already claimed") {
@@ -272,9 +266,18 @@ router.post("/batches/:id/transporter-handover", requireAuth, async (req, res) =
     }
 
     await db.transaction(async (tx) => {
+      await tx.insert(batchEvents).values({
+        eventTxHash: txHash,
+        batchId,
+        contractEvent: "HandoverInitiated",
+        detailsType: `transporter_${productType}_delivery`,
+        payloadVersion: 1,
+        details: record,
+      });
+
       const updated = await tx
         .update(transporterJobs)
-        .set({ status: "handover_pending" })
+        .set({ status: "handover_pending", handoverTxHash: txHash })
         .where(
           and(
             eq(transporterJobs.id, job[0].id),
@@ -284,21 +287,6 @@ router.post("/batches/:id/transporter-handover", requireAuth, async (req, res) =
         .returning({ id: transporterJobs.id });
       if (updated.length === 0) throw new Error("job state changed");
 
-      const table = productType === "olive" ? transporterOliveRecords : transporterOilRecords;
-      const values = {
-        eventTxHash: txHash,
-        batchId,
-        quantityDelivered: record.quantity_delivered,
-        unloadingDetails: record.unloading_details,
-        transportConditions: record.transport_conditions,
-        notes: record.notes,
-      };
-      if (productType === "olive") values.oliveCondition = record.olive_condition;
-      else {
-        values.oilCondition = record.oil_condition;
-        values.packagingCondition = record.packaging_condition;
-      }
-      await tx.insert(table).values(values);
     });
   } catch (err) {
     if (err.message === "job state changed") {

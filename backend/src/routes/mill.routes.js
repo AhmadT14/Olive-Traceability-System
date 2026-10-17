@@ -2,13 +2,8 @@ import { Router } from "express";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/db.js";
-import {
-  millOliveRecords,
-  millOilRecords,
-  batches,
-  transporterJobs,
-} from "../db/schema.js";
-import { hasRole, getBatch } from "../chain/reader.js";
+import { batchEvents, batches, transporterJobs } from "../db/schema.js";
+import { decodeTx, hasRole, getBatch } from "../chain/reader.js";
 import { getNextStageRole } from "../chain/checks.js";
 import { requireAuth } from "../auth/middleware.js";
 import {
@@ -43,7 +38,7 @@ const millOutgoingSchema = z.object({
   notes: z.string().optional(),
 });
 
-router.post("/batches/:id/mill-intake", async (req, res) => {
+router.post("/batches/:id/mill-intake", requireAuth, async (req, res) => {
   const batchId = req.params.id.trim();
   if (!batchId || batchId.length > 64) {
     return res.status(400).json({ error: "invalid batch id" });
@@ -57,6 +52,29 @@ router.post("/batches/:id/mill-intake", async (req, res) => {
   }
 
   const { txHash, ...record } = parsed.data;
+
+  try {
+    const [mill, batch] = await Promise.all([
+      hasRole("MILL", req.user.address),
+      getBatch(batchId),
+    ]);
+    if (!mill) {
+      return res.status(403).json({ error: "caller is not a mill" });
+    }
+    if (batch.status === "None") {
+      return res.status(404).json({ error: "batch not found" });
+    }
+    if (
+      batch.status !== "Created" ||
+      batch.stage !== "Mill" ||
+      batch.custodian.toLowerCase() !== req.user.address.toLowerCase()
+    ) {
+      return res.status(409).json({ error: "caller is not the confirmed receipt custodian" });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "chain read failed" });
+  }
 
   try {
     await verifyRecordAgainstChain("mill_olive", txHash, batchId, record);
@@ -88,9 +106,9 @@ router.post("/batches/:id/mill-intake", async (req, res) => {
     }
 
     const existing = await db
-      .select({ eventTxHash: millOliveRecords.eventTxHash })
-      .from(millOliveRecords)
-      .where(eq(millOliveRecords.eventTxHash, txHash))
+      .select({ eventTxHash: batchEvents.eventTxHash })
+      .from(batchEvents)
+      .where(eq(batchEvents.eventTxHash, txHash))
       .limit(1);
     if (existing.length > 0) {
       return res
@@ -98,16 +116,58 @@ router.post("/batches/:id/mill-intake", async (req, res) => {
         .json({ error: "record already recorded off-chain" });
     }
 
-    await db.insert(millOliveRecords).values({
-      eventTxHash: txHash,
-      batchId,
-      arrivalCondition: record.arrival_condition,
-      quantityReceived: record.quantity_received,
-      oliveQuality: record.olive_quality,
-      storageCondition: record.storage_condition,
-      notes: record.notes,
+    const decoded = await decodeTx(txHash);
+    const receipt = decoded?.events.find(
+      (event) =>
+        event.name === "ReceiptConfirmed" &&
+        event.args.newCustodian?.toLowerCase() === req.user.address.toLowerCase(),
+    );
+    if (!receipt) {
+      return res.status(409).json({ error: "receipt event was not submitted by caller" });
+    }
+
+    const jobs = await db
+      .select({ id: transporterJobs.id })
+      .from(transporterJobs)
+      .where(
+        and(
+          eq(transporterJobs.batchId, batchId),
+          eq(transporterJobs.destinationParty, req.user.address.toLowerCase()),
+          eq(transporterJobs.status, "handover_pending"),
+        ),
+      )
+      .limit(1);
+    if (jobs.length === 0) {
+      return res.status(409).json({ error: "no transporter handover is pending for this batch" });
+    }
+
+    await db.transaction(async (tx) => {
+      await tx.insert(batchEvents).values({
+        eventTxHash: txHash,
+        batchId,
+        contractEvent: "ReceiptConfirmed",
+        detailsType: "mill_intake",
+        payloadVersion: 1,
+        details: record,
+      });
+
+      const updated = await tx
+        .update(transporterJobs)
+        .set({ status: "completed", receiptTxHash: txHash })
+        .where(
+          and(
+            eq(transporterJobs.id, jobs[0].id),
+            eq(transporterJobs.status, "handover_pending"),
+          ),
+        )
+        .returning({ id: transporterJobs.id });
+      if (updated.length === 0) throw new Error("job state changed");
+
     });
   } catch (err) {
+    if (err.message === "job state changed") {
+      return res.status(409).json({ error: err.message });
+    }
     console.error(err);
     return res.status(500).json({ error: "db write failed" });
   }
@@ -185,12 +245,17 @@ router.post("/batches/:id/mill-outgoing", requireAuth, async (req, res) => {
     // The mill can only list oil for pickup after it has recorded intake —
     // mirrors the on-chain requirement that postForPickup only runs on a
     // batch the caller already holds (status == Created, i.e. after its own
-    // confirmReceipt). Off-chain, that means a mill_olive_records row must
+    // confirmReceipt). Off-chain, that means a mill_intake event row must
     // already exist for this batch.
     const intakeExists = await db
-      .select({ eventTxHash: millOliveRecords.eventTxHash })
-      .from(millOliveRecords)
-      .where(eq(millOliveRecords.batchId, batchId))
+      .select({ eventTxHash: batchEvents.eventTxHash })
+      .from(batchEvents)
+      .where(
+        and(
+          eq(batchEvents.batchId, batchId),
+          eq(batchEvents.detailsType, "mill_intake"),
+        ),
+      )
       .limit(1);
     if (intakeExists.length === 0) {
       return res.status(409).json({
@@ -199,9 +264,9 @@ router.post("/batches/:id/mill-outgoing", requireAuth, async (req, res) => {
     }
 
     const existing = await db
-      .select({ eventTxHash: millOilRecords.eventTxHash })
-      .from(millOilRecords)
-      .where(eq(millOilRecords.eventTxHash, txHash))
+      .select({ eventTxHash: batchEvents.eventTxHash })
+      .from(batchEvents)
+      .where(eq(batchEvents.eventTxHash, txHash))
       .limit(1);
     if (existing.length > 0) {
       return res
@@ -224,16 +289,13 @@ router.post("/batches/:id/mill-outgoing", requireAuth, async (req, res) => {
     }
 
     await db.transaction(async (tx) => {
-      await tx.insert(millOilRecords).values({
+      await tx.insert(batchEvents).values({
         eventTxHash: txHash,
         batchId,
-        pressingDate: record.pressing_date,
-        extractionMethod: record.extraction_method,
-        outputQuantity: record.output_quantity,
-        oilQuality: record.oil_quality,
-        packagingDetails: record.packaging_details,
-        qrCodeReference: record.qr_code_reference,
-        notes: record.notes,
+        contractEvent: "BatchListed",
+        detailsType: "mill_outgoing",
+        payloadVersion: 1,
+        details: record,
       });
 
       await tx.insert(transporterJobs).values({
@@ -241,6 +303,7 @@ router.post("/batches/:id/mill-outgoing", requireAuth, async (req, res) => {
         sourceParty: req.user.address.toLowerCase(),
         destinationParty: destinationAddress.toLowerCase(),
         status: "available",
+        listingTxHash: txHash,
       });
     });
   } catch (err) {

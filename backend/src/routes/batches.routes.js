@@ -2,7 +2,9 @@ import { Router } from "express";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "../db/db.js";
-import { batches, farmRecords } from "../db/schema.js";
+import { batchEvents, batches } from "../db/schema.js";
+import { decodeTx, hasRole } from "../chain/reader.js";
+import { requireAuth } from "../auth/middleware.js";
 import {
   verifyRecordAgainstChain,
   HashMismatchError,
@@ -18,7 +20,6 @@ const router = Router();
 const createBatchSchema = z.object({
   txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "must be a tx hash"),
   batchId: z.string().min(1).max(64),
-  farmer: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address"),
   harvest_date: z.string(), // YYYY-MM-DD
   location: z.string().max(255),
   olive_type: z.string().max(128),
@@ -32,7 +33,7 @@ const createBatchSchema = z.object({
   farm_notes: z.string().optional(),
 });
 
-router.post("/batches", async (req, res) => {
+router.post("/batches", requireAuth, async (req, res) => {
   const parsed = createBatchSchema.safeParse(req.body);
   if (!parsed.success) {
     return res
@@ -40,7 +41,25 @@ router.post("/batches", async (req, res) => {
       .json({ error: "invalid payload", details: parsed.error.flatten() });
   }
 
-  const { txHash, batchId, farmer, ...record } = parsed.data;
+  const { txHash, batchId, ...record } = parsed.data;
+
+  try {
+    if (!(await hasRole("FARMER", req.user.address))) {
+      return res.status(403).json({ error: "caller is not a farmer" });
+    }
+
+    const decoded = await decodeTx(txHash);
+    const creation = decoded?.events.find((event) => event.name === "BatchCreated");
+    if (!decoded?.success || !creation) {
+      return res.status(404).json({ error: "tx not found or has no successful BatchCreated event" });
+    }
+    if (creation.args.farmer?.toLowerCase() !== req.user.address.toLowerCase()) {
+      return res.status(403).json({ error: "batch transaction was not submitted by caller" });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "chain read failed" });
+  }
 
   try {
     await verifyRecordAgainstChain("farm", txHash, batchId, record);
@@ -72,26 +91,14 @@ router.post("/batches", async (req, res) => {
     }
 
     await db.transaction(async (tx) => {
-      await tx.insert(batches).values({
-        batchId,
-        farmer: farmer.toLowerCase(),
-        harvestDate: record.harvest_date,
-        location: record.location,
-        oliveType: record.olive_type,
-        createTxHash: txHash,
-      });
-
-      await tx.insert(farmRecords).values({
+      await tx.insert(batches).values({ batchId });
+      await tx.insert(batchEvents).values({
         eventTxHash: txHash,
         batchId,
-        quantity: record.quantity,
-        cultivationMethod: record.cultivation_method,
-        irrigationMethod: record.irrigation_method,
-        fertilizerDetails: record.fertilizer_details,
-        pesticideDetails: record.pesticide_details,
-        harvestingMethod: record.harvesting_method,
-        qualityDetails: record.quality_details,
-        farmNotes: record.farm_notes,
+        contractEvent: "BatchCreated",
+        detailsType: "farm",
+        payloadVersion: 1,
+        details: record,
       });
     });
   } catch (err) {

@@ -3,7 +3,8 @@ import { z } from "zod";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/db.js";
 import { transporterJobs } from "../db/schema.js";
-import { batchCustody, hasRole, getBatch } from "../chain/reader.js";
+import { hasRole, getBatch } from "../chain/reader.js";
+import { batchCustody } from "../chain/contracts.js";
 import { config } from "../config.js";
 import {
   checkCanCreateBatch,

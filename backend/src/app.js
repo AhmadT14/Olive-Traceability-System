@@ -10,6 +10,10 @@ import millRoutes from "./routes/mill.routes.js";
 import prepareRoutes from "./routes/prepare.routes.js";
 import destinationsRoutes from "./routes/destinations.routes.js";
 import transporterRoutes from "./routes/transporter.routes.js";
+import receiptRoutes from "./routes/receipt.routes.js";
+import jobsRoutes from "./routes/jobs.routes.js";
+import verificationRoutes from "./routes/verification.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 
 const app = express();
 app.use(express.json());
@@ -28,6 +32,10 @@ app.use(millRoutes);
 app.use(prepareRoutes);
 app.use(destinationsRoutes);
 app.use(transporterRoutes);
+app.use(receiptRoutes);
+app.use(jobsRoutes);
+app.use(verificationRoutes);
+app.use(adminRoutes);
 
 app.listen(config.PORT, () => {
   console.log(`Server is running on port ${config.PORT}`);
