@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "node src/app.js",
-    "sync:abis": "node scripts/sync-abis.js ../contracts/out"
+    "sync:abis": "node scripts/sync-abis.js ../contracts/out",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",

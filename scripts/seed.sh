@@ -1,9 +1,7 @@
-#!/usr/bin/env bash
-# LOCAL ANVIL ONLY. Never use these keys on a real chain.
 set -e
 
 set -a
-source backend/.env
+source .env
 set +a
 
 RPC=$RPC_URL

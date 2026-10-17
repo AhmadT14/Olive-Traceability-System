@@ -7,6 +7,9 @@ import historyRoutes from "./routes/history.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import batchesRoutes from "./routes/batches.routes.js";
 import millRoutes from "./routes/mill.routes.js";
+import prepareRoutes from "./routes/prepare.routes.js";
+import destinationsRoutes from "./routes/destinations.routes.js";
+import transporterRoutes from "./routes/transporter.routes.js";
 
 const app = express();
 app.use(express.json());
@@ -22,6 +25,9 @@ app.use(historyRoutes);
 app.use(authRoutes);
 app.use(batchesRoutes);
 app.use(millRoutes);
+app.use(prepareRoutes);
+app.use(destinationsRoutes);
+app.use(transporterRoutes);
 
 app.listen(config.PORT, () => {
   console.log(`Server is running on port ${config.PORT}`);

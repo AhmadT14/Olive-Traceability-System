@@ -34,8 +34,19 @@ export class EventNotFoundError extends Error {
 // lists (fields.js) and an entry here before they can go through this path.
 const HASH_EVENTS = {
   farm: { event: "BatchCreated", arg: "harvestDataHash" },
+  transporter_olive: { event: "BatchClaimed", arg: "intakeDataHash" },
+  transporter_oil: { event: "BatchClaimed", arg: "intakeDataHash" },
+  transporter_olive_outgoing: {
+    event: "HandoverInitiated",
+    arg: "outgoingDataHash",
+  },
+  transporter_oil_outgoing: {
+    event: "HandoverInitiated",
+    arg: "outgoingDataHash",
+  },
   mill_olive: { event: "ReceiptConfirmed", arg: "intakeDataHash" },
   mill_oil: { event: "BatchListed", arg: "outgoingDataHash" },
+  storage: { event: "ReceiptConfirmed", arg: "intakeDataHash" },
   import: { event: "ReceiptConfirmed", arg: "intakeDataHash" },
   retail: { event: "ReceiptConfirmed", arg: "intakeDataHash" },
 };

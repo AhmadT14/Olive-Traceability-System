@@ -15,12 +15,14 @@ services:
     environment:
       - DATABASE_URL=postgres://olive_app:olive_pass@postgres:5432/olive_traceability
       - PORT=3000
+      - RPC_URL=http://anvil:8545
+    env_file:
+      - .env
     ports:
       - "3000:3000"
     depends_on:
       - postgres
-    env_file:
-      - .env
+      - anvil
 
   anvil:
     image: ghcr.io/foundry-rs/foundry:latest

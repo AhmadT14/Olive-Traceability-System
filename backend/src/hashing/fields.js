@@ -14,6 +14,42 @@ export const HASH_FIELDS = {
     "farm_notes",
   ],
 
+  // claimBatch pickup details, separated by product state at the current stage.
+  transporter_olive: [
+    "truck_details",
+    "quantity_picked_up",
+    "pickup_condition",
+    "olive_condition",
+    "loading_details",
+    "transport_conditions",
+    "notes",
+  ],
+  transporter_oil: [
+    "truck_details",
+    "quantity_picked_up",
+    "oil_condition",
+    "packaging_condition",
+    "loading_details",
+    "transport_conditions",
+    "notes",
+  ],
+  // initiateHandover delivery details; these are a separate transaction from claimBatch.
+  transporter_olive_outgoing: [
+    "quantity_delivered",
+    "olive_condition",
+    "unloading_details",
+    "transport_conditions",
+    "notes",
+  ],
+  transporter_oil_outgoing: [
+    "quantity_delivered",
+    "oil_condition",
+    "packaging_condition",
+    "unloading_details",
+    "transport_conditions",
+    "notes",
+  ],
+
   // confirmReceipt by a mill -> intakeDataHash (mill_olive_records)
   mill_olive: [
     "arrival_condition",
@@ -31,6 +67,16 @@ export const HASH_FIELDS = {
     "oil_quality",
     "packaging_details",
     "qr_code_reference",
+    "notes",
+  ],
+
+  // confirmReceipt by a storage facility -> intakeDataHash (storage_records)
+  storage: [
+    "quantity_received",
+    "storage_start_date",
+    "expected_duration",
+    "conditions",
+    "product_condition",
     "notes",
   ],
 
@@ -52,6 +98,6 @@ export const HASH_FIELDS = {
   ],
 
   // NOT DEFINED YET, waiting on the schema decisions (Flags C and D):
-  // transporter pickup / delivery, transporter_jobs listing,
-  // storage intake / outgoing, export intake / outgoing.
+  // transporter_jobs listing details, storage intake / outgoing,
+  // export intake / outgoing.
 };

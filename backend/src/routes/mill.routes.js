@@ -1,8 +1,16 @@
 import { Router } from "express";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../db/db.js";
-import { millOliveRecords, millOilRecords, batches } from "../db/schema.js";
+import {
+  millOliveRecords,
+  millOilRecords,
+  batches,
+  transporterJobs,
+} from "../db/schema.js";
+import { hasRole, getBatch } from "../chain/reader.js";
+import { getNextStageRole } from "../chain/checks.js";
+import { requireAuth } from "../auth/middleware.js";
 import {
   verifyRecordAgainstChain,
   HashMismatchError,
@@ -25,6 +33,7 @@ const millIntakeSchema = z.object({
 // Matches HASH_FIELDS.mill_oil exactly.
 const millOutgoingSchema = z.object({
   txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "must be a tx hash"),
+  destinationAddress: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address"),
   pressing_date: z.string().optional(), // YYYY-MM-DD
   extraction_method: z.string().optional(),
   output_quantity: z.union([z.string(), z.number()]).optional(),
@@ -106,7 +115,7 @@ router.post("/batches/:id/mill-intake", async (req, res) => {
   res.status(201).json({ batchId, txHash });
 });
 
-router.post("/batches/:id/mill-outgoing", async (req, res) => {
+router.post("/batches/:id/mill-outgoing", requireAuth, async (req, res) => {
   const batchId = req.params.id.trim();
   if (!batchId || batchId.length > 64) {
     return res.status(400).json({ error: "invalid batch id" });
@@ -119,7 +128,41 @@ router.post("/batches/:id/mill-outgoing", async (req, res) => {
       .json({ error: "invalid payload", details: parsed.error.flatten() });
   }
 
-  const { txHash, ...record } = parsed.data;
+  const { txHash, destinationAddress, ...record } = parsed.data;
+
+  let destinationRole;
+  try {
+    const [mill, batch] = await Promise.all([
+      hasRole("MILL", req.user.address),
+      getBatch(batchId),
+    ]);
+    if (!mill) {
+      return res.status(403).json({ error: "caller is not a mill" });
+    }
+    if (batch.status === "None") {
+      return res.status(404).json({ error: "batch not found" });
+    }
+    if (batch.stage !== "Mill" || batch.status !== "Listed") {
+      return res.status(409).json({ error: "batch is not listed by a mill" });
+    }
+    if (batch.custodian.toLowerCase() !== req.user.address.toLowerCase()) {
+      return res.status(403).json({ error: "caller is not current custodian" });
+    }
+
+    destinationRole = getNextStageRole(batch.stage);
+    const destinationIsNextStage = await hasRole(
+      destinationRole,
+      destinationAddress,
+    );
+    if (!destinationIsNextStage) {
+      return res.status(400).json({
+        error: `destination must have ${destinationRole} role`,
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "chain read failed" });
+  }
 
   try {
     await verifyRecordAgainstChain("mill_oil", txHash, batchId, record);
@@ -166,23 +209,52 @@ router.post("/batches/:id/mill-outgoing", async (req, res) => {
         .json({ error: "record already recorded off-chain" });
     }
 
-    await db.insert(millOilRecords).values({
-      eventTxHash: txHash,
-      batchId,
-      pressingDate: record.pressing_date,
-      extractionMethod: record.extraction_method,
-      outputQuantity: record.output_quantity,
-      oilQuality: record.oil_quality,
-      packagingDetails: record.packaging_details,
-      qrCodeReference: record.qr_code_reference,
-      notes: record.notes,
+    const activeJob = await db
+      .select({ id: transporterJobs.id })
+      .from(transporterJobs)
+      .where(
+        and(
+          eq(transporterJobs.batchId, batchId),
+          eq(transporterJobs.status, "available"),
+        ),
+      )
+      .limit(1);
+    if (activeJob.length > 0) {
+      return res.status(409).json({ error: "transporter job already exists for this batch" });
+    }
+
+    await db.transaction(async (tx) => {
+      await tx.insert(millOilRecords).values({
+        eventTxHash: txHash,
+        batchId,
+        pressingDate: record.pressing_date,
+        extractionMethod: record.extraction_method,
+        outputQuantity: record.output_quantity,
+        oilQuality: record.oil_quality,
+        packagingDetails: record.packaging_details,
+        qrCodeReference: record.qr_code_reference,
+        notes: record.notes,
+      });
+
+      await tx.insert(transporterJobs).values({
+        batchId,
+        sourceParty: req.user.address.toLowerCase(),
+        destinationParty: destinationAddress.toLowerCase(),
+        status: "available",
+      });
     });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "db write failed" });
   }
 
-  res.status(201).json({ batchId, txHash });
+  res.status(201).json({
+    batchId,
+    txHash,
+    sourceParty: req.user.address.toLowerCase(),
+    destinationParty: destinationAddress.toLowerCase(),
+    destinationRole,
+  });
 });
 
 export default router;
