@@ -30,5 +30,13 @@ services:
     ports:
       - "8545:8545"
 
+  forge:
+    image: ghcr.io/foundry-rs/foundry:latest
+    working_dir: /workspace
+    volumes:
+      - ./contracts:/workspace
+    entrypoint: ["forge"]
+    command: ["build"]
+
 volumes:
   postgres-data:
