@@ -29,9 +29,9 @@ Run every command from the repo root unless a step says otherwise.
 docker compose up --build
 ```
 
-This starts PostgreSQL, Anvil, deploys the contracts automatically, and then starts
-the backend. Foundry (`forge`, `cast`, and `anvil`) runs inside Docker; it does not
-need to be installed on the host.
+This starts PostgreSQL, Anvil, deploys the contracts, seeds the sample farmer/mill
+and `B1` batch data, and then starts the backend. Foundry (`forge`, `cast`, and
+`anvil`) runs inside Docker; it does not need to be installed on the host.
 
 To start only the local blockchain:
 
@@ -198,6 +198,6 @@ forge test
 - Frontend is uncustomized Vite starter content.
 - The backend requires PostgreSQL, a deployed local chain, and wallet-signature authentication for end-to-end use.
 - Variable event and role-specific profile details are stored in validated PostgreSQL JSONB fields; shared participant fields such as name, contact information, location, and availability remain relational.
-- `docker-compose.yml` deploys contracts automatically before starting the backend.
+- `docker-compose.yml` deploys and seeds contracts automatically before starting the backend.
 - Anvil state is not persisted, so the chain resets whenever the container stops.
 - No production network, deployment, or key-management configuration is included.
