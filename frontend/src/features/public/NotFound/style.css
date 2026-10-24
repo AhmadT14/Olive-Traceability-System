@@ -1,0 +1,9 @@
+.not-found {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+.not-found__title {
+  font-size: var(--text-xl);
+}
