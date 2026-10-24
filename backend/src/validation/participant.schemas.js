@@ -45,6 +45,7 @@ export const profileSchema = z.object({
   email: z.string().email().max(255).optional(),
   address: z.string().optional(),
   location: z.string().max(255).optional(),
+  availability: z.string().max(32).optional(),
   details: z.record(z.string(), z.unknown()).optional(),
 });
 

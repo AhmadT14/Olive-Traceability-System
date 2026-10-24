@@ -1,20 +1,10 @@
 import { id, ZeroHash } from "ethers";
 import { registry, batchCustody, provider } from "./contracts.js";
-import { Status, Stage } from "./enums.js";
+import { RoleNames, Status, Stage } from "./enums.js";
 import { config } from "../config.js";
 
-const ROLE_NAMES = [
-  "FARMER",
-  "TRANSPORTER",
-  "MILL",
-  "STORAGE",
-  "EXPORTER",
-  "IMPORTER",
-  "RETAILER",
-];
-
 export const ROLES = Object.fromEntries(
-  ROLE_NAMES.map((name) => [name, id(`${name}_ROLE`)]),
+  RoleNames.map((name) => [name, id(`${name}_ROLE`)]),
 );
 
 export async function getBatch(batchId) {
@@ -24,6 +14,7 @@ export async function getBatch(batchId) {
     stage: Stage[Number(b.stage)],
     custodian: b.custodian,
     pendingTarget: b.pendingTarget,
+    destination: await batchCustody.destinations(batchId),
   };
 }
 

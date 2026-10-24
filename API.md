@@ -40,7 +40,7 @@ Tokens expire after one hour. Roles are read from the registry at login time.
 | `GET /batches/:id/destinations` | Bearer | Lists participants with the next stage's role for a batch that is ready to be listed by its current custodian. |
 | `GET /transporter-jobs` | Bearer | Lists transporter jobs available to or associated with the authenticated transporter. |
 
-`/batches/:id/chain` returns `batchId` with the contract state, including stage, status, custodian, pending target, and destination as applicable. `/history` returns `{ batchId, events }`. `/tx/:hash` returns `{ hash, success, blockNumber, events }`.
+`/batches/:id/chain` returns `batchId` with the contract state, including stage, status, custodian, active destination, and pending target as applicable. `/history` returns `{ batchId, events }`. `/tx/:hash` returns `{ hash, success, blockNumber, events }`. Chain state is authoritative; database rows are only off-chain details and workflow indexes.
 
 ## Wallet transaction workflow
 
@@ -94,7 +94,7 @@ These routes require a bearer token. The `txHash` must refer to a successful on 
 | `POST /batches/:id/storage-outgoing` | Save storage outgoing details after listing. Body: `txHash` and storage outgoing fields. |
 | `POST /batches/:id/exporter-outgoing` | Save exporter outgoing details after listing. Body: `txHash` and exporter outgoing fields. |
 | `POST /batches/:id/importer-outgoing` | Save importer outgoing details after listing. Body: `txHash` and importer outgoing fields. |
-| `POST /admin/participants/confirm-role-change` | Confirm a submitted role transaction. Body for registration includes `address`, `role`, `action: "register"`, `txHash`, and `profile`; revocation omits `profile`. Registration profile requires `name`, with optional `contactPhone`, `email`, `address`, `location`, and role-specific validated `details`. |
+| `POST /admin/participants/confirm-role-change` | Confirm a submitted role transaction. Body for registration includes `address`, `role`, `action: "register"`, `txHash`, and `profile`; revocation omits `profile`. Registration profile requires `name`, with optional shared fields `contactPhone`, `email`, `address`, `location`, `availability`, and role-specific validated `details`. |
 
 Record saving can return `409` if the chain event, caller, current batch state, destination, record hash, or corresponding off chain workflow state does not match. Record details are not saved until validation succeeds.
 

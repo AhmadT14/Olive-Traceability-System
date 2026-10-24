@@ -505,7 +505,7 @@ router.post("/batches/prepare-receipt", requireAuth, async (req, res) => {
         .json({ error: "invalid payload", details: parsed.error.flatten() });
     }
     const { batchId: _batchId, ...record } = parsed.data;
-    const dataHash = computeRecordHash(receipt.key, record);
+    const dataHash = computeRecordHash(receipt.hashStage, record);
     const data = batchCustody.interface.encodeFunctionData("confirmReceipt", [
       batchId,
       dataHash,

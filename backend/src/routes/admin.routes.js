@@ -133,6 +133,7 @@ router.post(
           ...(profile.email === undefined ? {} : { email: profile.email }),
           ...(profile.address === undefined ? {} : { address: profile.address }),
           ...(profile.location === undefined ? {} : { location: profile.location }),
+          ...(profile.availability === undefined ? {} : { availability: profile.availability }),
           details: profileDetails,
         };
         const { walletAddress: _walletAddress, ...profileUpdates } = profileValues;

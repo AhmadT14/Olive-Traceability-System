@@ -2,16 +2,9 @@ import { isAddress } from "ethers";
 import { z } from "zod";
 import { profileSchema } from "./participant.schemas.js";
 import { txHashSchema } from "./common.schemas.js";
+import { RoleNames } from "../chain/enums.js";
 
-export const roleNames = [
-  "FARMER",
-  "MILL",
-  "TRANSPORTER",
-  "STORAGE",
-  "EXPORTER",
-  "IMPORTER",
-  "RETAILER",
-];
+export const roleNames = RoleNames;
 
 const walletAddressSchema = z.string().refine(isAddress, "must be a valid wallet address");
 

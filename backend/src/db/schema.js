@@ -6,29 +6,12 @@ const txHash = (name) => p.varchar(name, { length: 66 });
 
 export const participants = p.pgTable("participants", {
   walletAddress: wallet("wallet_address").primaryKey(),
-  name: p.varchar("name", { length: 255 }),
-  role: p.varchar("role", { length: 32 }),
-  status: p.varchar("status", { length: 32 }),
-  availability: p.varchar("availability", { length: 32 }),
-  registeredAt: p.timestamp("registered_at"),
-  approvedBy: wallet("approved_by"),
-  approvedAt: p.timestamp("approved_at"),
-  registerTxHash: txHash("register_tx_hash"),
 });
 
-export const batches = p.pgTable(
-  "batches",
-  {
-    batchId: p.varchar("batch_id", { length: 64 }).primaryKey(),
-    farmer: wallet("farmer").references(() => participants.walletAddress),
-    harvestDate: p.date("harvest_date"),
-    location: p.varchar("location", { length: 255 }),
-    oliveType: p.varchar("olive_type", { length: 128 }),
-    createTxHash: txHash("create_tx_hash"),
-    createdAt: p.timestamp("created_at").defaultNow(),
-  },
-  (t) => [p.index("batches_farmer_idx").on(t.farmer)],
-);
+export const batches = p.pgTable("batches", {
+  batchId: p.varchar("batch_id", { length: 64 }).primaryKey(),
+  createdAt: p.timestamp("created_at").defaultNow(),
+});
 
 export const batchEvents = p.pgTable(
   "batch_events",
@@ -65,6 +48,7 @@ export const participantProfiles = p.pgTable("participant_profiles", {
   email: p.varchar("email", { length: 255 }),
   address: p.text("address"),
   location: p.varchar("location", { length: 255 }),
+  availability: p.varchar("availability", { length: 32 }),
   details: p.jsonb("details").notNull().default({}),
 });
 

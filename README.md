@@ -207,7 +207,7 @@ forge test
 
 - Frontend is uncustomized Vite starter content.
 - The backend requires PostgreSQL, a deployed local chain, and wallet-signature authentication for end-to-end use.
-- Variable event and profile details are stored in validated PostgreSQL JSONB fields; common identifiers and workflow relationships remain relational.
+- Variable event and role-specific profile details are stored in validated PostgreSQL JSONB fields; shared participant fields such as name, contact information, location, and availability remain relational.
 - `docker-compose.yml` starts the services but does not deploy contracts automatically.
 - Anvil state is not persisted, so the chain resets whenever the container stops.
 - No production network, deployment, or key-management configuration is included.

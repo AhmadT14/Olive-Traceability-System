@@ -33,7 +33,10 @@ const VERIFIABLE_EVENT_TYPES = {
   mill_outgoing: { stageKey: "mill_oil", contractEvent: "BatchListed" },
   storage_intake: { stageKey: "storage", contractEvent: "ReceiptConfirmed" },
   storage_outgoing: { stageKey: "storage_outgoing", contractEvent: "BatchListed" },
+  exporter_intake: { stageKey: "exporter_intake", contractEvent: "ReceiptConfirmed" },
+  exporter_outgoing: { stageKey: "exporter_outgoing", contractEvent: "BatchListed" },
   importer_intake: { stageKey: "import", contractEvent: "ReceiptConfirmed" },
+  importer_outgoing: { stageKey: "importer_outgoing", contractEvent: "BatchListed" },
   retailer_intake: { stageKey: "retail", contractEvent: "ReceiptConfirmed" },
 };
 

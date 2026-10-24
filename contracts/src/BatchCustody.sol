@@ -30,6 +30,9 @@ contract BatchCustody {
     }
 
     mapping(string => Batch) public batches;
+    // The active destination is chain state; the database only indexes the
+    // corresponding listing and transport transactions for coordination.
+    mapping(string => address) public destinations;
 
     event BatchCreated(
         string indexed batchId,
@@ -90,6 +93,7 @@ contract BatchCustody {
             custodian: msg.sender,
             pendingTarget: address(0)
         });
+        destinations[batchId] = destinationAddress;
 
         emit BatchCreated(batchId, msg.sender, destinationAddress, harvestDataHash);
     }
@@ -126,8 +130,8 @@ contract BatchCustody {
             ),
             "BatchCustody: destination is not the next stage"
         );
-
         batches[batchId].status = Status.Listed;
+        destinations[batchId] = destinationAddress;
 
         emit BatchListed(batchId, msg.sender, destinationAddress, outgoingDataHash);
     }
@@ -199,6 +203,10 @@ contract BatchCustody {
 
         batches[batchId].status = Status.PendingHandover;
         batches[batchId].pendingTarget = targetAddress;
+        require(
+            destinations[batchId] == targetAddress,
+            "BatchCustody: target does not match active destination"
+        );
 
         emit HandoverInitiated(
             batchId,
@@ -225,6 +233,7 @@ contract BatchCustody {
         batches[batchId].custodian = msg.sender;
         batches[batchId].pendingTarget = address(0);
         batches[batchId].stage = Stage(uint8(batches[batchId].stage) + 1);
+        destinations[batchId] = address(0);
 
         emit ReceiptConfirmed(batchId, msg.sender, intakeDataHash);
     }

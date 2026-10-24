@@ -7,3 +7,12 @@ export const Stage = [
   "Importer",
   "Retailer",
 ];
+export const RoleNames = [
+  "FARMER",
+  "TRANSPORTER",
+  "MILL",
+  "STORAGE",
+  "EXPORTER",
+  "IMPORTER",
+  "RETAILER",
+];
