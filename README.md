@@ -17,8 +17,7 @@ An early-stage olive batch traceability project. The Solidity contracts provide 
 ## Requirements
 
 - Docker and Docker Compose
-- Node.js 20 or newer and npm
-- Foundry (`forge` and `cast`)
+- Node.js 20 or newer and npm (only needed for running the backend or frontend outside Docker)
 
 ## Local development setup
 
@@ -29,6 +28,10 @@ Run every command from the repo root unless a step says otherwise.
 ```sh
 docker compose up --build
 ```
+
+This starts PostgreSQL, Anvil, deploys the contracts automatically, and then starts
+the backend. Foundry (`forge`, `cast`, and `anvil`) runs inside Docker; it does not
+need to be installed on the host.
 
 To start only the local blockchain:
 
@@ -53,30 +56,17 @@ curl -s -X POST http://127.0.0.1:8545 -H "Content-Type: application/json" \
 
 Expected result: `0x7a69` (chain id 31337).
 
-### 2. Deploy the contracts
+### 2. Configure the backend
 
-In another terminal:
-
-```sh
-bash scripts/deploy.sh
-```
-
-The script prints the registry and custody addresses.
-
-### 3. Create `backend/.env`
-
-Copy the example, then fill in the printed addresses:
-
-```sh
-cp backend/.env.example backend/.env
-```
+Docker Compose writes the deployed contract addresses into its shared runtime
+volume before starting the backend. No manual address copying is required.
+Keep the other application settings in the root `.env` file:
 
 ```dotenv
 RPC_URL=http://127.0.0.1:8545
 CHAIN_ID=31337
-# Use the REGISTRY_ADDRESS printed by deploy.sh
+# These addresses are generated automatically by Docker Compose during startup.
 REGISTRY_ADDRESS=0x...
-# Use the BATCH_CUSTODY_ADDRESS printed by deploy.sh
 BATCH_CUSTODY_ADDRESS=0x...
 DEPLOY_BLOCK=0
 DATABASE_URL=postgres://olive_app:olive_pass@localhost:5432/olive_traceability
@@ -208,6 +198,6 @@ forge test
 - Frontend is uncustomized Vite starter content.
 - The backend requires PostgreSQL, a deployed local chain, and wallet-signature authentication for end-to-end use.
 - Variable event and role-specific profile details are stored in validated PostgreSQL JSONB fields; shared participant fields such as name, contact information, location, and availability remain relational.
-- `docker-compose.yml` starts the services but does not deploy contracts automatically.
+- `docker-compose.yml` deploys contracts automatically before starting the backend.
 - Anvil state is not persisted, so the chain resets whenever the container stops.
 - No production network, deployment, or key-management configuration is included.
