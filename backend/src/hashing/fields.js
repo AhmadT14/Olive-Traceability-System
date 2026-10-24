@@ -80,6 +80,16 @@ export const HASH_FIELDS = {
     "notes",
   ],
 
+  // postForPickup by a storage facility -> outgoingDataHash (storage dispatch details)
+  storage_outgoing: [
+    "quantity_released",
+    "storage_end_date",
+    "product_condition",
+    "packaging_condition",
+    "loading_details",
+    "notes",
+  ],
+
   // confirmReceipt by an importer -> intakeDataHash (import_records)
   import: [
     "quantity_received",
@@ -98,6 +108,6 @@ export const HASH_FIELDS = {
   ],
 
   // NOT DEFINED YET, waiting on the schema decisions (Flags C and D):
-  // transporter_jobs listing details, storage intake / outgoing,
+  // transporter_jobs listing details,
   // export intake / outgoing.
 };

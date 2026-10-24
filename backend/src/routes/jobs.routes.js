@@ -71,10 +71,19 @@ router.get("/transporter-jobs", requireAuth, async (req, res) => {
     const byAddress = new Map(
       directory.map((participant) => [participant.walletAddress.toLowerCase(), participant]),
     );
-    const outgoingByTxHash = new Map(
-      outgoingRecords
-        .filter((event) => event.detailsType === "mill_outgoing")
-        .map((event) => [event.eventTxHash, {
+    const outgoingByTxHash = new Map(outgoingRecords.map((event) => {
+      if (event.detailsType === "storage_outgoing") {
+        return [event.eventTxHash, {
+          quantityReleased: event.details.quantity_released ?? null,
+          storageEndDate: event.details.storage_end_date ?? null,
+          productCondition: event.details.product_condition ?? null,
+          packagingCondition: event.details.packaging_condition ?? null,
+          loadingDetails: event.details.loading_details ?? null,
+          notes: event.details.notes ?? null,
+        }];
+      }
+      if (event.detailsType === "mill_outgoing") {
+        return [event.eventTxHash, {
           pressingDate: event.details.pressing_date ?? null,
           extractionMethod: event.details.extraction_method ?? null,
           outputQuantity: event.details.output_quantity ?? null,
@@ -82,8 +91,10 @@ router.get("/transporter-jobs", requireAuth, async (req, res) => {
           packagingDetails: event.details.packaging_details ?? null,
           qrCodeReference: event.details.qr_code_reference ?? null,
           notes: event.details.notes ?? null,
-        }]),
-    );
+        }];
+      }
+      return [event.eventTxHash, null];
+    }).filter(([, details]) => details !== null));
     const rolesByAddress = new Map(chainRoles);
 
     const availableJobs = jobs.flatMap((job, index) => {

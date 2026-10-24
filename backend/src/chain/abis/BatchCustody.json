@@ -90,6 +90,11 @@
         "internalType": "string"
       },
       {
+        "name": "destinationAddress",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
         "name": "harvestDataHash",
         "type": "bytes32",
         "internalType": "bytes32"
@@ -142,6 +147,11 @@
         "name": "batchId",
         "type": "string",
         "internalType": "string"
+      },
+      {
+        "name": "destinationAddress",
+        "type": "address",
+        "internalType": "address"
       },
       {
         "name": "outgoingDataHash",
@@ -207,6 +217,12 @@
         "internalType": "address"
       },
       {
+        "name": "destinationAddress",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
         "name": "harvestDataHash",
         "type": "bytes32",
         "indexed": false,
@@ -227,6 +243,12 @@
       },
       {
         "name": "custodian",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "destinationAddress",
         "type": "address",
         "indexed": true,
         "internalType": "address"

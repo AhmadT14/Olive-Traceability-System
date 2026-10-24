@@ -47,6 +47,7 @@ const HASH_EVENTS = {
   mill_olive: { event: "ReceiptConfirmed", arg: "intakeDataHash" },
   mill_oil: { event: "BatchListed", arg: "outgoingDataHash" },
   storage: { event: "ReceiptConfirmed", arg: "intakeDataHash" },
+  storage_outgoing: { event: "BatchListed", arg: "outgoingDataHash" },
   import: { event: "ReceiptConfirmed", arg: "intakeDataHash" },
   retail: { event: "ReceiptConfirmed", arg: "intakeDataHash" },
 };

@@ -6,6 +6,7 @@ An early-stage olive batch traceability project. The Solidity contracts provide 
 
 ## Repository layout
 
+- `API.md`: API reference for the project team, including backend routes and integration workflow.
 - `contracts/`: Foundry contracts, deployment script, and Solidity tests.
 - `backend/`: Node.js API scaffold, PostgreSQL/Drizzle schema, and contract ABI support.
 - `frontend/`: React and Vite application scaffold.

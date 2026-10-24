@@ -34,11 +34,13 @@ contract BatchCustody {
     event BatchCreated(
         string indexed batchId,
         address indexed farmer,
+        address indexed destinationAddress,
         bytes32 harvestDataHash
     );
     event BatchListed(
         string indexed batchId,
         address indexed custodian,
+        address indexed destinationAddress,
         bytes32 outgoingDataHash
     );
     event BatchClaimed(
@@ -60,6 +62,7 @@ contract BatchCustody {
 
     function createBatch(
         string memory batchId,
+        address destinationAddress,
         bytes32 harvestDataHash
     ) external {
         require(
@@ -73,19 +76,27 @@ contract BatchCustody {
             batches[batchId].status == Status.None,
             "BatchCustody: batch already exists"
         );
+        require(
+            participantRegistry.hasRole(
+                participantRegistry.MILL_ROLE(),
+                destinationAddress
+            ),
+            "BatchCustody: destination is not a mill"
+        );
 
         batches[batchId] = Batch({
-            status: Status.Created,
+            status: Status.Listed,
             stage: Stage.Farm,
             custodian: msg.sender,
             pendingTarget: address(0)
         });
 
-        emit BatchCreated(batchId, msg.sender, harvestDataHash);
+        emit BatchCreated(batchId, msg.sender, destinationAddress, harvestDataHash);
     }
 
     function postForPickup(
         string memory batchId,
+        address destinationAddress,
         bytes32 outgoingDataHash
     ) external {
         require(
@@ -104,10 +115,21 @@ contract BatchCustody {
             batches[batchId].stage != Stage.Retailer,
             "BatchCustody: batch already at final stage"
         );
+        require(
+            batches[batchId].stage != Stage.Farm,
+            "BatchCustody: farm pickup is set during batch creation"
+        );
+        require(
+            participantRegistry.hasRole(
+                _nextStageRole(batches[batchId].stage),
+                destinationAddress
+            ),
+            "BatchCustody: destination is not the next stage"
+        );
 
         batches[batchId].status = Status.Listed;
 
-        emit BatchListed(batchId, msg.sender, outgoingDataHash);
+        emit BatchListed(batchId, msg.sender, destinationAddress, outgoingDataHash);
     }
 
     function claimBatch(

@@ -1,0 +1,128 @@
+# Backend API
+
+The backend is an Express JSON API that coordinates the Olive Traceability System's smart contracts and PostgreSQL records. It reads current participant and batch state from the blockchain. Record details are stored off chain, while hashes of those details are included in on chain events so the API can check their integrity later.
+
+## Base URL and conventions
+
+The local API address is `http://localhost:3000`. Routes below are relative to that address; the server currently does not add an `/api` prefix. Requests with a body use JSON (`Content-Type: application/json`). Batch IDs are strings up to 64 characters. Ethereum addresses use the `0x` plus 40 hexadecimal character format; transaction hashes use `0x` plus 64 hexadecimal characters.
+
+Protected routes require a JWT in the header:
+
+```http
+Authorization: Bearer <token>
+```
+
+The API returns JSON. Common errors include `400` for invalid input, `401` for missing or invalid authentication, `403` for a role or caller permission failure, `404` for a missing chain record, `409` for a conflict with the current workflow state, and `500` for a chain or database failure. Validation errors include `details` from Zod.
+
+## Authentication
+
+Login uses a wallet signature. Request a one time nonce, sign the returned `message` with the wallet, then exchange the signature for a JWT. Nonces expire and are consumed by the login attempt.
+
+| Method and path | Auth | Purpose |
+| --- | --- | --- |
+| `POST /auth/nonce` | No | Body: `{ "address": "0x…" }`. Returns `{ address, nonce, message }`. |
+| `POST /auth/login` | No | Body: `{ "address": "0x…", "signature": "0x…" }`. Verifies the signature, reads active on chain roles, and returns `{ address, roles, token }`. |
+| `GET /auth/me` | Bearer | Returns the authenticated user's `{ address, roles }`. |
+
+Tokens expire after one hour. Roles are read from the registry at login time.
+
+## Read routes
+
+| Method and path | Auth | Purpose |
+| --- | --- | --- |
+| `GET /health` | No | Liveness check: `{ "ok": true }`. |
+| `GET /participants/:address/roles` | No | Reads the participant's active registry roles. |
+| `GET /batches/:id/chain` | No | Reads current batch state from the custody contract. |
+| `GET /batches/:id/history` | No | Combines on chain events with matching off chain record details. An event without stored details has `details: null`. |
+| `GET /batches/:id/verify` | No | Recomputes hashes for stored records and compares them to their on chain events. See [Integrity results](#integrity-results). |
+| `GET /tx/:hash` | No | Decodes a mined transaction and its recognized contract events. |
+| `GET /destinations?role=MILL` | Bearer | Lists registered participants that currently have the MILL role. Used when creating a batch. Other roles are not accepted by this route. |
+| `GET /batches/:id/destinations` | Bearer | Lists participants with the next stage's role for a batch that is ready to be listed by its current custodian. |
+| `GET /transporter-jobs` | Bearer | Lists transporter jobs available to or associated with the authenticated transporter. |
+
+`/batches/:id/chain` returns `batchId` with the contract state, including stage, status, custodian, pending target, and destination as applicable. `/history` returns `{ batchId, events }`. `/tx/:hash` returns `{ hash, success, blockNumber, events }`.
+
+## Wallet transaction workflow
+
+The API does not hold participant wallet keys and does not submit these workflow transactions on the user's behalf. A client first requests a prepared transaction, asks the connected wallet to sign and send it, then posts the resulting transaction hash to the matching record endpoint. Preparation responses include a `transaction` object with `to`, encoded `data`, and `value: "0x0"`; clients can pass these transaction fields to their wallet. The API validates caller permissions and workflow state during preparation and verifies the mined event and record hash when saving details.
+
+### Prepare contract calls
+
+All routes in this table require a bearer token and a JSON body. Successful responses include the encoded transaction under `transaction` and usually the computed `dataHash`.
+
+| Method and path | Body fields | Contract action |
+| --- | --- | --- |
+| `POST /batches/prepare` | `batchId`, `destinationAddress`, farm record fields | Creates a batch (`createBatch`). |
+| `POST /batches/prepare-listing` | `batchId`, `destinationAddress`, mill oil record fields | Mill lists the batch for pickup (`postForPickup`). |
+| `POST /batches/prepare-storage-listing` | `batchId`, `destinationAddress`, storage outgoing record fields | Storage lists a batch for pickup (`postForPickup`). |
+| `POST /batches/prepare-claim` | `batchId` and pickup record fields | Transporter claims an available job (`claimBatch`). |
+| `POST /batches/prepare-handover` | `batchId`, `targetAddress`, delivery record fields | Transporter starts the handover (`initiateHandover`). Target must match the job destination. |
+| `POST /batches/prepare-receipt` | `batchId` and receipt record fields for the current stage | Destination confirms receipt (`confirmReceipt`). |
+| `POST /admin/participants/prepare-role-change` | `address`, `role`, `action` (`register` or `revoke`) | Registry admin prepares a participant role grant or revoke. |
+
+Record fields are optional except where stated. The field names are snake_case because they are part of the canonical hash input.
+
+- Farm: `harvest_date` (required), `location`, `olive_type`, `quantity`, `cultivation_method`, `irrigation_method`, `fertilizer_details`, `pesticide_details`, `harvesting_method`, `quality_details`, `farm_notes`.
+- Mill outgoing: `pressing_date`, `extraction_method`, `output_quantity`, `oil_quality`, `packaging_details`, `qr_code_reference`, `notes`.
+- Storage outgoing: `quantity_released`, `storage_end_date`, `product_condition`, `packaging_condition`, `loading_details`, `notes`.
+- Transport pickup: `truck_details`, `quantity_picked_up`, `loading_details`, `transport_conditions`, `notes`, and `pickup_condition` plus `olive_condition` for olives, or `oil_condition` plus `packaging_condition` for oil.
+- Transport delivery: `quantity_delivered`, `unloading_details`, `transport_conditions`, `notes`, plus `olive_condition` for olives, or `oil_condition` and `packaging_condition` for oil.
+- Mill receipt (olive intake): `arrival_condition`, `quantity_received`, `olive_quality`, `storage_condition`, `notes`.
+- Storage receipt: `quantity_received`, `storage_start_date`, integer `expected_duration`, `conditions`, `product_condition`, `notes`.
+- Importer receipt: `quantity_received`, `shipment_arrival_details`, `received_product_details`, `product_condition`, `notes`.
+- Retailer receipt: `quantity_received`, `final_receipt_details`, `product_condition`, `notes`.
+
+The admin role preparation body is `{ "address": "0x…", "role": "FARMER|MILL|TRANSPORTER|STORAGE|EXPORTER|IMPORTER|RETAILER", "action": "register|revoke" }`. Exact supported role names are defined by the contract registry.
+
+### Save records after submitting transactions
+
+These routes require a bearer token. The `txHash` must refer to a successful on chain transaction containing the expected event and the hash of the submitted record.
+
+| Method and path | Purpose |
+| --- | --- |
+| `POST /batches` | Save farm details after batch creation. Body contains `txHash`, `batchId`, and the farm record fields above. |
+| `POST /batches/:id/transporter-claim` | Save pickup details after a transporter claim. Body: `txHash` and the applicable olive or oil pickup fields. |
+| `POST /batches/:id/transporter-handover` | Save delivery details after handover initiation. Body: `txHash` and the applicable olive or oil delivery fields. |
+| `POST /batches/:id/receipt` | Save storage, importer, or retailer receipt details. Body: `txHash` and the receipt fields for the batch's current stage. |
+| `POST /batches/:id/mill-intake` | Save mill's olive intake details. Body: `txHash` and mill receipt fields. |
+| `POST /batches/:id/mill-outgoing` | Save mill's oil production details after listing. Body: `txHash` and mill outgoing fields. |
+| `POST /batches/:id/storage-outgoing` | Save storage outgoing details after listing. Body: `txHash` and storage outgoing fields. |
+| `POST /admin/participants/confirm-role-change` | Confirm a submitted role transaction. Body for registration includes `address`, `role`, `action: "register"`, `txHash`, and `profile`; revocation omits `profile`. Registration profile requires `name`, with optional `contactPhone`, `email`, `address`, and `location`. |
+
+Record saving can return `409` if the chain event, caller, current batch state, destination, record hash, or corresponding off chain workflow state does not match. Record details are not saved until validation succeeds.
+
+## Integrity results
+
+`GET /batches/:id/verify` returns an overall `integrityStatus` and an `integrity` object for each stored event. Per-event statuses include:
+
+- `verified`: stored details hash matches the expected on chain event hash.
+- `hash_mismatch`: details were found but their computed hash differs.
+- `metadata_mismatch`: stored event metadata names an unexpected contract event.
+- `event_not_found_on_chain`: transaction or expected event could not be found.
+- `unverifiable`: no hash definition exists for that event type, or its payload version is unsupported.
+
+The overall status is `verified` only when every stored event verifies; it is `mismatch` when a hash or metadata mismatch exists, and otherwise `incomplete` (including when there are no stored details).
+
+## Example
+
+Get a nonce and log in (sign the `message` using the wallet):
+
+```sh
+curl -X POST http://localhost:3000/auth/nonce \
+  -H 'Content-Type: application/json' \
+  -d '{"address":"0xYourWalletAddress"}'
+```
+
+Then call a protected endpoint with the resulting token:
+
+```sh
+curl http://localhost:3000/batches/B1/destinations \
+  -H 'Authorization: Bearer <token>'
+```
+
+## Implementation notes
+
+- Route paths and validation are defined in `src/app.js` and `src/routes/`.
+- Contract reads and transaction event decoding use the configured RPC connection and generated ABIs.
+- Off chain details are inserted into PostgreSQL only after the API validates the matching on chain transaction and hash.
+- The API currently has no pagination or versioned `/api` prefix.

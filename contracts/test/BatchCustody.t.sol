@@ -41,7 +41,7 @@ contract BatchCustodyTest is Test {
         bytes32 harvestHash = keccak256("harvest-data-1"); // Stand-in for a hash the backend would compute from real farm_records data; contract only stores it opaquely
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", harvestHash);
+        custody.createBatch("BATCH-001", mill, harvestHash);
 
         (
             BatchCustody.Status status,
@@ -50,7 +50,7 @@ contract BatchCustodyTest is Test {
             address pendingTarget
         ) = custody.batches("BATCH-001");
 
-        assertEq(uint8(status), uint8(BatchCustody.Status.Created));
+        assertEq(uint8(status), uint8(BatchCustody.Status.Listed));
         assertEq(uint8(stage), uint8(BatchCustody.Stage.Farm));
         assertEq(custodian, farmer);
         assertEq(pendingTarget, address(0));
@@ -61,39 +61,44 @@ contract BatchCustodyTest is Test {
 
         vm.prank(transporter1);
         vm.expectRevert("BatchCustody: caller is not a farmer");
-        custody.createBatch("BATCH-001", harvestHash);
+        custody.createBatch("BATCH-001", mill, harvestHash);
     }
 
     function test_CreateBatch_RevertsIfBatchIdAlreadyExists() public {
         bytes32 harvestHash = keccak256("harvest-data-1");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", harvestHash);
+        custody.createBatch("BATCH-001", mill, harvestHash);
 
         vm.prank(farmer);
         vm.expectRevert("BatchCustody: batch already exists");
-        custody.createBatch("BATCH-001", harvestHash);
+        custody.createBatch("BATCH-001", mill, harvestHash);
+    }
+
+    function test_CreateBatch_RevertsIfDestinationIsNotMill() public {
+        vm.prank(farmer);
+        vm.expectRevert("BatchCustody: destination is not a mill");
+        custody.createBatch("BATCH-001", exporter, keccak256("harvest-data-1"));
     }
 
     function test_CreateBatch_EmitsEvent() public {
         bytes32 harvestHash = keccak256("harvest-data-1");
 
-        vm.expectEmit(true, true, false, true);
-        emit BatchCustody.BatchCreated("BATCH-001", farmer, harvestHash);
+        vm.expectEmit(true, true, true, true);
+        emit BatchCustody.BatchCreated("BATCH-001", farmer, mill, harvestHash);
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", harvestHash);
+        custody.createBatch("BATCH-001", mill, harvestHash);
     }
 
     function test_PostForPickup_Success() public {
         bytes32 harvestHash = keccak256("harvest-data-1");
         bytes32 outgoingHash = keccak256("outgoing-data-1");
 
-        vm.prank(farmer);
-        custody.createBatch("BATCH-001", harvestHash);
+        _walkToMill("BATCH-001", harvestHash);
 
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", outgoingHash);
+        vm.prank(mill);
+        custody.postForPickup("BATCH-001", storageFacility, outgoingHash);
 
         (
             BatchCustody.Status status,
@@ -103,21 +108,51 @@ contract BatchCustodyTest is Test {
         ) = custody.batches("BATCH-001");
 
         assertEq(uint8(status), uint8(BatchCustody.Status.Listed));
-        assertEq(uint8(stage), uint8(BatchCustody.Stage.Farm));
-        assertEq(custodianAddr, farmer);
+        assertEq(uint8(stage), uint8(BatchCustody.Stage.Mill));
+        assertEq(custodianAddr, mill);
         assertEq(pendingTarget, address(0));
+    }
+
+    function test_PostForPickup_EmitsSelectedDestination() public {
+        bytes32 h = keccak256("data");
+        _walkToMill("BATCH-001", h);
+
+        vm.expectEmit(true, true, true, true);
+        emit BatchCustody.BatchListed("BATCH-001", mill, storageFacility, h);
+
+        vm.prank(mill);
+        custody.postForPickup("BATCH-001", storageFacility, h);
+    }
+
+    function test_PostForPickup_RevertsIfDestinationIsNotNextStage() public {
+        bytes32 h = keccak256("data");
+        _walkToMill("BATCH-001", h);
+
+        vm.prank(mill);
+        vm.expectRevert("BatchCustody: destination is not the next stage");
+        custody.postForPickup("BATCH-001", exporter, h);
+    }
+
+    function test_PostForPickup_CannotReopenFarmPickupAfterClaim() public {
+        bytes32 h = keccak256("data");
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", mill, h);
+        vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+
+        vm.prank(transporter1);
+        vm.expectRevert("BatchCustody: farm pickup is set during batch creation");
+        custody.postForPickup("BATCH-001", mill, h);
     }
 
     function test_PostForPickup_RevertsIfNotCustodian() public {
         bytes32 harvestHash = keccak256("harvest-data-1");
         bytes32 outgoingHash = keccak256("outgoing-data-1");
 
-        vm.prank(farmer);
-        custody.createBatch("BATCH-001", harvestHash);
-
+        _walkToMill("BATCH-001", harvestHash);
         vm.prank(transporter1);
         vm.expectRevert("BatchCustody: caller is not current custodian");
-        custody.postForPickup("BATCH-001", outgoingHash);
+        custody.postForPickup("BATCH-001", storageFacility, outgoingHash);
     }
 
     function test_PostForPickup_RevertsIfNotFound() public {
@@ -125,7 +160,7 @@ contract BatchCustodyTest is Test {
 
         vm.prank(farmer);
         vm.expectRevert("BatchCustody: batch not found");
-        custody.postForPickup("BATCH-DOES-NOT-EXIST", outgoingHash);
+        custody.postForPickup("BATCH-DOES-NOT-EXIST", mill, outgoingHash);
     }
 
     function test_PostForPickup_RevertsIfAlreadyListed() public {
@@ -133,14 +168,10 @@ contract BatchCustodyTest is Test {
         bytes32 outgoingHash = keccak256("outgoing-data-1");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", harvestHash);
-
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", outgoingHash);
-
+        custody.createBatch("BATCH-001", mill, harvestHash);
         vm.prank(farmer);
         vm.expectRevert("BatchCustody: batch not in a listable state");
-        custody.postForPickup("BATCH-001", outgoingHash);
+        custody.postForPickup("BATCH-001", storageFacility, outgoingHash);
     }
 
     function test_PostForPickup_RevertsIfAtFinalStage() public {
@@ -149,7 +180,7 @@ contract BatchCustodyTest is Test {
 
         vm.prank(retailer);
         vm.expectRevert("BatchCustody: batch already at final stage");
-        custody.postForPickup("BATCH-001", h);
+        custody.postForPickup("BATCH-001", mill, h);
     }
 
     function test_Retailer_CannotPostForPickup() public {
@@ -158,14 +189,12 @@ contract BatchCustodyTest is Test {
 
         vm.prank(retailer);
         vm.expectRevert("BatchCustody: batch already at final stage");
-        custody.postForPickup("BATCH-001", h);
+        custody.postForPickup("BATCH-001", mill, h);
     }
 
     function _walkToRetailer(string memory batchId, bytes32 h) internal {
         vm.prank(farmer);
-        custody.createBatch(batchId, h);
-        vm.prank(farmer);
-        custody.postForPickup(batchId, h);
+        custody.createBatch(batchId, mill, h);
         vm.prank(transporter1);
         custody.claimBatch(batchId, h);
         vm.prank(transporter1);
@@ -174,7 +203,7 @@ contract BatchCustodyTest is Test {
         custody.confirmReceipt(batchId, h);
 
         vm.prank(mill);
-        custody.postForPickup(batchId, h);
+        custody.postForPickup(batchId, storageFacility, h);
         vm.prank(transporter1);
         custody.claimBatch(batchId, h);
         vm.prank(transporter1);
@@ -183,7 +212,7 @@ contract BatchCustodyTest is Test {
         custody.confirmReceipt(batchId, h);
 
         vm.prank(storageFacility);
-        custody.postForPickup(batchId, h);
+        custody.postForPickup(batchId, exporter, h);
         vm.prank(transporter1);
         custody.claimBatch(batchId, h);
         vm.prank(transporter1);
@@ -192,7 +221,7 @@ contract BatchCustodyTest is Test {
         custody.confirmReceipt(batchId, h);
 
         vm.prank(exporter);
-        custody.postForPickup(batchId, h);
+        custody.postForPickup(batchId, importer, h);
         vm.prank(transporter1);
         custody.claimBatch(batchId, h);
         vm.prank(transporter1);
@@ -201,7 +230,7 @@ contract BatchCustodyTest is Test {
         custody.confirmReceipt(batchId, h);
 
         vm.prank(importer);
-        custody.postForPickup(batchId, h);
+        custody.postForPickup(batchId, retailer, h);
         vm.prank(transporter1);
         custody.claimBatch(batchId, h);
         vm.prank(transporter1);
@@ -210,13 +239,22 @@ contract BatchCustodyTest is Test {
         custody.confirmReceipt(batchId, h);
     }
 
+    function _walkToMill(string memory batchId, bytes32 h) internal {
+        vm.prank(farmer);
+        custody.createBatch(batchId, mill, h);
+        vm.prank(transporter1);
+        custody.claimBatch(batchId, h);
+        vm.prank(transporter1);
+        custody.initiateHandover(batchId, mill, h);
+        vm.prank(mill);
+        custody.confirmReceipt(batchId, h);
+    }
+
     function test_ClaimBatch_Success() public {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
 
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
@@ -238,9 +276,7 @@ contract BatchCustodyTest is Test {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
 
         vm.prank(mill);
         vm.expectRevert("BatchCustody: caller is not a transporter");
@@ -251,9 +287,12 @@ contract BatchCustodyTest is Test {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
 
         vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+
+        vm.prank(transporter2);
         vm.expectRevert("BatchCustody: batch not listed for pickup");
         custody.claimBatch("BATCH-001", h);
     }
@@ -262,9 +301,7 @@ contract BatchCustodyTest is Test {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
 
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
@@ -278,9 +315,7 @@ contract BatchCustodyTest is Test {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
 
@@ -304,9 +339,7 @@ contract BatchCustodyTest is Test {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
         vm.prank(transporter1);
@@ -323,9 +356,7 @@ contract BatchCustodyTest is Test {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
 
@@ -346,9 +377,7 @@ contract BatchCustodyTest is Test {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
 
@@ -364,9 +393,7 @@ contract BatchCustodyTest is Test {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
 
@@ -379,9 +406,7 @@ contract BatchCustodyTest is Test {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
 
@@ -394,9 +419,7 @@ contract BatchCustodyTest is Test {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
 
@@ -409,9 +432,7 @@ contract BatchCustodyTest is Test {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
         vm.prank(transporter1);
@@ -437,9 +458,7 @@ contract BatchCustodyTest is Test {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
 
@@ -452,9 +471,7 @@ contract BatchCustodyTest is Test {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
         vm.prank(transporter1);
@@ -469,9 +486,7 @@ contract BatchCustodyTest is Test {
         bytes32 h = keccak256("data");
 
         vm.prank(farmer);
-        custody.createBatch("BATCH-001", h);
-        vm.prank(farmer);
-        custody.postForPickup("BATCH-001", h);
+        custody.createBatch("BATCH-001", mill, h);
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
         vm.prank(transporter1);
@@ -489,7 +504,7 @@ contract BatchCustodyTest is Test {
         assertEq(custodianAfterMill, mill);
 
         vm.prank(mill);
-        custody.postForPickup("BATCH-001", h);
+        custody.postForPickup("BATCH-001", storageFacility, h);
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
         vm.prank(transporter1);
@@ -507,7 +522,7 @@ contract BatchCustodyTest is Test {
         assertEq(custodianAfterStorage, storageFacility);
 
         vm.prank(storageFacility);
-        custody.postForPickup("BATCH-001", h);
+        custody.postForPickup("BATCH-001", exporter, h);
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
         vm.prank(transporter1);

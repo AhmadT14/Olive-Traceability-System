@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/db.js";
-import { transporterJobs } from "../db/schema.js";
+import { batchEvents, participants, transporterJobs } from "../db/schema.js";
 import { hasRole, getBatch } from "../chain/reader.js";
 import { batchCustody } from "../chain/contracts.js";
 import { config } from "../config.js";
@@ -21,6 +21,7 @@ const router = Router();
 
 const prepareBatchSchema = z.object({
   batchId: z.string().trim().min(1).max(64),
+  destinationAddress: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address"),
   harvest_date: z.string().min(1),
   location: z.string().max(255),
   olive_type: z.string().max(128),
@@ -36,12 +37,24 @@ const prepareBatchSchema = z.object({
 
 const prepareListingSchema = z.object({
   batchId: z.string().trim().min(1).max(64),
+  destinationAddress: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address"),
   pressing_date: z.string().optional(),
   extraction_method: z.string().optional(),
   output_quantity: z.union([z.string(), z.number()]).optional(),
   oil_quality: z.string().optional(),
   packaging_details: z.string().optional(),
   qr_code_reference: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+const prepareStorageListingSchema = z.object({
+  batchId: z.string().trim().min(1).max(64),
+  destinationAddress: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address"),
+  quantity_released: z.union([z.string(), z.number()]).optional(),
+  storage_end_date: z.string().optional(),
+  product_condition: z.string().optional(),
+  packaging_condition: z.string().optional(),
+  loading_details: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -136,7 +149,8 @@ router.post("/batches/prepare", requireAuth, async (req, res) => {
       .json({ error: "invalid payload", details: parsed.error.flatten() });
   }
 
-  const { batchId, ...record } = parsed.data;
+  const { batchId, destinationAddress: rawDestinationAddress, ...record } = parsed.data;
+  const destinationAddress = rawDestinationAddress.toLowerCase();
 
   try {
     const farmer = await hasRole("FARMER", req.user.address);
@@ -151,14 +165,32 @@ router.post("/batches/prepare", requireAuth, async (req, res) => {
       return res.status(status).json({ error: check.reason });
     }
 
+    const [destination, destinationHasRole] = await Promise.all([
+      db
+        .select({ walletAddress: participants.walletAddress })
+        .from(participants)
+        .where(eq(participants.walletAddress, destinationAddress))
+        .limit(1),
+      hasRole("MILL", destinationAddress),
+    ]);
+    if (destination.length === 0) {
+      return res.status(400).json({ error: "destination must be a registered participant" });
+    }
+    if (!destinationHasRole) {
+      return res.status(400).json({ error: "destination must have MILL role" });
+    }
+
     const dataHash = computeRecordHash("farm", record);
     const data = batchCustody.interface.encodeFunctionData("createBatch", [
       batchId,
+      destinationAddress,
       dataHash,
     ]);
 
     return res.json({
       batchId,
+      destinationAddress,
+      destinationRole: "MILL",
       dataHash,
       transaction: {
         to: config.BATCH_CUSTODY_ADDRESS,
@@ -180,7 +212,8 @@ router.post("/batches/prepare-listing", requireAuth, async (req, res) => {
       .json({ error: "invalid payload", details: parsed.error.flatten() });
   }
 
-  const { batchId, ...record } = parsed.data;
+  const { batchId, destinationAddress: rawDestinationAddress, ...record } = parsed.data;
+  const destinationAddress = rawDestinationAddress.toLowerCase();
 
   try {
     const [mill, batch] = await Promise.all([
@@ -202,14 +235,33 @@ router.post("/batches/prepare-listing", requireAuth, async (req, res) => {
       return res.status(409).json({ error: check.reason });
     }
 
+    const nextRole = getNextStageRole(batch.stage);
+    const [destination, destinationHasRole] = await Promise.all([
+      db
+        .select({ walletAddress: participants.walletAddress })
+        .from(participants)
+        .where(eq(participants.walletAddress, destinationAddress))
+        .limit(1),
+      hasRole(nextRole, destinationAddress),
+    ]);
+    if (destination.length === 0) {
+      return res.status(400).json({ error: "destination must be a registered participant" });
+    }
+    if (!destinationHasRole) {
+      return res.status(400).json({ error: `destination must have ${nextRole} role` });
+    }
+
     const dataHash = computeRecordHash("mill_oil", record);
     const data = batchCustody.interface.encodeFunctionData("postForPickup", [
       batchId,
+      destinationAddress,
       dataHash,
     ]);
 
     return res.json({
       batchId,
+      destinationAddress,
+      destinationRole: nextRole,
       dataHash,
       transaction: {
         to: config.BATCH_CUSTODY_ADDRESS,
@@ -220,6 +272,53 @@ router.post("/batches/prepare-listing", requireAuth, async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "chain read failed" });
+  }
+});
+
+router.post("/batches/prepare-storage-listing", requireAuth, async (req, res) => {
+  const parsed = prepareStorageListingSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid payload", details: parsed.error.flatten() });
+  }
+
+  const { batchId, destinationAddress: rawDestinationAddress, ...record } = parsed.data;
+  const destinationAddress = rawDestinationAddress.toLowerCase();
+  try {
+    const [storage, batch] = await Promise.all([
+      hasRole("STORAGE", req.user.address),
+      getBatch(batchId),
+    ]);
+    if (!storage) return res.status(403).json({ error: "caller is not a storage facility" });
+    if (batch.status === "None") return res.status(404).json({ error: "batch not found" });
+    if (batch.stage !== "Storage") return res.status(409).json({ error: "batch is not at the storage stage" });
+
+    const check = checkCanPostForPickup({ batch, actor: req.user.address });
+    if (!check.allowed) return res.status(409).json({ error: check.reason });
+
+    const intake = await db.select({ eventTxHash: batchEvents.eventTxHash })
+      .from(batchEvents)
+      .where(and(
+        eq(batchEvents.batchId, batchId),
+        eq(batchEvents.detailsType, "storage_intake"),
+      )).limit(1);
+    if (intake.length === 0) return res.status(409).json({ error: "no storage intake recorded off-chain for this batch yet" });
+
+    const nextRole = getNextStageRole(batch.stage);
+    const [destination, destinationHasRole] = await Promise.all([
+      db.select({ walletAddress: participants.walletAddress }).from(participants)
+        .where(eq(participants.walletAddress, destinationAddress)).limit(1),
+      hasRole(nextRole, destinationAddress),
+    ]);
+    if (destination.length === 0) return res.status(400).json({ error: "destination must be a registered participant" });
+    if (!destinationHasRole) return res.status(400).json({ error: `destination must have ${nextRole} role` });
+
+    const dataHash = computeRecordHash("storage_outgoing", record);
+    const data = batchCustody.interface.encodeFunctionData("postForPickup", [batchId, destinationAddress, dataHash]);
+    return res.json({ batchId, destinationAddress, destinationRole: nextRole, dataHash,
+      transaction: { to: config.BATCH_CUSTODY_ADDRESS, data, value: "0x0" } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "storage listing preparation failed" });
   }
 });
 

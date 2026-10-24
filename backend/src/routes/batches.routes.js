@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "../db/db.js";
-import { batchEvents, batches } from "../db/schema.js";
+import { batchEvents, batches, participants, transporterJobs } from "../db/schema.js";
 import { decodeTx, hasRole } from "../chain/reader.js";
 import { requireAuth } from "../auth/middleware.js";
 import {
@@ -42,6 +42,7 @@ router.post("/batches", requireAuth, async (req, res) => {
   }
 
   const { txHash, batchId, ...record } = parsed.data;
+  let destinationParty;
 
   try {
     if (!(await hasRole("FARMER", req.user.address))) {
@@ -55,6 +56,10 @@ router.post("/batches", requireAuth, async (req, res) => {
     }
     if (creation.args.farmer?.toLowerCase() !== req.user.address.toLowerCase()) {
       return res.status(403).json({ error: "batch transaction was not submitted by caller" });
+    }
+    destinationParty = creation.args.destinationAddress?.toLowerCase();
+    if (!destinationParty) {
+      return res.status(409).json({ error: "batch event has no on-chain destination" });
     }
   } catch (err) {
     console.error(err);
@@ -79,6 +84,15 @@ router.post("/batches", requireAuth, async (req, res) => {
   }
 
   try {
+    const destination = await db
+      .select({ walletAddress: participants.walletAddress })
+      .from(participants)
+      .where(eq(participants.walletAddress, destinationParty))
+      .limit(1);
+    if (destination.length === 0) {
+      return res.status(409).json({ error: "on-chain destination is missing from the participant directory" });
+    }
+
     const existing = await db
       .select({ batchId: batches.batchId })
       .from(batches)
@@ -99,6 +113,13 @@ router.post("/batches", requireAuth, async (req, res) => {
         detailsType: "farm",
         payloadVersion: 1,
         details: record,
+      });
+      await tx.insert(transporterJobs).values({
+        batchId,
+        sourceParty: req.user.address.toLowerCase(),
+        destinationParty,
+        status: "available",
+        listingTxHash: txHash,
       });
     });
   } catch (err) {
