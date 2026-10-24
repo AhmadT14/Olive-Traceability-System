@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { and, eq } from "drizzle-orm";
-import { z } from "zod";
+import { receiptSchemas as receiptDefinitions } from "../validation/receipt.schemas.js";
 import { db } from "../db/db.js";
 import { batchEvents, transporterJobs } from "../db/schema.js";
 import { decodeTx, getBatch, hasRole } from "../chain/reader.js";
@@ -12,45 +12,6 @@ import {
 } from "../hashing/verify.js";
 
 const router = Router();
-
-const receiptDefinitions = {
-  Storage: {
-    role: "STORAGE",
-    hashStage: "storage",
-    detailsType: "storage_intake",
-    schema: z.object({
-      quantity_received: z.union([z.string(), z.number()]).optional(),
-      storage_start_date: z.string().optional(),
-      expected_duration: z.number().int().optional(),
-      conditions: z.string().optional(),
-      product_condition: z.string().optional(),
-      notes: z.string().optional(),
-    }),
-  },
-  Importer: {
-    role: "IMPORTER",
-    hashStage: "import",
-    detailsType: "importer_intake",
-    schema: z.object({
-      quantity_received: z.union([z.string(), z.number()]).optional(),
-      shipment_arrival_details: z.string().optional(),
-      received_product_details: z.string().optional(),
-      product_condition: z.string().optional(),
-      notes: z.string().optional(),
-    }),
-  },
-  Retailer: {
-    role: "RETAILER",
-    hashStage: "retail",
-    detailsType: "retailer_intake",
-    schema: z.object({
-      quantity_received: z.union([z.string(), z.number()]).optional(),
-      final_receipt_details: z.string().optional(),
-      product_condition: z.string().optional(),
-      notes: z.string().optional(),
-    }),
-  },
-};
 
 router.post("/batches/:id/receipt", requireAuth, async (req, res) => {
   const batchId = req.params.id.trim();

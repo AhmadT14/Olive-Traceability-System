@@ -1,5 +1,7 @@
 import { Router } from "express";
-import { z } from "zod";
+import { millListingSchema } from "../validation/listing.schemas.js";
+import { millReceiptSchema } from "../validation/receipt.schemas.js";
+import { txHashSchema } from "../validation/common.schemas.js";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/db.js";
 import { batchEvents, batches, participants, transporterJobs } from "../db/schema.js";
@@ -15,26 +17,10 @@ const router = Router();
 
 // Matches HASH_FIELDS.mill_olive exactly — see the note in batches.routes.js
 // on why these stay snake_case rather than the Drizzle camelCase names.
-const millIntakeSchema = z.object({
-  txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "must be a tx hash"),
-  arrival_condition: z.string().optional(),
-  quantity_received: z.union([z.string(), z.number()]).optional(),
-  olive_quality: z.string().optional(),
-  storage_condition: z.string().optional(),
-  notes: z.string().optional(),
-});
+const millIntakeSchema = millReceiptSchema.extend({ txHash: txHashSchema });
 
 // Matches HASH_FIELDS.mill_oil exactly.
-const millOutgoingSchema = z.object({
-  txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "must be a tx hash"),
-  pressing_date: z.string().optional(), // YYYY-MM-DD
-  extraction_method: z.string().optional(),
-  output_quantity: z.union([z.string(), z.number()]).optional(),
-  oil_quality: z.string().optional(),
-  packaging_details: z.string().optional(),
-  qr_code_reference: z.string().optional(),
-  notes: z.string().optional(),
-});
+const millOutgoingSchema = millListingSchema.omit({ batchId: true, destinationAddress: true }).extend({ txHash: txHashSchema });
 
 router.post("/batches/:id/mill-intake", requireAuth, async (req, res) => {
   const batchId = req.params.id.trim();

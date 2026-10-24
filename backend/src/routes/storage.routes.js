@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { and, eq } from "drizzle-orm";
-import { z } from "zod";
+import { storageListingSchema } from "../validation/listing.schemas.js";
+import { txHashSchema } from "../validation/common.schemas.js";
 import { db } from "../db/db.js";
 import { batchEvents, batches, participants, transporterJobs } from "../db/schema.js";
 import { decodeTx, getBatch, hasRole } from "../chain/reader.js";
@@ -13,14 +14,8 @@ import {
 
 const router = Router();
 
-const storageOutgoingSchema = z.object({
-  txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "must be a tx hash"),
-  quantity_released: z.union([z.string(), z.number()]).optional(),
-  storage_end_date: z.string().optional(),
-  product_condition: z.string().optional(),
-  packaging_condition: z.string().optional(),
-  loading_details: z.string().optional(),
-  notes: z.string().optional(),
+const storageOutgoingSchema = storageListingSchema.omit({ batchId: true, destinationAddress: true }).extend({
+  txHash: txHashSchema,
 });
 
 router.post("/batches/:id/storage-outgoing", requireAuth, async (req, res) => {

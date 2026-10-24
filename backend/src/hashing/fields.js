@@ -90,12 +90,39 @@ export const HASH_FIELDS = {
     "notes",
   ],
 
+  // confirmReceipt by an exporter -> intakeDataHash.
+  exporter_intake: [
+    "quantity_received",
+    "shipment_arrival_details",
+    "received_product_details",
+    "product_condition",
+    "notes",
+  ],
+
+  // postForPickup by an exporter -> outgoingDataHash.
+  exporter_outgoing: [
+    "quantity_shipped",
+    "shipment_details",
+    "product_condition",
+    "packaging_condition",
+    "notes",
+  ],
+
   // confirmReceipt by an importer -> intakeDataHash (import_records)
   import: [
     "quantity_received",
     "shipment_arrival_details",
     "received_product_details",
     "product_condition",
+    "notes",
+  ],
+
+  // postForPickup by an importer -> outgoingDataHash.
+  importer_outgoing: [
+    "quantity_shipped",
+    "shipment_details",
+    "product_condition",
+    "packaging_condition",
     "notes",
   ],
 
@@ -107,7 +134,4 @@ export const HASH_FIELDS = {
     "notes",
   ],
 
-  // NOT DEFINED YET, waiting on the schema decisions (Flags C and D):
-  // transporter_jobs listing details,
-  // export intake / outgoing.
 };

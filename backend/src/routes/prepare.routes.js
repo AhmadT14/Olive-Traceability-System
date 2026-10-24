@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { z } from "zod";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/db.js";
 import { batchEvents, participants, transporterJobs } from "../db/schema.js";
@@ -16,130 +15,33 @@ import {
 } from "../chain/checks.js";
 import { computeRecordHash } from "../hashing/canonical.js";
 import { requireAuth } from "../auth/middleware.js";
+import { farmPreparationSchema } from "../validation/batch.schemas.js";
+import {
+  millListingSchema,
+  storageListingSchema,
+  exporterListingSchema,
+  importerListingSchema,
+} from "../validation/listing.schemas.js";
+import {
+  prepareOlivePickupSchema,
+  prepareOilPickupSchema,
+  prepareOliveDeliverySchema,
+  prepareOilDeliverySchema,
+} from "../validation/transporter.schemas.js";
+import { receiptSchemas } from "../validation/receipt.schemas.js";
+import { batchIdSchema } from "../validation/common.schemas.js";
 
 const router = Router();
 
-const prepareBatchSchema = z.object({
-  batchId: z.string().trim().min(1).max(64),
-  destinationAddress: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address"),
-  harvest_date: z.string().min(1),
-  location: z.string().max(255),
-  olive_type: z.string().max(128),
-  quantity: z.union([z.string(), z.number()]).optional(),
-  cultivation_method: z.string().optional(),
-  irrigation_method: z.string().optional(),
-  fertilizer_details: z.string().optional(),
-  pesticide_details: z.string().optional(),
-  harvesting_method: z.string().optional(),
-  quality_details: z.string().optional(),
-  farm_notes: z.string().optional(),
-});
-
-const prepareListingSchema = z.object({
-  batchId: z.string().trim().min(1).max(64),
-  destinationAddress: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address"),
-  pressing_date: z.string().optional(),
-  extraction_method: z.string().optional(),
-  output_quantity: z.union([z.string(), z.number()]).optional(),
-  oil_quality: z.string().optional(),
-  packaging_details: z.string().optional(),
-  qr_code_reference: z.string().optional(),
-  notes: z.string().optional(),
-});
-
-const prepareStorageListingSchema = z.object({
-  batchId: z.string().trim().min(1).max(64),
-  destinationAddress: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address"),
-  quantity_released: z.union([z.string(), z.number()]).optional(),
-  storage_end_date: z.string().optional(),
-  product_condition: z.string().optional(),
-  packaging_condition: z.string().optional(),
-  loading_details: z.string().optional(),
-  notes: z.string().optional(),
-});
-
-const pickupFields = {
-  truck_details: z.string().optional(),
-  quantity_picked_up: z.union([z.string(), z.number()]).optional(),
-  loading_details: z.string().optional(),
-  transport_conditions: z.string().optional(),
-  notes: z.string().optional(),
-};
-const olivePickupSchema = z.object({
-  batchId: z.string().trim().min(1).max(64),
-  ...pickupFields,
-  pickup_condition: z.string().optional(),
-  olive_condition: z.string().optional(),
-});
-const oilPickupSchema = z.object({
-  batchId: z.string().trim().min(1).max(64),
-  ...pickupFields,
-  oil_condition: z.string().optional(),
-  packaging_condition: z.string().optional(),
-});
-
-const deliveryFields = {
-  quantity_delivered: z.union([z.string(), z.number()]).optional(),
-  unloading_details: z.string().optional(),
-  transport_conditions: z.string().optional(),
-  notes: z.string().optional(),
-};
-const oliveDeliverySchema = z.object({
-  batchId: z.string().trim().min(1).max(64),
-  targetAddress: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address"),
-  ...deliveryFields,
-  olive_condition: z.string().optional(),
-});
-const oilDeliverySchema = z.object({
-  batchId: z.string().trim().min(1).max(64),
-  targetAddress: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address"),
-  ...deliveryFields,
-  oil_condition: z.string().optional(),
-  packaging_condition: z.string().optional(),
-});
-
-const receiptSchemas = {
-  Farm: {
-    key: "mill_olive",
-    schema: z.object({
-      arrival_condition: z.string().optional(),
-      quantity_received: z.union([z.string(), z.number()]).optional(),
-      olive_quality: z.string().optional(),
-      storage_condition: z.string().optional(),
-      notes: z.string().optional(),
-    }),
-  },
-  Mill: {
-    key: "storage",
-    schema: z.object({
-      quantity_received: z.union([z.string(), z.number()]).optional(),
-      storage_start_date: z.string().optional(),
-      expected_duration: z.number().int().optional(),
-      conditions: z.string().optional(),
-      product_condition: z.string().optional(),
-      notes: z.string().optional(),
-    }),
-  },
-  Exporter: {
-    key: "import",
-    schema: z.object({
-      quantity_received: z.union([z.string(), z.number()]).optional(),
-      shipment_arrival_details: z.string().optional(),
-      received_product_details: z.string().optional(),
-      product_condition: z.string().optional(),
-      notes: z.string().optional(),
-    }),
-  },
-  Importer: {
-    key: "retail",
-    schema: z.object({
-      quantity_received: z.union([z.string(), z.number()]).optional(),
-      final_receipt_details: z.string().optional(),
-      product_condition: z.string().optional(),
-      notes: z.string().optional(),
-    }),
-  },
-};
+const prepareBatchSchema = farmPreparationSchema;
+const prepareListingSchema = millListingSchema;
+const prepareStorageListingSchema = storageListingSchema;
+const prepareExporterListingSchema = exporterListingSchema;
+const prepareImporterListingSchema = importerListingSchema;
+const olivePickupSchema = prepareOlivePickupSchema;
+const oilPickupSchema = prepareOilPickupSchema;
+const oliveDeliverySchema = prepareOliveDeliverySchema;
+const oilDeliverySchema = prepareOilDeliverySchema;
 
 router.post("/batches/prepare", requireAuth, async (req, res) => {
   const parsed = prepareBatchSchema.safeParse(req.body);
@@ -320,6 +222,87 @@ router.post("/batches/prepare-storage-listing", requireAuth, async (req, res) =>
     console.error(err);
     return res.status(500).json({ error: "storage listing preparation failed" });
   }
+});
+
+function addStageListingRoute({ path, schema, role, stage, hashStage, intakeType }) {
+  router.post(path, requireAuth, async (req, res) => {
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "invalid payload", details: parsed.error.flatten() });
+    }
+
+    const { batchId, destinationAddress: rawDestinationAddress, ...record } = parsed.data;
+    const destinationAddress = rawDestinationAddress.toLowerCase();
+
+    try {
+      const [participantRole, batch] = await Promise.all([
+        hasRole(role, req.user.address),
+        getBatch(batchId),
+      ]);
+      if (!participantRole) return res.status(403).json({ error: `caller is not an ${role.toLowerCase()}` });
+      if (batch.status === "None") return res.status(404).json({ error: "batch not found" });
+      if (batch.stage !== stage) return res.status(409).json({ error: `batch is not at the ${stage.toLowerCase()} stage` });
+
+      const check = checkCanPostForPickup({ batch, actor: req.user.address });
+      if (!check.allowed) return res.status(409).json({ error: check.reason });
+
+      const intake = await db
+        .select({ eventTxHash: batchEvents.eventTxHash })
+        .from(batchEvents)
+        .where(and(
+          eq(batchEvents.batchId, batchId),
+          eq(batchEvents.detailsType, intakeType),
+        ))
+        .limit(1);
+      if (intake.length === 0) {
+        return res.status(409).json({ error: `no ${stage.toLowerCase()} intake recorded off-chain for this batch yet` });
+      }
+
+      const nextRole = getNextStageRole(batch.stage);
+      const [destination, destinationHasRole] = await Promise.all([
+        db.select({ walletAddress: participants.walletAddress }).from(participants)
+          .where(eq(participants.walletAddress, destinationAddress)).limit(1),
+        hasRole(nextRole, destinationAddress),
+      ]);
+      if (destination.length === 0) return res.status(400).json({ error: "destination must be a registered participant" });
+      if (!destinationHasRole) return res.status(400).json({ error: `destination must have ${nextRole} role` });
+
+      const dataHash = computeRecordHash(hashStage, record);
+      const data = batchCustody.interface.encodeFunctionData("postForPickup", [
+        batchId,
+        destinationAddress,
+        dataHash,
+      ]);
+      return res.json({
+        batchId,
+        destinationAddress,
+        destinationRole: nextRole,
+        dataHash,
+        transaction: { to: config.BATCH_CUSTODY_ADDRESS, data, value: "0x0" },
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "chain read failed" });
+    }
+  });
+}
+
+addStageListingRoute({
+  path: "/batches/prepare-exporter-listing",
+  schema: prepareExporterListingSchema,
+  role: "EXPORTER",
+  stage: "Exporter",
+  hashStage: "exporter_outgoing",
+  intakeType: "exporter_intake",
+});
+
+addStageListingRoute({
+  path: "/batches/prepare-importer-listing",
+  schema: prepareImporterListingSchema,
+  role: "IMPORTER",
+  stage: "Importer",
+  hashStage: "importer_outgoing",
+  intakeType: "importer_intake",
 });
 
 router.post("/batches/prepare-claim", requireAuth, async (req, res) => {
@@ -514,7 +497,7 @@ router.post("/batches/prepare-receipt", requireAuth, async (req, res) => {
     }
 
     const parsed = receipt.schema.extend({
-      batchId: z.string().trim().min(1).max(64),
+      batchId: batchIdSchema,
     }).safeParse(req.body);
     if (!parsed.success) {
       return res

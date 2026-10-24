@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { isAddress, getAddress } from "ethers";
-import { z } from "zod";
+import { getAddress } from "ethers";
 import { db } from "../db/db.js";
 import { participantProfiles, participants } from "../db/schema.js";
 import {
@@ -12,37 +11,14 @@ import {
 import { registry } from "../chain/contracts.js";
 import { config } from "../config.js";
 import { requireAuth } from "../auth/middleware.js";
+import { profileDetailsSchemas } from "../validation/participant.schemas.js";
+import {
+  confirmRoleChangeSchema,
+  prepareRoleChangeSchema,
+  roleNames,
+} from "../validation/admin.schemas.js";
 
 const router = Router();
-const roleNames = Object.keys(ROLES);
-const prepareRoleChangeSchema = z.object({
-  address: z.string().refine(isAddress, "must be a valid wallet address"),
-  role: z.enum(roleNames),
-  action: z.enum(["register", "revoke"]),
-});
-const roleChangeIdentity = {
-  address: z.string().refine(isAddress, "must be a valid wallet address"),
-  role: z.enum(roleNames),
-  txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "must be a tx hash"),
-};
-const profileSchema = z.object({
-  name: z.string().trim().min(1).max(255),
-  contactPhone: z.string().max(64).optional(),
-  email: z.string().email().max(255).optional(),
-  address: z.string().optional(),
-  location: z.string().max(255).optional(),
-});
-const confirmRoleChangeSchema = z.discriminatedUnion("action", [
-  z.object({
-    ...roleChangeIdentity,
-    action: z.literal("register"),
-    profile: profileSchema,
-  }),
-  z.object({
-    ...roleChangeIdentity,
-    action: z.literal("revoke"),
-  }),
-]);
 
 router.post(
   "/admin/participants/prepare-role-change",
@@ -57,6 +33,17 @@ router.post(
 
     const address = getAddress(parsed.data.address);
     const { role, action } = parsed.data;
+    let profileDetails = {};
+    if (action === "register") {
+      const detailsResult = profileDetailsSchemas[role].safeParse(parsed.data.profile.details);
+      if (!detailsResult.success) {
+        return res.status(400).json({
+          error: "invalid profile details",
+          details: detailsResult.error.flatten(),
+        });
+      }
+      profileDetails = detailsResult.data;
+    }
 
     try {
       if (!(await hasAdminRole(req.user.address))) {
@@ -146,6 +133,7 @@ router.post(
           ...(profile.email === undefined ? {} : { email: profile.email }),
           ...(profile.address === undefined ? {} : { address: profile.address }),
           ...(profile.location === undefined ? {} : { location: profile.location }),
+          details: profileDetails,
         };
         const { walletAddress: _walletAddress, ...profileUpdates } = profileValues;
 

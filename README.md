@@ -2,13 +2,14 @@
 
 An early-stage olive batch traceability project. The Solidity contracts provide an on-chain participant registry and custody workflow for batches moving from farms through mills, storage, exporters, importers, and retailers. Batch events accept hashes for harvest, outgoing, and intake records so documents can be tied to an on-chain history without storing their contents in the contract.
 
-> **Project status:** the contracts and local development setup are present, but the frontend is still the Vite starter screen and the backend currently only starts an Express server. End-to-end traceability is not yet wired up.
+> **Project status:** the backend API and contract workflows are implemented through the complete Farm → Mill → Storage → Exporter → Importer → Retailer chain. The frontend is still the Vite starter screen.
 
 ## Repository layout
 
 - `API.md`: API reference for the project team, including backend routes and integration workflow.
 - `contracts/`: Foundry contracts, deployment script, and Solidity tests.
 - `backend/`: Node.js API scaffold, PostgreSQL/Drizzle schema, and contract ABI support.
+- `backend/src/validation/`: centralized Zod schemas for request payloads and role-specific profile details.
 - `frontend/`: React and Vite application scaffold.
 - `scripts/`: local Anvil deployment and sample data scripts.
 - `docker-compose.yml`: PostgreSQL, backend, and local Anvil services.
@@ -205,7 +206,8 @@ forge test
 ## Current limitations
 
 - Frontend is uncustomized Vite starter content.
-- Backend has no implemented API routes or database integration at runtime.
+- The backend requires PostgreSQL, a deployed local chain, and wallet-signature authentication for end-to-end use.
+- Variable event and profile details are stored in validated PostgreSQL JSONB fields; common identifiers and workflow relationships remain relational.
 - `docker-compose.yml` starts the services but does not deploy contracts automatically.
 - Anvil state is not persisted, so the chain resets whenever the container stops.
 - No production network, deployment, or key-management configuration is included.

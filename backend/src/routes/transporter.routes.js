@@ -1,6 +1,11 @@
 import { Router } from "express";
 import { and, desc, eq } from "drizzle-orm";
-import { z } from "zod";
+import {
+  olivePickupSchema,
+  oilPickupSchema,
+  oliveDeliverySchema,
+  oilDeliverySchema,
+} from "../validation/transporter.schemas.js";
 import { db } from "../db/db.js";
 import {
   batchEvents,
@@ -16,41 +21,8 @@ import {
 
 const router = Router();
 
-const pickupFields = {
-  truck_details: z.string().optional(),
-  quantity_picked_up: z.union([z.string(), z.number()]).optional(),
-  loading_details: z.string().optional(),
-  transport_conditions: z.string().optional(),
-  notes: z.string().optional(),
-};
-const oliveRecordSchema = z.object({
-  txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "must be a tx hash"),
-  ...pickupFields,
-  pickup_condition: z.string().optional(),
-  olive_condition: z.string().optional(),
-});
-const oilRecordSchema = z.object({
-  txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "must be a tx hash"),
-  ...pickupFields,
-  oil_condition: z.string().optional(),
-  packaging_condition: z.string().optional(),
-});
-const deliveryFields = {
-  txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "must be a tx hash"),
-  quantity_delivered: z.union([z.string(), z.number()]).optional(),
-  unloading_details: z.string().optional(),
-  transport_conditions: z.string().optional(),
-  notes: z.string().optional(),
-};
-const oliveDeliverySchema = z.object({
-  ...deliveryFields,
-  olive_condition: z.string().optional(),
-});
-const oilDeliverySchema = z.object({
-  ...deliveryFields,
-  oil_condition: z.string().optional(),
-  packaging_condition: z.string().optional(),
-});
+const oliveRecordSchema = olivePickupSchema;
+const oilRecordSchema = oilPickupSchema;
 
 router.post("/batches/:id/transporter-claim", requireAuth, async (req, res) => {
   const batchId = req.params.id.trim();

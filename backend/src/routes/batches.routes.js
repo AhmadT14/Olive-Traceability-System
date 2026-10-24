@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { z } from "zod";
+import { createBatchSchema } from "../validation/batch.schemas.js";
 import { eq } from "drizzle-orm";
 import { db } from "../db/db.js";
 import { batchEvents, batches, participants, transporterJobs } from "../db/schema.js";
@@ -17,22 +17,6 @@ const router = Router();
 // than the camelCase Drizzle column names, since this payload is exactly
 // what gets passed into computeRecordHash — keeping the keys identical
 // avoids a second mapping that could drift out of sync with fields.js.
-const createBatchSchema = z.object({
-  txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/, "must be a tx hash"),
-  batchId: z.string().min(1).max(64),
-  harvest_date: z.string(), // YYYY-MM-DD
-  location: z.string().max(255),
-  olive_type: z.string().max(128),
-  quantity: z.union([z.string(), z.number()]).optional(),
-  cultivation_method: z.string().optional(),
-  irrigation_method: z.string().optional(),
-  fertilizer_details: z.string().optional(),
-  pesticide_details: z.string().optional(),
-  harvesting_method: z.string().optional(),
-  quality_details: z.string().optional(),
-  farm_notes: z.string().optional(),
-});
-
 router.post("/batches", requireAuth, async (req, res) => {
   const parsed = createBatchSchema.safeParse(req.body);
   if (!parsed.success) {

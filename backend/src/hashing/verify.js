@@ -28,10 +28,7 @@ export class EventNotFoundError extends Error {
 }
 
 // Maps each defined HASH_FIELDS stage key to the contract event that carries
-// its dataHash, and which argument on that event holds it. Only covers the
-// stages HASH_FIELDS currently defines (farm, mill_olive, mill_oil, import,
-// retail) — transporter/storage/export stages still need both their field
-// lists (fields.js) and an entry here before they can go through this path.
+// its dataHash, and which argument on that event holds it.
 const HASH_EVENTS = {
   farm: { event: "BatchCreated", arg: "harvestDataHash" },
   transporter_olive: { event: "BatchClaimed", arg: "intakeDataHash" },
@@ -48,7 +45,10 @@ const HASH_EVENTS = {
   mill_oil: { event: "BatchListed", arg: "outgoingDataHash" },
   storage: { event: "ReceiptConfirmed", arg: "intakeDataHash" },
   storage_outgoing: { event: "BatchListed", arg: "outgoingDataHash" },
+  exporter_intake: { event: "ReceiptConfirmed", arg: "intakeDataHash" },
+  exporter_outgoing: { event: "BatchListed", arg: "outgoingDataHash" },
   import: { event: "ReceiptConfirmed", arg: "intakeDataHash" },
+  importer_outgoing: { event: "BatchListed", arg: "outgoingDataHash" },
   retail: { event: "ReceiptConfirmed", arg: "intakeDataHash" },
 };
 

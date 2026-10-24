@@ -55,6 +55,8 @@ All routes in this table require a bearer token and a JSON body. Successful resp
 | `POST /batches/prepare` | `batchId`, `destinationAddress`, farm record fields | Creates a batch (`createBatch`). |
 | `POST /batches/prepare-listing` | `batchId`, `destinationAddress`, mill oil record fields | Mill lists the batch for pickup (`postForPickup`). |
 | `POST /batches/prepare-storage-listing` | `batchId`, `destinationAddress`, storage outgoing record fields | Storage lists a batch for pickup (`postForPickup`). |
+| `POST /batches/prepare-exporter-listing` | `batchId`, `destinationAddress`, exporter outgoing record fields | Exporter lists the batch for pickup (`postForPickup`). |
+| `POST /batches/prepare-importer-listing` | `batchId`, `destinationAddress`, importer outgoing record fields | Importer lists the batch for pickup (`postForPickup`). |
 | `POST /batches/prepare-claim` | `batchId` and pickup record fields | Transporter claims an available job (`claimBatch`). |
 | `POST /batches/prepare-handover` | `batchId`, `targetAddress`, delivery record fields | Transporter starts the handover (`initiateHandover`). Target must match the job destination. |
 | `POST /batches/prepare-receipt` | `batchId` and receipt record fields for the current stage | Destination confirms receipt (`confirmReceipt`). |
@@ -69,7 +71,10 @@ Record fields are optional except where stated. The field names are snake_case b
 - Transport delivery: `quantity_delivered`, `unloading_details`, `transport_conditions`, `notes`, plus `olive_condition` for olives, or `oil_condition` and `packaging_condition` for oil.
 - Mill receipt (olive intake): `arrival_condition`, `quantity_received`, `olive_quality`, `storage_condition`, `notes`.
 - Storage receipt: `quantity_received`, `storage_start_date`, integer `expected_duration`, `conditions`, `product_condition`, `notes`.
+- Exporter receipt: `quantity_received`, `shipment_arrival_details`, `received_product_details`, `product_condition`, `notes`.
+- Exporter outgoing: `quantity_shipped`, `shipment_details`, `product_condition`, `packaging_condition`, `notes`.
 - Importer receipt: `quantity_received`, `shipment_arrival_details`, `received_product_details`, `product_condition`, `notes`.
+- Importer outgoing: `quantity_shipped`, `shipment_details`, `product_condition`, `packaging_condition`, `notes`.
 - Retailer receipt: `quantity_received`, `final_receipt_details`, `product_condition`, `notes`.
 
 The admin role preparation body is `{ "address": "0x…", "role": "FARMER|MILL|TRANSPORTER|STORAGE|EXPORTER|IMPORTER|RETAILER", "action": "register|revoke" }`. Exact supported role names are defined by the contract registry.
@@ -83,11 +88,13 @@ These routes require a bearer token. The `txHash` must refer to a successful on 
 | `POST /batches` | Save farm details after batch creation. Body contains `txHash`, `batchId`, and the farm record fields above. |
 | `POST /batches/:id/transporter-claim` | Save pickup details after a transporter claim. Body: `txHash` and the applicable olive or oil pickup fields. |
 | `POST /batches/:id/transporter-handover` | Save delivery details after handover initiation. Body: `txHash` and the applicable olive or oil delivery fields. |
-| `POST /batches/:id/receipt` | Save storage, importer, or retailer receipt details. Body: `txHash` and the receipt fields for the batch's current stage. |
+| `POST /batches/:id/receipt` | Save storage, exporter, importer, or retailer receipt details. Body: `txHash` and the receipt fields for the batch's current stage. |
 | `POST /batches/:id/mill-intake` | Save mill's olive intake details. Body: `txHash` and mill receipt fields. |
 | `POST /batches/:id/mill-outgoing` | Save mill's oil production details after listing. Body: `txHash` and mill outgoing fields. |
 | `POST /batches/:id/storage-outgoing` | Save storage outgoing details after listing. Body: `txHash` and storage outgoing fields. |
-| `POST /admin/participants/confirm-role-change` | Confirm a submitted role transaction. Body for registration includes `address`, `role`, `action: "register"`, `txHash`, and `profile`; revocation omits `profile`. Registration profile requires `name`, with optional `contactPhone`, `email`, `address`, and `location`. |
+| `POST /batches/:id/exporter-outgoing` | Save exporter outgoing details after listing. Body: `txHash` and exporter outgoing fields. |
+| `POST /batches/:id/importer-outgoing` | Save importer outgoing details after listing. Body: `txHash` and importer outgoing fields. |
+| `POST /admin/participants/confirm-role-change` | Confirm a submitted role transaction. Body for registration includes `address`, `role`, `action: "register"`, `txHash`, and `profile`; revocation omits `profile`. Registration profile requires `name`, with optional `contactPhone`, `email`, `address`, `location`, and role-specific validated `details`. |
 
 Record saving can return `409` if the chain event, caller, current batch state, destination, record hash, or corresponding off chain workflow state does not match. Record details are not saved until validation succeeds.
 
