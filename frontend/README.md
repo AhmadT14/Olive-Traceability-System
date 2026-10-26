@@ -1,16 +1,39 @@
-# React + Vite
+# Olive Traceability frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React app for the Palestinian olive oil traceability system: a public batch trace page and wallet-based dashboards for each supply chain role.
 
-Currently, two official plugins are available:
+Stack: React 19, Vite, react-router-dom 7, ethers 6, plain JavaScript and plain CSS.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Run it
 
-## React Compiler
+1. Start the backend stack from the repo root (Postgres, Anvil, API on port 3000).
+2. Copy `.env.example` to `.env` and fill in the values.
+3. `npm install`, then `npm run dev`, and open http://localhost:5173.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The dev server proxies `/api` to `http://localhost:3000` and strips the prefix, because the backend has no CORS.
 
-## Expanding the ESLint configuration
+## Environment
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+| Variable | Meaning |
+| --- | --- |
+| `VITE_API_URL` | API base path, `/api` in development |
+| `VITE_CHAIN_ID` | Chain the wallet must use, `31337` for local Anvil |
+| `VITE_ADMIN_ADDRESS` | Wallet treated as admin until the backend returns an admin flag (Anvil account 0 locally) |
+| `VITE_USE_MOCKS` | `true` returns fixtures from `src/mocks` instead of calling the API |
+
+## Scripts
+
+- `npm run dev`: development server
+- `npm run build`: production build into `dist`
+- `npm run lint`: ESLint
+
+## Layout
+
+- `src/api`: every API call, with the mock switch
+- `src/mocks`: fixtures shaped like the `API.md` responses
+- `src/wallet`: MetaMask connection and network checks
+- `src/auth`: login session, role guard, role list
+- `src/components`: shared UI pieces
+- `src/features`: pages, grouped by area
+- `src/routes`: the route table
+- `src/styles`: design tokens and base styles

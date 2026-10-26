@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "../auth";
+import { useAuth } from "../auth/useAuth";
 import { ROLE_HOME } from "../auth/roles";
 import RequireRole from "../auth/RequireRole";
 import Home from "../features/public/Home";

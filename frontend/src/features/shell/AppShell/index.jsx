@@ -1,6 +1,8 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useAuth } from "../../../auth";
+import { useAuth } from "../../../auth/useAuth";
+import { useWallet } from "../../../wallet/useWallet";
 import { ROLE_HOME, ROLE_LABELS } from "../../../auth/roles";
+import { CHAIN_ID } from "../../../api";
 import Badge from "../../../components/Badge";
 import Button from "../../../components/Button";
 import "./style.css";
@@ -11,8 +13,11 @@ function shortAddress(address) {
 
 export default function AppShell() {
   const { session, switchRole, logout } = useAuth();
+  const wallet = useWallet();
   const navigate = useNavigate();
   const role = session.activeRole;
+  const walletUnavailable =
+    wallet.hasProvider && wallet.ready && !wallet.account;
 
   function handleRoleChange(event) {
     const next = event.target.value;
@@ -60,6 +65,35 @@ export default function AppShell() {
             Sign out
           </Button>
         </header>
+        {wallet.wrongChain && (
+          <div className="app-shell__notice" role="alert">
+            <span>
+              MetaMask is on the wrong network (chain {wallet.chainId}). Switch
+              to chain {CHAIN_ID} before you send any transaction.
+            </span>
+            <Button variant="secondary" onClick={() => wallet.switchChain()}>
+              Switch network
+            </Button>
+          </div>
+        )}
+        {walletUnavailable && (
+          <div className="app-shell__notice" role="alert">
+            <span>
+              MetaMask is locked or not connected. You are still signed in,
+              but you need to unlock it before you send any transaction.
+            </span>
+            <Button
+              variant="secondary"
+              onClick={() => wallet.connect()}
+              disabled={wallet.connecting}
+            >
+              Unlock wallet
+            </Button>
+          </div>
+        )}
+        {wallet.error && (wallet.wrongChain || walletUnavailable) && (
+          <p className="app-shell__notice-error">{wallet.error}</p>
+        )}
         <div className="app-shell__content">
           <Outlet />
         </div>

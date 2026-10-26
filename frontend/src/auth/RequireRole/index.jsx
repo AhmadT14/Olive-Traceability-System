@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "..";
+import { useAuth } from "../useAuth";
 
 export default function RequireRole({ role, children }) {
   const { session } = useAuth();

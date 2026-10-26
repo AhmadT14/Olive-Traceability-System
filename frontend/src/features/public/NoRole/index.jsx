@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../../../auth";
+import { useAuth } from "../../../auth/useAuth";
 import Card from "../../../components/Card";
 import Button from "../../../components/Button";
 import "./style.css";

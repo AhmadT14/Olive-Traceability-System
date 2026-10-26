@@ -1,12 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getNonce,
   login as loginRequest,
@@ -14,10 +6,10 @@ import {
   setUnauthorizedHandler,
   ADMIN_ADDRESS,
 } from "../api";
-import { useWallet } from "../wallet";
-import { useToast } from "../components/Toast";
+import { useWallet } from "../wallet/useWallet";
+import { useToast } from "../components/Toast/useToast";
+import { AuthContext } from "./context";
 
-const AuthContext = createContext(null);
 const SESSION_KEY = "olive_session";
 const SESSION_MS = 55 * 60 * 1000; // token lasts 1 hour, expire a little early
 
@@ -55,17 +47,22 @@ function normalizeRole(role) {
 
 export function AuthProvider({ children }) {
   const wallet = useWallet();
+  const { onAccountChange } = wallet;
   const toast = useToast();
   const [session, setSession] = useState(loadSession);
   const [loggingIn, setLoggingIn] = useState(false);
   const [error, setError] = useState("");
   const sessionRef = useRef(session);
-  sessionRef.current = session;
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   const logout = useCallback(
     (message) => {
       setToken(null);
       saveSession(null);
+      sessionRef.current = null;
       setSession(null);
       if (typeof message === "string" && message)
         toast.show(message, "warning");
@@ -91,13 +88,18 @@ export function AuthProvider({ children }) {
     return () => clearTimeout(timer);
   }, [session, logout]);
 
-  // MetaMask account switched or disconnected.
-  useEffect(() => {
-    if (!session || !wallet.ready) return;
-    if (!wallet.account || wallet.account.toLowerCase() !== session.address) {
-      logout("The wallet account changed. Sign in again.");
-    }
-  }, [wallet.account, wallet.ready, session, logout]);
+  // Log out only when MetaMask reports a different account. A locked or
+  // disconnected wallet reports no account, and the session is kept.
+  useEffect(
+    () =>
+      onAccountChange((account) => {
+        const current = sessionRef.current;
+        if (current && account && account.toLowerCase() !== current.address) {
+          logout("The wallet account changed. Sign in again.");
+        }
+      }),
+    [onAccountChange, logout],
+  );
 
   const login = useCallback(async () => {
     setError("");
@@ -128,6 +130,7 @@ export function AuthProvider({ children }) {
         expiresAt: Date.now() + SESSION_MS,
       };
       saveSession(next);
+      sessionRef.current = next;
       setSession(next);
       return true;
     } catch (err) {
@@ -155,10 +158,4 @@ export function AuthProvider({ children }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
-  return ctx;
 }

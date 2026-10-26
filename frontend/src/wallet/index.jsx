@@ -1,15 +1,8 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BrowserProvider } from "ethers";
 import { CHAIN_ID } from "../api";
+import { WalletContext } from "./context";
 
-const WalletContext = createContext(null);
 const CHAIN_HEX = "0x" + CHAIN_ID.toString(16);
 
 function readableError(err) {
@@ -45,15 +38,26 @@ export function WalletProvider({ children }) {
   const eth = typeof window !== "undefined" ? window.ethereum : undefined;
   const [account, setAccount] = useState(null);
   const [chainId, setChainId] = useState(null);
-  const [ready, setReady] = useState(false);
+  // Without MetaMask there is nothing to wait for.
+  const [ready, setReady] = useState(() => !eth);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState("");
+  const listeners = useRef(new Set());
+
+  // Every account update from MetaMask goes through here, so subscribers
+  // (the auth provider) see the same value as the state.
+  const publishAccount = useCallback((next) => {
+    setAccount(next);
+    listeners.current.forEach((fn) => fn(next));
+  }, []);
+
+  const onAccountChange = useCallback((fn) => {
+    listeners.current.add(fn);
+    return () => listeners.current.delete(fn);
+  }, []);
 
   useEffect(() => {
-    if (!eth) {
-      setReady(true);
-      return undefined;
-    }
+    if (!eth) return undefined;
     let active = true;
     Promise.all([
       eth.request({ method: "eth_accounts" }),
@@ -61,13 +65,13 @@ export function WalletProvider({ children }) {
     ])
       .then(([accounts, chain]) => {
         if (!active) return;
-        setAccount(accounts[0] || null);
+        publishAccount(accounts[0] || null);
         setChainId(parseInt(chain, 16));
       })
       .catch(() => {})
       .finally(() => active && setReady(true));
 
-    const onAccounts = (accounts) => setAccount(accounts[0] || null);
+    const onAccounts = (accounts) => publishAccount(accounts[0] || null);
     const onChain = (chain) => setChainId(parseInt(chain, 16));
     eth.on("accountsChanged", onAccounts);
     eth.on("chainChanged", onChain);
@@ -76,7 +80,7 @@ export function WalletProvider({ children }) {
       eth.removeListener("accountsChanged", onAccounts);
       eth.removeListener("chainChanged", onChain);
     };
-  }, [eth]);
+  }, [eth, publishAccount]);
 
   const connect = useCallback(async () => {
     if (!eth) {
@@ -89,7 +93,7 @@ export function WalletProvider({ children }) {
       const accounts = await eth.request({ method: "eth_requestAccounts" });
       await ensureChain(eth);
       const chain = await eth.request({ method: "eth_chainId" });
-      setAccount(accounts[0] || null);
+      publishAccount(accounts[0] || null);
       setChainId(parseInt(chain, 16));
       return accounts[0] || null;
     } catch (err) {
@@ -97,6 +101,18 @@ export function WalletProvider({ children }) {
       return null;
     } finally {
       setConnecting(false);
+    }
+  }, [eth, publishAccount]);
+
+  const switchChain = useCallback(async () => {
+    if (!eth) return false;
+    setError("");
+    try {
+      await ensureChain(eth);
+      return true;
+    } catch (err) {
+      setError(readableError(err));
+      return false;
     }
   }, [eth]);
 
@@ -115,18 +131,25 @@ export function WalletProvider({ children }) {
       connecting,
       error,
       connect,
+      switchChain,
       getSigner,
+      onAccountChange,
     }),
-    [eth, account, chainId, ready, connecting, error, connect, getSigner],
+    [
+      eth,
+      account,
+      chainId,
+      ready,
+      connecting,
+      error,
+      connect,
+      switchChain,
+      getSigner,
+      onAccountChange,
+    ],
   );
 
   return (
     <WalletContext.Provider value={value}>{children}</WalletContext.Provider>
   );
-}
-
-export function useWallet() {
-  const ctx = useContext(WalletContext);
-  if (!ctx) throw new Error("useWallet must be used inside WalletProvider");
-  return ctx;
 }

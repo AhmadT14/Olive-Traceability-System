@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../../../auth";
-import { useWallet } from "../../../wallet";
+import { useAuth } from "../../../auth/useAuth";
+import { useWallet } from "../../../wallet/useWallet";
 import { CHAIN_ID } from "../../../api";
 import Card from "../../../components/Card";
 import Button from "../../../components/Button";
