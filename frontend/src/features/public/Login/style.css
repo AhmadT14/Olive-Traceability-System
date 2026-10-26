@@ -1,0 +1,11 @@
+.login {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+}
+.login__error {
+  color: var(--color-danger);
+}
+.login__warning {
+  color: var(--color-warning);
+}

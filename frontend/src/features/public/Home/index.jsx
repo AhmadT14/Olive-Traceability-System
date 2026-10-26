@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getHealth, USE_MOCKS } from "../../../api";
 import Card from "../../../components/Card";
 import Badge from "../../../components/Badge";
@@ -18,6 +19,9 @@ export default function Home() {
   return (
     <main className="home">
       <h1 className="home__title">Olive Oil Traceability</h1>
+      <p>
+        <Link to="/login">Sign in</Link>
+      </p>
       <Card title="Backend connection">
         {state.status === "loading" && <Badge>Checking</Badge>}
         {state.status === "ok" && <Badge tone="success">Connected</Badge>}

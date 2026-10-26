@@ -1,0 +1,64 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.app-shell__sidebar {
+  padding: var(--space-4);
+  background: var(--color-primary-dark);
+  color: #fff;
+}
+.app-shell__brand {
+  font-weight: 700;
+  margin-bottom: var(--space-3);
+}
+.app-shell__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.app-shell__link {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  text-decoration: none;
+}
+.app-shell__link--active {
+  background: rgba(255, 255, 255, 0.18);
+}
+.app-shell__main {
+  flex: 1;
+  min-width: 0;
+}
+.app-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+.app-shell__role-select {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+.app-shell__wallet {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+.app-shell__content {
+  padding: var(--space-6) var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .app-shell {
+    flex-direction: row;
+  }
+  .app-shell__sidebar {
+    width: 220px;
+    flex-shrink: 0;
+  }
+}
