@@ -1,15 +1,12 @@
-import { Router } from "express";
-import { asc, eq } from "drizzle-orm";
-import { db } from "../db/db.js";
-import { batchEvents } from "../db/schema.js";
 import { getBatch } from "../chain/reader.js";
+import { internalError, notFound } from "../errors.js";
 import {
   EventNotFoundError,
   HashMismatchError,
   verifyRecordAgainstChain,
 } from "../hashing/verify.js";
-
-const router = Router();
+import * as batchEventRepository from "../repositories/batchEvent.repository.js";
+import { parseBatchId } from "../validation/parse.js";
 
 const VERIFIABLE_EVENT_TYPES = {
   farm: { stageKey: "farm", contractEvent: "BatchCreated" },
@@ -32,18 +29,33 @@ const VERIFIABLE_EVENT_TYPES = {
   mill_intake: { stageKey: "mill_olive", contractEvent: "ReceiptConfirmed" },
   mill_outgoing: { stageKey: "mill_oil", contractEvent: "BatchListed" },
   storage_intake: { stageKey: "storage", contractEvent: "ReceiptConfirmed" },
-  storage_outgoing: { stageKey: "storage_outgoing", contractEvent: "BatchListed" },
-  exporter_intake: { stageKey: "exporter_intake", contractEvent: "ReceiptConfirmed" },
-  exporter_outgoing: { stageKey: "exporter_outgoing", contractEvent: "BatchListed" },
+  storage_outgoing: {
+    stageKey: "storage_outgoing",
+    contractEvent: "BatchListed",
+  },
+  exporter_intake: {
+    stageKey: "exporter_intake",
+    contractEvent: "ReceiptConfirmed",
+  },
+  exporter_outgoing: {
+    stageKey: "exporter_outgoing",
+    contractEvent: "BatchListed",
+  },
   importer_intake: { stageKey: "import", contractEvent: "ReceiptConfirmed" },
-  importer_outgoing: { stageKey: "importer_outgoing", contractEvent: "BatchListed" },
+  importer_outgoing: {
+    stageKey: "importer_outgoing",
+    contractEvent: "BatchListed",
+  },
   retailer_intake: { stageKey: "retail", contractEvent: "ReceiptConfirmed" },
 };
 
 async function verifyEvent(batchId, event) {
   const expected = VERIFIABLE_EVENT_TYPES[event.detailsType];
   if (!expected) {
-    return { status: "unverifiable", reason: "no hash field definition for this event type" };
+    return {
+      status: "unverifiable",
+      reason: "no hash field definition for this event type",
+    };
   }
   if (event.payloadVersion !== 1) {
     return { status: "unverifiable", reason: "unsupported payload version" };
@@ -79,33 +91,22 @@ async function verifyEvent(batchId, event) {
   }
 }
 
-router.get("/batches/:id/verify", async (req, res) => {
-  const batchId = req.params.id.trim();
-  if (!batchId || batchId.length > 64) {
-    return res.status(400).json({ error: "invalid batch id" });
-  }
+export async function verifyBatch(rawBatchId) {
+  const batchId = parseBatchId(rawBatchId);
 
   let batch;
   try {
     batch = await getBatch(batchId);
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "chain read failed" });
+    throw internalError("chain read failed", err);
   }
-  if (batch.status === "None") {
-    return res.status(404).json({ error: "batch not found" });
-  }
+  if (batch.status === "None") throw notFound("batch not found");
 
   let storedEvents;
   try {
-    storedEvents = await db
-      .select()
-      .from(batchEvents)
-      .where(eq(batchEvents.batchId, batchId))
-      .orderBy(asc(batchEvents.recordedAt), asc(batchEvents.eventTxHash));
+    storedEvents = await batchEventRepository.findByBatchId(batchId);
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "event details lookup failed" });
+    throw internalError("event details lookup failed", err);
   }
 
   try {
@@ -130,15 +131,12 @@ router.get("/batches/:id/verify", async (req, res) => {
           ? "mismatch"
           : "incomplete";
 
-    return res.json({
+    return {
       batch: { batchId, ...batch },
       integrityStatus,
       events,
-    });
+    };
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "chain verification failed" });
+    throw internalError("chain verification failed", err);
   }
-});
-
-export default router;
+}
