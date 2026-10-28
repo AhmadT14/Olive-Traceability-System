@@ -4,6 +4,10 @@ import {
   confirmRoleChange,
   prepareRoleChange,
 } from "../../services/admin.service.js";
+import {
+  roleChangeConfirmedResponseSchema,
+  roleChangePreparedResponseSchema,
+} from "../../validation/response.schemas.js";
 import { handle } from "../response.js";
 
 const router = Router();
@@ -11,19 +15,25 @@ const router = Router();
 router.post(
   "/admin/participants/prepare-role-change",
   requireAuth,
-  handle(async (req) => ({
-    status: 200,
-    body: await prepareRoleChange(req.user, req.body),
-  })),
+  handle(
+    async (req) => ({
+      status: 200,
+      body: await prepareRoleChange(req.user, req.body),
+    }),
+    roleChangePreparedResponseSchema,
+  ),
 );
 
 router.post(
   "/admin/participants/confirm-role-change",
   requireAuth,
-  handle(async (req) => ({
-    status: 200,
-    body: await confirmRoleChange(req.user, req.body),
-  })),
+  handle(
+    async (req) => ({
+      status: 200,
+      body: await confirmRoleChange(req.user, req.body),
+    }),
+    roleChangeConfirmedResponseSchema,
+  ),
 );
 
 export default router;

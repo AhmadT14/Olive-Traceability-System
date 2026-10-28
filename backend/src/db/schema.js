@@ -17,12 +17,18 @@ export const batchEvents = p.pgTable(
   "batch_events",
   {
     eventTxHash: txHash("event_tx_hash").primaryKey(),
-    batchId: p.varchar("batch_id", { length: 64 }).notNull().references(() => batches.batchId),
+    batchId: p
+      .varchar("batch_id", { length: 64 })
+      .notNull()
+      .references(() => batches.batchId),
     contractEvent: p.varchar("contract_event", { length: 32 }).notNull(),
     detailsType: p.varchar("details_type", { length: 40 }).notNull(),
     payloadVersion: p.smallint("payload_version").notNull().default(1),
     details: p.jsonb("details").notNull(),
-    recordedAt: p.timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
+    recordedAt: p
+      .timestamp("recorded_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (t) => [
     p.check(
@@ -34,7 +40,10 @@ export const batchEvents = p.pgTable(
       sql`${t.detailsType} IN ('farm', 'transporter_olive_pickup', 'transporter_oil_pickup', 'transporter_olive_delivery', 'transporter_oil_delivery', 'mill_intake', 'mill_outgoing', 'storage_intake', 'storage_outgoing', 'exporter_intake', 'exporter_outgoing', 'importer_intake', 'importer_outgoing', 'retailer_intake')`,
     ),
     p.check("batch_events_payload_version_check", sql`${t.payloadVersion} > 0`),
-    p.check("batch_events_details_object_check", sql`jsonb_typeof(${t.details}) = 'object'`),
+    p.check(
+      "batch_events_details_object_check",
+      sql`jsonb_typeof(${t.details}) = 'object'`,
+    ),
     p.unique("batch_events_batch_tx_unique").on(t.batchId, t.eventTxHash),
     p.index("batch_events_batch_id_idx").on(t.batchId),
     p.index("batch_events_details_type_idx").on(t.detailsType),
@@ -42,7 +51,9 @@ export const batchEvents = p.pgTable(
 );
 
 export const participantProfiles = p.pgTable("participant_profiles", {
-  walletAddress: wallet("wallet_address").primaryKey().references(() => participants.walletAddress, { onDelete: "cascade" }),
+  walletAddress: wallet("wallet_address")
+    .primaryKey()
+    .references(() => participants.walletAddress, { onDelete: "cascade" }),
   name: p.varchar("name", { length: 255 }),
   contactPhone: p.varchar("contact_phone", { length: 64 }),
   email: p.varchar("email", { length: 255 }),
@@ -52,16 +63,26 @@ export const participantProfiles = p.pgTable("participant_profiles", {
   details: p.jsonb("details").notNull().default({}),
 });
 
-const batchRef = () => p.varchar("batch_id", { length: 64 }).notNull().references(() => batches.batchId);
+const batchRef = () =>
+  p
+    .varchar("batch_id", { length: 64 })
+    .notNull()
+    .references(() => batches.batchId);
 
 export const transporterJobs = p.pgTable(
   "transporter_jobs",
   {
     id: p.integer("id").primaryKey().generatedAlwaysAsIdentity(),
     batchId: batchRef(),
-    sourceParty: wallet("source_party").notNull().references(() => participants.walletAddress),
-    destinationParty: wallet("destination_party").notNull().references(() => participants.walletAddress),
-    transporter: wallet("transporter").references(() => participants.walletAddress),
+    sourceParty: wallet("source_party")
+      .notNull()
+      .references(() => participants.walletAddress),
+    destinationParty: wallet("destination_party")
+      .notNull()
+      .references(() => participants.walletAddress),
+    transporter: wallet("transporter").references(
+      () => participants.walletAddress,
+    ),
     status: p.varchar("status", { length: 32 }).notNull(),
     listingTxHash: txHash("listing_tx_hash"),
     claimTxHash: txHash("claim_tx_hash"),

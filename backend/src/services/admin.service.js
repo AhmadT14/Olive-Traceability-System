@@ -22,24 +22,13 @@ import {
   prepareRoleChangeSchema,
   roleNames,
 } from "../validation/admin.schemas.js";
-import { parseOrThrow } from "../validation/parse.js";
+import { parseBody } from "../validation/parse.js";
 import { profileDetailsSchemas } from "../validation/participant.schemas.js";
 
 export async function prepareRoleChange(user, body) {
-  const parsed = parseOrThrow(prepareRoleChangeSchema, body);
-  const address = getAddress(parsed.data.address);
-  const { role, action } = parsed.data;
-
-  let profileDetails = {};
-  if (action === "register") {
-    const detailsResult = profileDetailsSchemas[role].safeParse(
-      parsed.data.profile.details,
-    );
-    if (!detailsResult.success) {
-      throw badRequest("invalid profile details", detailsResult.error.flatten());
-    }
-    profileDetails = detailsResult.data;
-  }
+  const parsed = parseBody(prepareRoleChangeSchema, body);
+  const address = getAddress(parsed.address);
+  const { role, action } = parsed;
 
   try {
     if (!(await hasAdminRole(user.address))) {
@@ -78,9 +67,9 @@ export async function prepareRoleChange(user, body) {
 }
 
 export async function confirmRoleChange(user, body) {
-  const parsed = parseOrThrow(confirmRoleChangeSchema, body);
-  const address = getAddress(parsed.data.address);
-  const { action, role, txHash } = parsed.data;
+  const parsed = parseBody(confirmRoleChangeSchema, body);
+  const address = getAddress(parsed.address);
+  const { action, role, txHash } = parsed;
 
   try {
     if (!(await hasAdminRole(user.address))) {
@@ -112,8 +101,17 @@ export async function confirmRoleChange(user, body) {
     }
 
     if (action === "register") {
-      const profile = parsed.data.profile;
-      const profileDetails = profile.details ?? {};
+      const profile = parsed.profile;
+      const detailsResult = profileDetailsSchemas[role].safeParse(
+        profile.details ?? {},
+      );
+      if (!detailsResult.success) {
+        throw badRequest(
+          "invalid profile details",
+          detailsResult.error.flatten(),
+        );
+      }
+
       const profileValues = {
         walletAddress: address.toLowerCase(),
         name: profile.name,
@@ -128,16 +126,13 @@ export async function confirmRoleChange(user, body) {
         ...(profile.availability === undefined
           ? {}
           : { availability: profile.availability }),
-        details: profileDetails,
+        details: detailsResult.data,
       };
       const { walletAddress: _walletAddress, ...profileUpdates } =
         profileValues;
 
       await runInTransaction(async (exec) => {
-        await participantRepository.insertIgnore(
-          address.toLowerCase(),
-          exec,
-        );
+        await participantRepository.insertIgnore(address.toLowerCase(), exec);
         await participantRepository.upsertProfile(
           profileValues,
           profileUpdates,
@@ -147,7 +142,9 @@ export async function confirmRoleChange(user, body) {
     }
 
     const activeRoles = await Promise.all(
-      roleNames.map(async (name) => ((await hasRole(name, address)) ? name : null)),
+      roleNames.map(async (name) =>
+        (await hasRole(name, address)) ? name : null,
+      ),
     );
 
     return {

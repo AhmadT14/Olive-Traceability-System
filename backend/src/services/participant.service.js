@@ -1,6 +1,6 @@
-import { isAddress } from "ethers";
 import { ROLES, hasRole } from "../chain/reader.js";
-import { badRequest, internalError } from "../errors.js";
+import { internalError } from "../errors.js";
+import { parseWalletAddress } from "../validation/parse.js";
 
 // Reads every registry role an address currently holds.
 export async function readRoles(address) {
@@ -11,8 +11,8 @@ export async function readRoles(address) {
   return names.filter((_, index) => results[index]);
 }
 
-export async function getParticipantRoles(address) {
-  if (!isAddress(address)) throw badRequest("invalid address");
+export async function getParticipantRoles(rawAddress) {
+  const address = parseWalletAddress(rawAddress);
 
   try {
     return { address, roles: await readRoles(address) };

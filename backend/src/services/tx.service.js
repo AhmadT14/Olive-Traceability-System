@@ -1,8 +1,9 @@
 import { decodeTx } from "../chain/reader.js";
-import { badRequest, internalError, notFound } from "../errors.js";
+import { internalError, notFound } from "../errors.js";
+import { parseTxHash } from "../validation/parse.js";
 
-export async function decodeTransaction(hash) {
-  if (!/^0x[0-9a-fA-F]{64}$/.test(hash)) throw badRequest("invalid tx hash");
+export async function decodeTransaction(rawHash) {
+  const hash = parseTxHash(rawHash);
 
   let result;
   try {

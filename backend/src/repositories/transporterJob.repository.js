@@ -39,7 +39,10 @@ export function findPendingHandoverForDestination(
 
 export function findClaimedForTransporter(batchId, transporter, exec = db) {
   return exec
-    .select({ id: transporterJobs.id, destinationParty: transporterJobs.destinationParty })
+    .select({
+      id: transporterJobs.id,
+      destinationParty: transporterJobs.destinationParty,
+    })
     .from(transporterJobs)
     .where(
       and(

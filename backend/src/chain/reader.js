@@ -59,7 +59,9 @@ export async function decodeRegistryTx(txHash) {
   if (!receipt) return null;
 
   const events = receipt.logs
-    .filter((log) => log.address.toLowerCase() === registry.target.toLowerCase())
+    .filter(
+      (log) => log.address.toLowerCase() === registry.target.toLowerCase(),
+    )
     .map((log) => {
       const parsed = registry.interface.parseLog(log);
       return parsed && { name: parsed.name, args: parsed.args };

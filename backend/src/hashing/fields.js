@@ -133,5 +133,4 @@ export const HASH_FIELDS = {
     "product_condition",
     "notes",
   ],
-
 };

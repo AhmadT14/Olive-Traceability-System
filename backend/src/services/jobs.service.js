@@ -36,9 +36,13 @@ export async function listAvailableJobs(user) {
     if (jobs.length === 0) return { jobs: [] };
 
     const addresses = [
-      ...new Set(jobs.flatMap((job) => [job.sourceParty, job.destinationParty])),
+      ...new Set(
+        jobs.flatMap((job) => [job.sourceParty, job.destinationParty]),
+      ),
     ];
-    const listingTxHashes = jobs.map((job) => job.listingTxHash).filter(Boolean);
+    const listingTxHashes = jobs
+      .map((job) => job.listingTxHash)
+      .filter(Boolean);
 
     const [directory, chainBatches, outgoingRecords, chainRoles] =
       await Promise.all([
@@ -86,7 +90,8 @@ export async function listAvailableJobs(user) {
 
       const source = byAddress.get(job.sourceParty.toLowerCase());
       const destination = byAddress.get(job.destinationParty.toLowerCase());
-      const sourceRoles = rolesByAddress.get(job.sourceParty.toLowerCase()) ?? [];
+      const sourceRoles =
+        rolesByAddress.get(job.sourceParty.toLowerCase()) ?? [];
       const destinationRoles =
         rolesByAddress.get(job.destinationParty.toLowerCase()) ?? [];
 

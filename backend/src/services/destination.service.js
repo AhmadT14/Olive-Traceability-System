@@ -2,19 +2,17 @@ import { getBatch, hasRole } from "../chain/reader.js";
 import { getNextStageRole } from "../chain/checks.js";
 import {
   AppError,
-  badRequest,
   conflict,
   forbidden,
   internalError,
   notFound,
 } from "../errors.js";
 import * as participantRepository from "../repositories/participant.repository.js";
-import { parseBatchId } from "../validation/parse.js";
+import { parseBatchId, parseDestinationRole } from "../validation/parse.js";
 
 // Used on the farmer's create-batch form before a batch exists on chain.
 export async function listDestinationsForRole(rawRole) {
-  const role = typeof rawRole === "string" ? rawRole.toUpperCase() : "";
-  if (role !== "MILL") throw badRequest("role must be MILL");
+  const role = parseDestinationRole(rawRole);
 
   try {
     const candidates = await participantRepository.listWithNames();

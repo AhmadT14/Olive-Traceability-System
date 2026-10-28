@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { addressSchema, batchIdSchema, quantitySchema } from "./common.schemas.js";
+import {
+  addressSchema,
+  batchIdSchema,
+  quantitySchema,
+} from "./common.schemas.js";
 
 const destination = {
   batchId: batchIdSchema,

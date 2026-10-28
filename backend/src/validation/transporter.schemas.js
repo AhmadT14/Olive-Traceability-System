@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { addressSchema, batchIdSchema, quantitySchema, txHashSchema } from "./common.schemas.js";
+import {
+  addressSchema,
+  batchIdSchema,
+  quantitySchema,
+  txHashSchema,
+} from "./common.schemas.js";
 
 const pickupFields = {
   truck_details: z.string().optional(),
@@ -42,8 +47,12 @@ export const oilDeliverySchema = z.object({
   packaging_condition: z.string().optional(),
 });
 
-export const prepareOlivePickupSchema = olivePickupSchema.extend({ batchId: batchIdSchema });
-export const prepareOilPickupSchema = oilPickupSchema.extend({ batchId: batchIdSchema });
+export const prepareOlivePickupSchema = olivePickupSchema.extend({
+  batchId: batchIdSchema,
+});
+export const prepareOilPickupSchema = oilPickupSchema.extend({
+  batchId: batchIdSchema,
+});
 export const prepareOliveDeliverySchema = oliveDeliverySchema.extend({
   batchId: batchIdSchema,
   targetAddress: addressSchema,

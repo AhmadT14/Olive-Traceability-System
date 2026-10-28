@@ -14,7 +14,7 @@ import {
 import * as batchEventRepository from "../repositories/batchEvent.repository.js";
 import * as transporterJobRepository from "../repositories/transporterJob.repository.js";
 import { runInTransaction } from "../repositories/unitOfWork.js";
-import { parseBatchId, parseOrThrow } from "../validation/parse.js";
+import { parseBatchId, parseBody } from "../validation/parse.js";
 import {
   oilDeliverySchema,
   oilPickupSchema,
@@ -48,7 +48,7 @@ export async function claimBatch(user, rawBatchId, body) {
   }
 
   const schema = productType === "olive" ? olivePickupSchema : oilPickupSchema;
-  const { txHash, ...record } = parseOrThrow(schema, body);
+  const { txHash, ...record } = parseBody(schema, body);
   const hashStage = `transporter_${productType}`;
 
   try {
@@ -58,7 +58,9 @@ export async function claimBatch(user, rawBatchId, body) {
       throw conflict("record does not match the on-chain hash");
     }
     if (err instanceof EventNotFoundError) {
-      throw notFound("tx not found or has no BatchClaimed event for this batch");
+      throw notFound(
+        "tx not found or has no BatchClaimed event for this batch",
+      );
     }
     throw internalError("chain read failed", err);
   }
@@ -144,7 +146,7 @@ export async function handoverBatch(user, rawBatchId, body) {
 
   const schema =
     productType === "olive" ? oliveDeliverySchema : oilDeliverySchema;
-  const { txHash, ...record } = parseOrThrow(schema, body);
+  const { txHash, ...record } = parseBody(schema, body);
   const hashStage = `transporter_${productType}_outgoing`;
 
   try {
@@ -172,9 +174,7 @@ export async function handoverBatch(user, rawBatchId, body) {
           batch.pendingTarget.toLowerCase(),
     );
     if (!handover) {
-      throw conflict(
-        "handover event does not match caller and pending target",
-      );
+      throw conflict("handover event does not match caller and pending target");
     }
 
     const job = await transporterJobRepository.findClaimedForHandover(

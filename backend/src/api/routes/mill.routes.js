@@ -4,6 +4,7 @@ import {
   recordMillIntake,
   recordMillOutgoing,
 } from "../../services/batch.service.js";
+import { writeAckSchema } from "../../validation/response.schemas.js";
 import { handle } from "../response.js";
 
 const router = Router();
@@ -11,19 +12,25 @@ const router = Router();
 router.post(
   "/batches/:id/mill-intake",
   requireAuth,
-  handle(async (req) => ({
-    status: 201,
-    body: await recordMillIntake(req.user, req.params.id, req.body),
-  })),
+  handle(
+    async (req) => ({
+      status: 201,
+      body: await recordMillIntake(req.user, req.params.id, req.body),
+    }),
+    writeAckSchema,
+  ),
 );
 
 router.post(
   "/batches/:id/mill-outgoing",
   requireAuth,
-  handle(async (req) => ({
-    status: 201,
-    body: await recordMillOutgoing(req.user, req.params.id, req.body),
-  })),
+  handle(
+    async (req) => ({
+      status: 201,
+      body: await recordMillOutgoing(req.user, req.params.id, req.body),
+    }),
+    writeAckSchema,
+  ),
 );
 
 export default router;

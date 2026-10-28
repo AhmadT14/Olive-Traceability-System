@@ -7,7 +7,10 @@ import { computeDataHash, normalize } from "../src/hashing/hash.js";
 test("normalize handles empty values and trimmed strings", () => {
   assert.equal(normalize("notes", undefined), null);
   assert.equal(normalize("notes", null), null);
-  assert.equal(normalize("notes", "  harvested by hand  "), "harvested by hand");
+  assert.equal(
+    normalize("notes", "  harvested by hand  "),
+    "harvested by hand",
+  );
   assert.equal(normalize("notes", "   "), null);
 });
 
@@ -18,7 +21,10 @@ test("normalize formats decimal fields to two places", () => {
 });
 
 test("normalize formats dates as ISO calendar dates", () => {
-  assert.equal(normalize("harvest_date", new Date("2024-03-10T18:45:00.000Z")), "2024-03-10");
+  assert.equal(
+    normalize("harvest_date", new Date("2024-03-10T18:45:00.000Z")),
+    "2024-03-10",
+  );
   assert.equal(normalize("harvest_date", "  2024-03-10  "), "2024-03-10");
 });
 
@@ -65,16 +71,26 @@ test("computeDataHash hashes the selected fields in their declared order", () =>
 });
 
 test("computeDataHash ignores fields outside the event field list", () => {
-  const baseline = Object.fromEntries(HASH_FIELDS.farm.map((field) => [field, "value"]));
+  const baseline = Object.fromEntries(
+    HASH_FIELDS.farm.map((field) => [field, "value"]),
+  );
   const withExtra = { ...baseline, unrelated: "extra" };
 
-  assert.equal(computeDataHash("farm", "batch-123", baseline), computeDataHash("farm", "batch-123", withExtra));
+  assert.equal(
+    computeDataHash("farm", "batch-123", baseline),
+    computeDataHash("farm", "batch-123", withExtra),
+  );
 });
 
 test("computeDataHash changes when a selected field or batch ID changes", () => {
-  const row = Object.fromEntries(HASH_FIELDS.farm.map((field) => [field, "value"]));
+  const row = Object.fromEntries(
+    HASH_FIELDS.farm.map((field) => [field, "value"]),
+  );
 
-  assert.notEqual(computeDataHash("farm", "batch-123", row), computeDataHash("farm", "batch-456", row));
+  assert.notEqual(
+    computeDataHash("farm", "batch-123", row),
+    computeDataHash("farm", "batch-456", row),
+  );
   assert.notEqual(
     computeDataHash("farm", "batch-123", row),
     computeDataHash("farm", "batch-123", { ...row, location: "different" }),
@@ -82,5 +98,8 @@ test("computeDataHash changes when a selected field or batch ID changes", () => 
 });
 
 test("computeDataHash rejects unknown event types", () => {
-  assert.throws(() => computeDataHash("unknown", "batch-123", {}), /Unknown hash event type: unknown/);
+  assert.throws(
+    () => computeDataHash("unknown", "batch-123", {}),
+    /Unknown hash event type: unknown/,
+  );
 });

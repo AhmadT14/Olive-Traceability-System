@@ -29,10 +29,7 @@ import {
   millListingSchema,
   storageListingSchema,
 } from "../validation/listing.schemas.js";
-import {
-  parseBatchIdFromBody,
-  parseOrThrow,
-} from "../validation/parse.js";
+import { parseBatchIdFromBody, parseBody } from "../validation/parse.js";
 import { receiptSchemas } from "../validation/receipt.schemas.js";
 import {
   prepareOilDeliverySchema,
@@ -93,7 +90,7 @@ export async function prepareBatch(user, body) {
     batchId,
     destinationAddress: rawDestinationAddress,
     ...record
-  } = parseOrThrow(farmPreparationSchema, body);
+  } = parseBody(farmPreparationSchema, body);
   const destinationAddress = rawDestinationAddress.toLowerCase();
 
   try {
@@ -164,7 +161,7 @@ async function prepareStageListing(user, body, spec) {
     batchId,
     destinationAddress: rawDestinationAddress,
     ...record
-  } = parseOrThrow(spec.schema, body);
+  } = parseBody(spec.schema, body);
   const destinationAddress = rawDestinationAddress.toLowerCase();
 
   try {
@@ -237,17 +234,18 @@ export async function prepareClaim(user, body) {
     const check = checkCanClaimBatch({ batch, role: "TRANSPORTER" });
     if (!check.allowed) throw conflict(check.reason);
 
-    const availableJob = await transporterJobRepository.findAvailableByBatch(
-      batchId,
-    );
+    const availableJob =
+      await transporterJobRepository.findAvailableByBatch(batchId);
     if (availableJob.length === 0) {
       throw conflict("no available transporter job for this batch");
     }
 
     const productType = batch.stage === "Farm" ? "olive" : "oil";
     const schema =
-      productType === "olive" ? prepareOlivePickupSchema : prepareOilPickupSchema;
-    const parsed = parseOrThrow(schema, body);
+      productType === "olive"
+        ? prepareOlivePickupSchema
+        : prepareOilPickupSchema;
+    const parsed = parseBody(schema, body);
 
     const { batchId: _batchId, ...record } = parsed;
     const dataHash = computeRecordHash(`transporter_${productType}`, record);
@@ -296,7 +294,7 @@ export async function prepareHandover(user, body) {
       batch.stage === "Farm"
         ? prepareOliveDeliverySchema
         : prepareOilDeliverySchema;
-    const parsed = parseOrThrow(schema, body);
+    const parsed = parseBody(schema, body);
     const { targetAddress, batchId: _batchId, ...record } = parsed;
 
     const [job, targetHasNextRole] = await Promise.all([
@@ -355,9 +353,7 @@ export async function prepareReceipt(user, body) {
 
     const receipt = receiptSchemas[batch.stage];
     if (!receipt) {
-      throw conflict(
-        `receipt schema is not defined for stage ${batch.stage}`,
-      );
+      throw conflict(`receipt schema is not defined for stage ${batch.stage}`);
     }
 
     const expectedRole = getNextStageRole(batch.stage);
@@ -371,7 +367,7 @@ export async function prepareReceipt(user, body) {
     const check = checkCanConfirmReceipt({ batch, actor: user.address });
     if (!check.allowed) throw conflict(check.reason);
 
-    const parsed = parseOrThrow(
+    const parsed = parseBody(
       receipt.schema.extend({ batchId: batchIdSchema }),
       body,
     );

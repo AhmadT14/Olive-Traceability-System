@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { addressSchema, batchIdSchema, quantitySchema, txHashSchema } from "./common.schemas.js";
+import {
+  addressSchema,
+  batchIdSchema,
+  quantitySchema,
+  txHashSchema,
+} from "./common.schemas.js";
 
 export const createBatchSchema = z.object({
   txHash: txHashSchema,

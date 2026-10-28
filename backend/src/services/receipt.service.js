@@ -1,7 +1,6 @@
 import { decodeTx, getBatch, hasRole } from "../chain/reader.js";
 import {
   AppError,
-  badRequest,
   conflict,
   forbidden,
   internalError,
@@ -15,16 +14,12 @@ import {
 import * as batchEventRepository from "../repositories/batchEvent.repository.js";
 import * as transporterJobRepository from "../repositories/transporterJob.repository.js";
 import { runInTransaction } from "../repositories/unitOfWork.js";
-import { parseBatchId, parseOrThrow } from "../validation/parse.js";
+import { parseBatchId, parseBody, parseTxHash } from "../validation/parse.js";
 import { receiptSchemas } from "../validation/receipt.schemas.js";
 
 export async function recordReceipt(user, rawBatchId, body) {
   const batchId = parseBatchId(rawBatchId);
-
-  const txHash = body?.txHash;
-  if (typeof txHash !== "string" || !/^0x[0-9a-fA-F]{64}$/.test(txHash)) {
-    throw badRequest("invalid tx hash");
-  }
+  const txHash = parseTxHash(body?.txHash);
 
   let definition;
   try {
@@ -51,7 +46,7 @@ export async function recordReceipt(user, rawBatchId, body) {
     throw internalError("chain read failed", err);
   }
 
-  const record = parseOrThrow(definition.schema, body);
+  const record = parseBody(definition.schema, body);
 
   try {
     await verifyRecordAgainstChain(
@@ -83,10 +78,11 @@ export async function recordReceipt(user, rawBatchId, body) {
       throw conflict("receipt event was not submitted by caller");
     }
 
-    const jobs = await transporterJobRepository.findPendingHandoverForDestination(
-      batchId,
-      user.address.toLowerCase(),
-    );
+    const jobs =
+      await transporterJobRepository.findPendingHandoverForDestination(
+        batchId,
+        user.address.toLowerCase(),
+      );
     if (jobs.length === 0) {
       throw conflict("no transporter handover is pending for this batch");
     }

@@ -1,9 +1,13 @@
 import { internalError } from "../errors.js";
+import { parseResponse } from "../validation/parse.js";
 import { sendError } from "./errorHandler.js";
 
 // Adapter for Express handlers. The callback returns `{ status, body }`;
 // services throw AppError, which is mapped to the matching HTTP response.
-export function handle(fn) {
+//
+// An optional response schema validates the outgoing body. A mismatch is a
+// backend bug and becomes a logged 500 rather than an unexpected payload.
+export function handle(fn, responseSchema) {
   return async (req, res) => {
     try {
       const result = await fn(req, res);
@@ -18,6 +22,10 @@ export function handle(fn) {
             `handler for ${req.method} ${req.originalUrl} returned no body`,
           ),
         );
+      }
+
+      if (responseSchema) {
+        parseResponse(responseSchema, body, `${req.method} ${req.originalUrl}`);
       }
 
       return res.status(status).json(body);

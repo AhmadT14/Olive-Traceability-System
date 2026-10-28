@@ -36,9 +36,34 @@ export const retailerReceiptSchema = z.object({
 });
 
 export const receiptSchemas = {
-  Farm: { hashStage: "mill_olive", role: "MILL", detailsType: "mill_intake", schema: millReceiptSchema },
-  Storage: { hashStage: "storage", role: "STORAGE", detailsType: "storage_intake", schema: storageReceiptSchema },
-  Exporter: { hashStage: "exporter_intake", role: "EXPORTER", detailsType: "exporter_intake", schema: exporterReceiptSchema },
-  Importer: { hashStage: "import", role: "IMPORTER", detailsType: "importer_intake", schema: importerReceiptSchema },
-  Retailer: { hashStage: "retail", role: "RETAILER", detailsType: "retailer_intake", schema: retailerReceiptSchema },
+  Farm: {
+    hashStage: "mill_olive",
+    role: "MILL",
+    detailsType: "mill_intake",
+    schema: millReceiptSchema,
+  },
+  Storage: {
+    hashStage: "storage",
+    role: "STORAGE",
+    detailsType: "storage_intake",
+    schema: storageReceiptSchema,
+  },
+  Exporter: {
+    hashStage: "exporter_intake",
+    role: "EXPORTER",
+    detailsType: "exporter_intake",
+    schema: exporterReceiptSchema,
+  },
+  Importer: {
+    hashStage: "import",
+    role: "IMPORTER",
+    detailsType: "importer_intake",
+    schema: importerReceiptSchema,
+  },
+  Retailer: {
+    hashStage: "retail",
+    role: "RETAILER",
+    detailsType: "retailer_intake",
+    schema: retailerReceiptSchema,
+  },
 };

@@ -12,7 +12,7 @@ Protected routes require a JWT in the header:
 Authorization: Bearer <token>
 ```
 
-The API returns JSON. Common errors include `400` for invalid input, `401` for missing or invalid authentication, `403` for a role or caller permission failure, `404` for a missing chain record, `409` for a conflict with the current workflow state, and `500` for a chain or database failure. Validation errors include `details` from Zod.
+The API returns JSON. Errors always use the same envelope: `{ "error": "<message>" }`, plus `details` (Zod's `flatten()` output) when a request field failed validation. Status codes are `400` for a malformed request (invalid JSON, unknown path, bad path/query parameter, or a missing body), `422` for a well-formed JSON body that fails its field schema, `401` for missing or invalid authentication, `403` for a role or caller permission failure, `404` for a missing chain record, `409` for a conflict with the current workflow state, and `500` for a chain or database failure. Responses are also validated against a schema before they are sent; a mismatch is a server bug and returns a generic `500`.
 
 ## Authentication
 

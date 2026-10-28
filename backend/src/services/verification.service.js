@@ -61,7 +61,10 @@ async function verifyEvent(batchId, event) {
     return { status: "unverifiable", reason: "unsupported payload version" };
   }
   if (event.contractEvent !== expected.contractEvent) {
-    return { status: "metadata_mismatch", expectedEvent: expected.contractEvent };
+    return {
+      status: "metadata_mismatch",
+      expectedEvent: expected.contractEvent,
+    };
   }
 
   try {

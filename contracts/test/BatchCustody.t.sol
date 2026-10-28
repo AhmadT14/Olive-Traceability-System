@@ -43,12 +43,8 @@ contract BatchCustodyTest is Test {
         vm.prank(farmer);
         custody.createBatch("BATCH-001", mill, harvestHash);
 
-        (
-            BatchCustody.Status status,
-            BatchCustody.Stage stage,
-            address custodian,
-            address pendingTarget
-        ) = custody.batches("BATCH-001");
+        (BatchCustody.Status status, BatchCustody.Stage stage, address custodian, address pendingTarget) =
+            custody.batches("BATCH-001");
 
         assertEq(uint8(status), uint8(BatchCustody.Status.Listed));
         assertEq(uint8(stage), uint8(BatchCustody.Stage.Farm));
@@ -100,12 +96,8 @@ contract BatchCustodyTest is Test {
         vm.prank(mill);
         custody.postForPickup("BATCH-001", storageFacility, outgoingHash);
 
-        (
-            BatchCustody.Status status,
-            BatchCustody.Stage stage,
-            address custodianAddr,
-            address pendingTarget
-        ) = custody.batches("BATCH-001");
+        (BatchCustody.Status status, BatchCustody.Stage stage, address custodianAddr, address pendingTarget) =
+            custody.batches("BATCH-001");
 
         assertEq(uint8(status), uint8(BatchCustody.Status.Listed));
         assertEq(uint8(stage), uint8(BatchCustody.Stage.Mill));
@@ -259,12 +251,8 @@ contract BatchCustodyTest is Test {
         vm.prank(transporter1);
         custody.claimBatch("BATCH-001", h);
 
-        (
-            BatchCustody.Status status,
-            BatchCustody.Stage stage,
-            address custodianAddr,
-            address pendingTarget
-        ) = custody.batches("BATCH-001");
+        (BatchCustody.Status status, BatchCustody.Stage stage, address custodianAddr, address pendingTarget) =
+            custody.batches("BATCH-001");
 
         assertEq(uint8(status), uint8(BatchCustody.Status.Created));
         assertEq(uint8(stage), uint8(BatchCustody.Stage.Farm));
@@ -322,12 +310,8 @@ contract BatchCustodyTest is Test {
         vm.prank(transporter1);
         custody.initiateHandover("BATCH-001", mill, h);
 
-        (
-            BatchCustody.Status status,
-            BatchCustody.Stage stage,
-            address custodianAddr,
-            address pendingTarget
-        ) = custody.batches("BATCH-001");
+        (BatchCustody.Status status, BatchCustody.Stage stage, address custodianAddr, address pendingTarget) =
+            custody.batches("BATCH-001");
 
         assertEq(uint8(status), uint8(BatchCustody.Status.PendingHandover));
         assertEq(uint8(stage), uint8(BatchCustody.Stage.Farm));
@@ -441,12 +425,8 @@ contract BatchCustodyTest is Test {
         vm.prank(mill);
         custody.confirmReceipt("BATCH-001", h);
 
-        (
-            BatchCustody.Status status,
-            BatchCustody.Stage stage,
-            address custodianAddr,
-            address pendingTarget
-        ) = custody.batches("BATCH-001");
+        (BatchCustody.Status status, BatchCustody.Stage stage, address custodianAddr, address pendingTarget) =
+            custody.batches("BATCH-001");
 
         assertEq(uint8(status), uint8(BatchCustody.Status.Created));
         assertEq(uint8(stage), uint8(BatchCustody.Stage.Mill));
@@ -494,12 +474,7 @@ contract BatchCustodyTest is Test {
         vm.prank(mill);
         custody.confirmReceipt("BATCH-001", h);
 
-        (
-            ,
-            BatchCustody.Stage stageAfterMill,
-            address custodianAfterMill,
-
-        ) = custody.batches("BATCH-001");
+        (, BatchCustody.Stage stageAfterMill, address custodianAfterMill,) = custody.batches("BATCH-001");
         assertEq(uint8(stageAfterMill), uint8(BatchCustody.Stage.Mill));
         assertEq(custodianAfterMill, mill);
 
@@ -512,12 +487,7 @@ contract BatchCustodyTest is Test {
         vm.prank(storageFacility);
         custody.confirmReceipt("BATCH-001", h);
 
-        (
-            ,
-            BatchCustody.Stage stageAfterStorage,
-            address custodianAfterStorage,
-
-        ) = custody.batches("BATCH-001");
+        (, BatchCustody.Stage stageAfterStorage, address custodianAfterStorage,) = custody.batches("BATCH-001");
         assertEq(uint8(stageAfterStorage), uint8(BatchCustody.Stage.Storage));
         assertEq(custodianAfterStorage, storageFacility);
 
@@ -530,12 +500,7 @@ contract BatchCustodyTest is Test {
         vm.prank(exporter);
         custody.confirmReceipt("BATCH-001", h);
 
-        (
-            ,
-            BatchCustody.Stage stageAfterExporter,
-            address custodianAfterExporter,
-
-        ) = custody.batches("BATCH-001");
+        (, BatchCustody.Stage stageAfterExporter, address custodianAfterExporter,) = custody.batches("BATCH-001");
         assertEq(uint8(stageAfterExporter), uint8(BatchCustody.Stage.Exporter));
         assertEq(custodianAfterExporter, exporter);
     }

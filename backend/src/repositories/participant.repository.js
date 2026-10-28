@@ -51,11 +51,8 @@ export function insertIgnore(walletAddress, exec = db) {
 }
 
 export function upsertProfile(values, updates, exec = db) {
-  return exec
-    .insert(participantProfiles)
-    .values(values)
-    .onConflictDoUpdate({
-      target: participantProfiles.walletAddress,
-      set: updates,
-    });
+  return exec.insert(participantProfiles).values(values).onConflictDoUpdate({
+    target: participantProfiles.walletAddress,
+    set: updates,
+  });
 }

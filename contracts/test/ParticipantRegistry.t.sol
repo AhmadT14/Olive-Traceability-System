@@ -60,9 +60,7 @@ contract ParticipantRegistryTest is Test {
         bytes32 adminRole = registry.DEFAULT_ADMIN_ROLE();
 
         vm.prank(admin);
-        vm.expectRevert(
-            "ParticipantRegistry: cannot assign admin role via registration"
-        );
+        vm.expectRevert("ParticipantRegistry: cannot assign admin role via registration");
         registry.registerParticipant(farmer, adminRole);
     }
 
@@ -70,9 +68,7 @@ contract ParticipantRegistryTest is Test {
         bytes32 adminRole = registry.DEFAULT_ADMIN_ROLE();
 
         vm.prank(admin);
-        vm.expectRevert(
-            "ParticipantRegistry: cannot revoke admin role via this function"
-        );
+        vm.expectRevert("ParticipantRegistry: cannot revoke admin role via this function");
         registry.revokeParticipant(admin, adminRole);
     }
 

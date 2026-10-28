@@ -25,12 +25,12 @@ import {
   millListingSchema,
   storageListingSchema,
 } from "../validation/listing.schemas.js";
-import { parseBatchId, parseOrThrow } from "../validation/parse.js";
+import { parseBatchId, parseBody } from "../validation/parse.js";
 import { millReceiptSchema } from "../validation/receipt.schemas.js";
 
 // Field names deliberately match HASH_FIELDS.* (snake_case) rather than the
 // camelCase Drizzle column names, because this payload is passed straight into
-// computeRecordHash — keeping the keys identical avoids a mapping that could
+// computeRecordHash â€” keeping the keys identical avoids a mapping that could
 // drift out of sync with fields.js.
 
 // Matches HASH_FIELDS.mill_olive exactly.
@@ -80,7 +80,7 @@ const LISTINGS = {
 };
 
 export async function recordFarmBatch(user, body) {
-  const { txHash, batchId, ...record } = parseOrThrow(createBatchSchema, body);
+  const { txHash, batchId, ...record } = parseBody(createBatchSchema, body);
 
   let destinationParty;
   try {
@@ -164,7 +164,7 @@ export async function recordFarmBatch(user, body) {
 
 export async function recordMillIntake(user, rawBatchId, body) {
   const batchId = parseBatchId(rawBatchId);
-  const { txHash, ...record } = parseOrThrow(millIntakeSchema, body);
+  const { txHash, ...record } = parseBody(millIntakeSchema, body);
 
   try {
     const [mill, batch] = await Promise.all([
@@ -217,10 +217,11 @@ export async function recordMillIntake(user, rawBatchId, body) {
       throw conflict("receipt event was not submitted by caller");
     }
 
-    const jobs = await transporterJobRepository.findPendingHandoverForDestination(
-      batchId,
-      user.address.toLowerCase(),
-    );
+    const jobs =
+      await transporterJobRepository.findPendingHandoverForDestination(
+        batchId,
+        user.address.toLowerCase(),
+      );
     if (jobs.length === 0) {
       throw conflict("no transporter handover is pending for this batch");
     }
@@ -256,7 +257,7 @@ export async function recordMillIntake(user, rawBatchId, body) {
 
 export async function recordMillOutgoing(user, rawBatchId, body) {
   const batchId = parseBatchId(rawBatchId);
-  const { txHash, ...record } = parseOrThrow(millOutgoingSchema, body);
+  const { txHash, ...record } = parseBody(millOutgoingSchema, body);
 
   try {
     const [mill, batch] = await Promise.all([
@@ -371,7 +372,7 @@ export function recordImporterOutgoing(user, rawBatchId, body) {
 
 async function recordStageListing(user, rawBatchId, body, spec) {
   const batchId = parseBatchId(rawBatchId);
-  const { txHash, ...record } = parseOrThrow(spec.schema, body);
+  const { txHash, ...record } = parseBody(spec.schema, body);
 
   try {
     const [hasStageRole, batch] = await Promise.all([

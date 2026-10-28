@@ -9,10 +9,12 @@ contract ParticipantRegistry is AccessControl, IParticipantRegistry {
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
     }
 
-    function hasRole(
-        bytes32 role,
-        address account
-    ) public view override(AccessControl, IParticipantRegistry) returns (bool) {
+    function hasRole(bytes32 role, address account)
+        public
+        view
+        override(AccessControl, IParticipantRegistry)
+        returns (bool)
+    {
         return super.hasRole(role, account);
     }
 
@@ -24,25 +26,13 @@ contract ParticipantRegistry is AccessControl, IParticipantRegistry {
     bytes32 public constant IMPORTER_ROLE = keccak256("IMPORTER_ROLE");
     bytes32 public constant RETAILER_ROLE = keccak256("RETAILER_ROLE");
 
-    function registerParticipant(
-        address wallet,
-        bytes32 role
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(
-            role != DEFAULT_ADMIN_ROLE,
-            "ParticipantRegistry: cannot assign admin role via registration"
-        );
+    function registerParticipant(address wallet, bytes32 role) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(role != DEFAULT_ADMIN_ROLE, "ParticipantRegistry: cannot assign admin role via registration");
         _grantRole(role, wallet);
     }
 
-    function revokeParticipant(
-        address wallet,
-        bytes32 role
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(
-            role != DEFAULT_ADMIN_ROLE,
-            "ParticipantRegistry: cannot revoke admin role via this function"
-        );
+    function revokeParticipant(address wallet, bytes32 role) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(role != DEFAULT_ADMIN_ROLE, "ParticipantRegistry: cannot revoke admin role via this function");
         _revokeRole(role, wallet);
     }
 }

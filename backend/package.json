@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "node src/app.js",
     "sync:abis": "node scripts/sync-abis.js ../contracts/out",
-    "test": "node --test"
+    "test": "node --test",
+    "format": "prettier --write \"src/**/*.js\" \"test/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.js\" \"test/**/*.js\"",
+    "lint": "npm run format:check"
   },
   "keywords": [],
   "author": "",

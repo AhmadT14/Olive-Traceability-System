@@ -4,6 +4,10 @@ import {
   listBatchDestinations,
   listDestinationsForRole,
 } from "../../services/destination.service.js";
+import {
+  batchDestinationsResponseSchema,
+  destinationsResponseSchema,
+} from "../../validation/response.schemas.js";
 import { handle } from "../response.js";
 
 const router = Router();
@@ -12,19 +16,25 @@ const router = Router();
 router.get(
   "/destinations",
   requireAuth,
-  handle(async (req) => ({
-    status: 200,
-    body: await listDestinationsForRole(req.query.role),
-  })),
+  handle(
+    async (req) => ({
+      status: 200,
+      body: await listDestinationsForRole(req.query.role),
+    }),
+    destinationsResponseSchema,
+  ),
 );
 
 router.get(
   "/batches/:id/destinations",
   requireAuth,
-  handle(async (req) => ({
-    status: 200,
-    body: await listBatchDestinations(req.user, req.params.id),
-  })),
+  handle(
+    async (req) => ({
+      status: 200,
+      body: await listBatchDestinations(req.user, req.params.id),
+    }),
+    batchDestinationsResponseSchema,
+  ),
 );
 
 export default router;

@@ -51,7 +51,8 @@ export const profileSchema = z.object({
 
 export const validateProfileDetails = (role, details) => {
   const schema = profileDetailsSchemas[role];
-  if (!schema) throw new Error(`No profile schema registered for role "${role}"`);
+  if (!schema)
+    throw new Error(`No profile schema registered for role "${role}"`);
   return schema.parse(details ?? {});
 };
 
