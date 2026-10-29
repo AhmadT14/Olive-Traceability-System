@@ -10,14 +10,11 @@ import {
 import { CHAIN_ID } from "../../../api";
 import Badge from "../../../components/Badge";
 import Button from "../../../components/Button";
+import { shortAddress } from "../../../utils/format";
 import "./style.css";
 
 function linkClass({ isActive }) {
   return `app-shell__link${isActive ? " app-shell__link--active" : ""}`;
-}
-
-function shortAddress(address) {
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
 export default function AppShell() {

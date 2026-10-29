@@ -21,6 +21,8 @@ export const ROLE_NAV = {
   farmer: [
     { path: "/farmer", label: "Overview" },
     { path: "/farmer/batches/new", label: "Create batch" },
+    // Temporary Phase 2 test page, removed in Phase 4.
+    { path: "/dev/create-batch", label: "Test: create batch" },
   ],
   transporter: [
     { path: "/transporter/jobs", label: "Job board" },
@@ -41,4 +43,7 @@ export const ROLE_HOME = Object.fromEntries(
 );
 
 // Links every signed in role sees under its own links.
-export const SHARED_NAV = [{ path: "/settings", label: "Settings" }];
+export const SHARED_NAV = [
+  { path: "/batches", label: "Find a batch" },
+  { path: "/settings", label: "Settings" },
+];

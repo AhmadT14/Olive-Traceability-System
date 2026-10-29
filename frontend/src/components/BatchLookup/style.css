@@ -1,0 +1,13 @@
+.batch-lookup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.batch-lookup .field {
+  flex: 1 1 220px;
+  margin-bottom: 0;
+}
+.batch-lookup .button {
+  margin-top: 1.6rem;
+}

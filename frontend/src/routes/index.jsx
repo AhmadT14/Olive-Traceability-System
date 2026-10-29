@@ -8,6 +8,20 @@ import NoRole from "../features/public/NoRole";
 import NotFound from "../features/public/NotFound";
 import AppShell from "../features/shell/AppShell";
 import RolePlaceholder from "../features/shell/RolePlaceholder";
+import FindBatch from "../features/batch/FindBatch";
+import BatchDetail from "../features/batch/BatchDetail";
+import CreateBatchTest from "../features/dev/CreateBatchTest";
+
+// Nav paths that have a real page. The rest show a placeholder.
+const PAGES = {
+  "/batches": FindBatch,
+  "/dev/create-batch": CreateBatchTest,
+};
+
+function page(path, title) {
+  const Page = PAGES[path];
+  return Page ? <Page /> : <RolePlaceholder title={title} />;
+}
 
 function AppHome() {
   const { session } = useAuth();
@@ -37,9 +51,7 @@ export default function AppRoutes() {
               path={link.path}
               element={
                 <RequireRole role={role}>
-                  <RolePlaceholder
-                    title={`${ROLE_LABELS[role]}: ${link.label}`}
-                  />
+                  {page(link.path, `${ROLE_LABELS[role]}: ${link.label}`)}
                 </RequireRole>
               }
             />
@@ -49,9 +61,10 @@ export default function AppRoutes() {
           <Route
             key={link.path}
             path={link.path}
-            element={<RolePlaceholder title={link.label} />}
+            element={page(link.path, link.label)}
           />
         ))}
+        <Route path="/batches/:batchId" element={<BatchDetail />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
