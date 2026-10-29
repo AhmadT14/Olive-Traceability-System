@@ -2,7 +2,7 @@ import IntegrityBadge from "../IntegrityBadge";
 import ParticipantName from "../ParticipantName";
 import TxLink from "../TxLink";
 import Badge from "../Badge";
-import { fieldLabel } from "../../forms/fields";
+import { describeRecord } from "../../forms/fields";
 import { formatDate } from "../../utils/format";
 import "./style.css";
 
@@ -27,15 +27,15 @@ const EVENTS = {
   ReceiptConfirmed: { title: "Receipt confirmed", actor: "newCustodian" },
 };
 
-function Details({ values }) {
-  const entries = Object.entries(values || {});
-  if (entries.length === 0) return null;
+function Details({ details }) {
+  const rows = describeRecord(details.type, details.values || {});
+  if (rows.length === 0) return null;
   return (
     <dl className="timeline__details">
-      {entries.map(([name, value]) => (
-        <div key={name} className="timeline__detail">
-          <dt>{fieldLabel(name)}</dt>
-          <dd>{String(value)}</dd>
+      {rows.map((row) => (
+        <div key={row.name} className="timeline__detail">
+          <dt>{row.label}</dt>
+          <dd>{row.value}</dd>
         </div>
       ))}
     </dl>
@@ -86,7 +86,7 @@ export default function Timeline({ events, verification }) {
                 `, saved ${formatDate(event.details.recordedAt)}`}
               , transaction <TxLink hash={event.txHash} />
             </p>
-            {event.details && <Details values={event.details.values} />}
+            {event.details && <Details details={event.details} />}
           </li>
         );
       })}

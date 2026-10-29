@@ -1,13 +1,52 @@
 .home {
+  min-height: 100vh;
+}
+.home__bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+  background: var(--color-primary-dark);
+}
+.home__brand {
+  color: #fff;
+  font-weight: 700;
+}
+.home__sign-in {
+  color: #fff;
+}
+.home__main {
   max-width: 640px;
-  margin: 0 auto;
-  padding: var(--space-8) var(--space-4);
+  margin-inline: auto;
+  padding-block: var(--space-8);
+  padding-inline: var(--space-4);
 }
 .home__title {
   font-size: var(--text-xl);
   color: var(--color-primary-dark);
+  text-wrap: balance;
 }
-.home__message {
+.home__intro {
+  margin-block-end: var(--space-6);
+}
+.home__search {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.home__hint {
   margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+.home__members {
+  margin-block: var(--space-8) var(--space-2);
+}
+.home__status,
+.home__message {
+  font-size: var(--text-sm);
   color: var(--color-text-muted);
 }

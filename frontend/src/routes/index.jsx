@@ -3,6 +3,7 @@ import { useAuth } from "../auth/useAuth";
 import { ROLE_HOME, ROLE_LABELS, ROLE_NAV, SHARED_NAV } from "../auth/roles";
 import RequireRole from "../auth/RequireRole";
 import Home from "../features/public/Home";
+import Trace from "../features/consumer/Trace";
 import Login from "../features/public/Login";
 import NoRole from "../features/public/NoRole";
 import NotFound from "../features/public/NotFound";
@@ -34,6 +35,8 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/trace" element={<Navigate to="/" replace />} />
+      <Route path="/trace/:batchId" element={<Trace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/no-role" element={<NoRole />} />
       <Route path="/app" element={<AppHome />} />

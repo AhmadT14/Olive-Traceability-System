@@ -141,3 +141,42 @@ export function fieldLabel(name) {
   const words = name.replace(/_/g, " ");
   return words[0].toUpperCase() + words.slice(1);
 }
+
+// Stored details types (history `details.type`) and their form in RECORD_FIELDS.
+const DETAILS_FORM = {
+  farm: "farm",
+  transporter_olive_pickup: "transport_pickup_olive",
+  transporter_oil_pickup: "transport_pickup_oil",
+  transporter_olive_delivery: "transport_delivery_olive",
+  transporter_oil_delivery: "transport_delivery_oil",
+  mill_intake: "mill_receipt",
+  mill_outgoing: "mill_outgoing",
+  storage_intake: "storage_receipt",
+  storage_outgoing: "storage_outgoing",
+  exporter_intake: "exporter_receipt",
+  exporter_outgoing: "exporter_outgoing",
+  importer_intake: "importer_receipt",
+  importer_outgoing: "importer_outgoing",
+  retailer_intake: "retailer_receipt",
+};
+
+// Saved record values as [{ name, label, value }] in form order, with the
+// unit added to quantities. Unknown fields come last.
+export function describeRecord(type, values) {
+  const fields = RECORD_FIELDS[DETAILS_FORM[type]] || [];
+  const known = fields
+    .filter((f) => values[f.name] !== undefined && values[f.name] !== "")
+    .map((f) => ({
+      name: f.name,
+      label: f.label,
+      value: f.unit ? `${values[f.name]} ${f.unit}` : String(values[f.name]),
+    }));
+  const extra = Object.keys(values)
+    .filter((name) => !fields.some((f) => f.name === name))
+    .map((name) => ({
+      name,
+      label: fieldLabel(name),
+      value: String(values[name]),
+    }));
+  return [...known, ...extra];
+}

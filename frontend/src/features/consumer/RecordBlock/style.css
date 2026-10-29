@@ -1,0 +1,57 @@
+.record + .record {
+  margin-block-start: var(--space-4);
+}
+.record__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+.record__check {
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.record__check--good {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.record__check--bad {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+.record__check--neutral {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+.record__list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-2);
+  margin: 0;
+}
+.record__row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 40%) 1fr;
+  gap: var(--space-3);
+}
+.record__row dt {
+  color: var(--color-text-muted);
+}
+.record__row dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.record__empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-style: italic;
+}

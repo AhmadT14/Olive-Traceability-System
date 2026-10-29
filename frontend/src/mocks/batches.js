@@ -1,9 +1,9 @@
 import { ApiError } from "../api/client";
 import { mockCaller, mockRoles } from "./auth";
-import { MOCK_ACCOUNTS } from "./participants";
+import { SEED_BATCHES, TAMPERED_TX } from "./seedBatches";
 
-// A small in-memory chain plus database, reset on page reload. Responses use
-// the shapes from the backend response schemas.
+// A small in-memory chain plus database. Responses use the shapes from the
+// backend response schemas.
 
 const ZERO = "0x0000000000000000000000000000000000000000";
 const CUSTODY_CONTRACT = "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512";
@@ -41,45 +41,46 @@ function canonical(record) {
   );
 }
 
-let block = 10;
-const batches = new Map();
-const prepared = new Map(); // transaction data -> prepared action
-const failedOnce = new Set();
-const canonicalByTx = new Map(); // txHash -> canonical record from prepare
+// Kept in sessionStorage so the mock chain survives a reload, like a real
+// chain does. Close the tab to start again with only the seed batches.
+const STORE_KEY = "olive_mock_chain";
 
-batches.set("B1", {
-  chain: {
-    status: "Listed",
-    stage: "Farm",
-    custodian: MOCK_ACCOUNTS.farmer,
-    pendingTarget: ZERO,
-    destination: MOCK_ACCOUNTS.mill,
-  },
-  events: [
-    {
-      name: "BatchCreated",
-      txHash: randomHash(),
-      blockNumber: 5,
-      args: {
-        batchId: randomHash(),
-        farmer: MOCK_ACCOUNTS.farmer,
-        destinationAddress: MOCK_ACCOUNTS.mill,
-        harvestDataHash: randomHash(),
-      },
-      details: {
-        type: "farm",
-        payloadVersion: 1,
-        recordedAt: "2026-10-20T09:00:00.000Z",
-        values: {
-          harvest_date: "2026-10-20",
-          location: "Jenin",
-          olive_type: "Nabali",
-          quantity: 1500,
-        },
-      },
-    },
-  ],
-});
+function loadStore() {
+  try {
+    return JSON.parse(sessionStorage.getItem(STORE_KEY));
+  } catch {
+    return null;
+  }
+}
+
+const saved = loadStore();
+let block = saved ? saved.block : 10;
+const batches = new Map(saved ? saved.batches : []);
+const prepared = new Map(saved ? saved.prepared : []); // tx data -> action
+const failedOnce = new Set(saved ? saved.failedOnce : []);
+const canonicalByTx = new Map(saved ? saved.canonicalByTx : []); // txHash -> record
+
+function persist() {
+  try {
+    sessionStorage.setItem(
+      STORE_KEY,
+      JSON.stringify({
+        block,
+        batches: [...batches],
+        prepared: [...prepared],
+        failedOnce: [...failedOnce],
+        canonicalByTx: [...canonicalByTx],
+      }),
+    );
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+// Demo batches are added if missing, also on top of a saved mock chain.
+for (const [id, batch] of Object.entries(SEED_BATCHES)) {
+  if (!batches.has(id)) batches.set(id, structuredClone(batch));
+}
 
 function findBatch(batchId, message) {
   const batch = batches.get(batchId);
@@ -99,6 +100,21 @@ export async function historyMock(batchId) {
   return { batchId, events: batch.events };
 }
 
+function integrityOf(event) {
+  const onChainHash =
+    event.args.harvestDataHash ||
+    event.args.outgoingDataHash ||
+    event.args.intakeDataHash;
+  if (TAMPERED_TX.has(event.txHash)) {
+    return {
+      status: "hash_mismatch",
+      onChainHash,
+      computedHash: "0x" + onChainHash.slice(2).split("").reverse().join(""),
+    };
+  }
+  return { status: "verified", onChainHash, computedHash: onChainHash };
+}
+
 export async function verifyMock(batchId) {
   await wait();
   const batch = findBatch(batchId, "batch not found");
@@ -111,17 +127,16 @@ export async function verifyMock(batchId) {
       payloadVersion: e.details.payloadVersion,
       recordedAt: e.details.recordedAt,
       details: e.details.values,
-      integrity: {
-        status: "verified",
-        onChainHash: e.args.harvestDataHash,
-        computedHash: e.args.harvestDataHash,
-      },
+      integrity: integrityOf(e),
     }));
-  return {
-    batch: { batchId, ...batch.chain },
-    integrityStatus: events.length > 0 ? "verified" : "incomplete",
-    events,
-  };
+  const statuses = events.map((e) => e.integrity.status);
+  const integrityStatus =
+    statuses.length > 0 && statuses.every((s) => s === "verified")
+      ? "verified"
+      : statuses.some((s) => s === "hash_mismatch" || s === "metadata_mismatch")
+        ? "mismatch"
+        : "incomplete";
+  return { batch: { batchId, ...batch.chain }, integrityStatus, events };
 }
 
 export async function prepareBatchMock(body) {
@@ -151,6 +166,7 @@ export async function prepareBatchMock(body) {
     destination: destinationAddress.toLowerCase(),
     canonical: canonical(record),
   });
+  persist();
   return {
     batchId,
     destinationAddress,
@@ -195,6 +211,7 @@ export function mineMockTx(transaction) {
     ],
   });
   canonicalByTx.set(txHash, action.canonical);
+  persist();
   return txHash;
 }
 
@@ -211,6 +228,7 @@ export async function saveBatchMock(body) {
   }
   if (record.farm_notes === FAIL_SAVE_ONCE && !failedOnce.has(txHash)) {
     failedOnce.add(txHash);
+    persist();
     throw new ApiError(500, "db write failed");
   }
   if (canonicalByTx.get(txHash) !== canonical(record)) {
@@ -224,5 +242,6 @@ export async function saveBatchMock(body) {
     recordedAt: new Date().toISOString(),
     values: record,
   };
+  persist();
   return { batchId, txHash };
 }
