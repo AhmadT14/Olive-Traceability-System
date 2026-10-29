@@ -1,6 +1,6 @@
 import { request } from "./client";
 import { USE_MOCKS } from "./config";
-import { nonceMock, loginMock } from "../mocks/auth";
+import { nonceMock, loginMock, meMock } from "../mocks/auth";
 
 export async function getNonce(address) {
   if (USE_MOCKS) return nonceMock(address);
@@ -13,4 +13,9 @@ export async function login(address, signature) {
     method: "POST",
     body: { address, signature },
   });
+}
+
+export async function getMe() {
+  if (USE_MOCKS) return meMock();
+  return request("/auth/me", { auth: true });
 }

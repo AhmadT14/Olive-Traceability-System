@@ -1,11 +1,20 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../auth/useAuth";
 import { useWallet } from "../../../wallet/useWallet";
-import { ROLE_HOME, ROLE_LABELS } from "../../../auth/roles";
+import {
+  ROLE_HOME,
+  ROLE_LABELS,
+  ROLE_NAV,
+  SHARED_NAV,
+} from "../../../auth/roles";
 import { CHAIN_ID } from "../../../api";
 import Badge from "../../../components/Badge";
 import Button from "../../../components/Button";
 import "./style.css";
+
+function linkClass({ isActive }) {
+  return `app-shell__link${isActive ? " app-shell__link--active" : ""}`;
+}
 
 function shortAddress(address) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -30,14 +39,11 @@ export default function AppShell() {
       <aside className="app-shell__sidebar">
         <div className="app-shell__brand">Olive Traceability</div>
         <nav className="app-shell__nav">
-          <NavLink
-            to={ROLE_HOME[role]}
-            className={({ isActive }) =>
-              `app-shell__link${isActive ? " app-shell__link--active" : ""}`
-            }
-          >
-            Home
-          </NavLink>
+          {[...ROLE_NAV[role], ...SHARED_NAV].map((link) => (
+            <NavLink key={link.path} to={link.path} end className={linkClass}>
+              {link.label}
+            </NavLink>
+          ))}
         </nav>
       </aside>
       <div className="app-shell__main">
@@ -79,15 +85,15 @@ export default function AppShell() {
         {walletUnavailable && (
           <div className="app-shell__notice" role="alert">
             <span>
-              MetaMask is locked or not connected. You are still signed in,
-              but you need to unlock it before you send any transaction.
+              MetaMask is not connected to this site. You are still signed in,
+              but you need to connect it again before you send any transaction.
             </span>
             <Button
               variant="secondary"
               onClick={() => wallet.connect()}
               disabled={wallet.connecting}
             >
-              Unlock wallet
+              Connect wallet
             </Button>
           </div>
         )}

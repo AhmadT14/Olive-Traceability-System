@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
-import { ROLE_HOME } from "../auth/roles";
+import { ROLE_HOME, ROLE_LABELS, ROLE_NAV, SHARED_NAV } from "../auth/roles";
 import RequireRole from "../auth/RequireRole";
 import Home from "../features/public/Home";
 import Login from "../features/public/Login";
@@ -30,15 +30,26 @@ export default function AppRoutes() {
           </RequireRole>
         }
       >
-        {Object.entries(ROLE_HOME).map(([role, path]) => (
+        {Object.entries(ROLE_NAV).flatMap(([role, links]) =>
+          links.map((link) => (
+            <Route
+              key={link.path}
+              path={link.path}
+              element={
+                <RequireRole role={role}>
+                  <RolePlaceholder
+                    title={`${ROLE_LABELS[role]}: ${link.label}`}
+                  />
+                </RequireRole>
+              }
+            />
+          )),
+        )}
+        {SHARED_NAV.map((link) => (
           <Route
-            key={role}
-            path={path}
-            element={
-              <RequireRole role={role}>
-                <RolePlaceholder role={role} />
-              </RequireRole>
-            }
+            key={link.path}
+            path={link.path}
+            element={<RolePlaceholder title={link.label} />}
           />
         ))}
       </Route>

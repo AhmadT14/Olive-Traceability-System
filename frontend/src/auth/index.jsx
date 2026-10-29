@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getNonce,
+  getMe,
   login as loginRequest,
   setToken,
   setUnauthorizedHandler,
@@ -45,6 +46,16 @@ function normalizeRole(role) {
     .replace(/_role$/, "");
 }
 
+// Login gives the participant roles. Admin is added from the env address
+// (workaround for gap 2).
+function buildRoles(address, apiRoles) {
+  const roles = (apiRoles || []).map(normalizeRole);
+  if (address.toLowerCase() === ADMIN_ADDRESS && !roles.includes("admin")) {
+    roles.push("admin");
+  }
+  return roles;
+}
+
 export function AuthProvider({ children }) {
   const wallet = useWallet();
   const { onAccountChange } = wallet;
@@ -77,6 +88,33 @@ export function AuthProvider({ children }) {
     });
   }, [logout]);
 
+  // On page load, check the stored token with /auth/me. A 401 ends the
+  // session through the handler above; otherwise refresh the roles.
+  useEffect(() => {
+    if (!sessionRef.current) return undefined;
+    let active = true;
+    getMe()
+      .then((me) => {
+        const prev = sessionRef.current;
+        if (!active || !prev) return;
+        const roles = buildRoles(prev.address, me.roles);
+        const next = {
+          ...prev,
+          roles,
+          activeRole: roles.includes(prev.activeRole)
+            ? prev.activeRole
+            : roles[0] || null,
+        };
+        saveSession(next);
+        sessionRef.current = next;
+        setSession(next);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
   // Token expiry after about 1 hour.
   useEffect(() => {
     if (!session) return undefined;
@@ -88,8 +126,8 @@ export function AuthProvider({ children }) {
     return () => clearTimeout(timer);
   }, [session, logout]);
 
-  // Log out only when MetaMask reports a different account. A locked or
-  // disconnected wallet reports no account, and the session is kept.
+  // Log out only when MetaMask reports a different account. A wallet
+  // disconnected from the site reports no account, and the session is kept.
   useEffect(
     () =>
       onAccountChange((account) => {
@@ -116,11 +154,7 @@ export function AuthProvider({ children }) {
       const signature = await signer.signMessage(message);
       const res = await loginRequest(address, signature);
 
-      const roles = (res.roles || []).map(normalizeRole);
-      // Workaround for gap 2: admin is detected from the env address.
-      if (address.toLowerCase() === ADMIN_ADDRESS && !roles.includes("admin")) {
-        roles.push("admin");
-      }
+      const roles = buildRoles(address, res.roles);
 
       setToken(res.token);
       const next = {

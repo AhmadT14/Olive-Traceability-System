@@ -1,3 +1,5 @@
+import { getToken } from "../api/client";
+
 // Mock roles follow the default Anvil accounts 1 to 7. Account 0 is the admin.
 const MOCK_ROLES = {
   "0x70997970c51812dc3a010c7d01b50e0d17dc79c8": ["FARMER"],
@@ -22,6 +24,12 @@ export function loginMock(address) {
   return {
     address,
     roles: MOCK_ROLES[address.toLowerCase()] || [],
-    token: "mock-token",
+    token: `mock-token:${address.toLowerCase()}`,
   };
+}
+
+// The mock token carries the address, so /auth/me can answer without a server.
+export function meMock() {
+  const address = (getToken() || "").split(":")[1] || "";
+  return { address, roles: MOCK_ROLES[address] || [] };
 }

@@ -1,9 +1,8 @@
 import Card from "../../../components/Card";
-import { ROLE_LABELS } from "../../../auth/roles";
 
-export default function RolePlaceholder({ role }) {
+export default function RolePlaceholder({ title }) {
   return (
-    <Card title={`${ROLE_LABELS[role]} area`}>
+    <Card title={title}>
       <p>
         This page is empty for now. The real screens arrive in later phases.
       </p>
