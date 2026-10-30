@@ -35,8 +35,12 @@ export const retailerReceiptSchema = z.object({
   notes: z.string().optional(),
 });
 
+// Keyed by the stage the batch is in once the receipt is confirmed, which is the
+// receiving participant's own stage. confirmReceipt advances the stage, so a
+// receipt that is still being prepared looks up the stage after the batch's
+// current one (see prepareReceipt).
 export const receiptSchemas = {
-  Farm: {
+  Mill: {
     hashStage: "mill_olive",
     role: "MILL",
     detailsType: "mill_intake",

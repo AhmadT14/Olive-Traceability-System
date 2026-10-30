@@ -47,17 +47,17 @@ export const oilDeliverySchema = z.object({
   packaging_condition: z.string().optional(),
 });
 
-export const prepareOlivePickupSchema = olivePickupSchema.extend({
-  batchId: batchIdSchema,
-});
-export const prepareOilPickupSchema = oilPickupSchema.extend({
-  batchId: batchIdSchema,
-});
-export const prepareOliveDeliverySchema = oliveDeliverySchema.extend({
-  batchId: batchIdSchema,
-  targetAddress: addressSchema,
-});
-export const prepareOilDeliverySchema = oilDeliverySchema.extend({
-  batchId: batchIdSchema,
-  targetAddress: addressSchema,
-});
+// A transaction hash only exists after the wallet has sent the transaction, so
+// the prepare step takes the record fields without one.
+export const prepareOlivePickupSchema = olivePickupSchema
+  .omit({ txHash: true })
+  .extend({ batchId: batchIdSchema });
+export const prepareOilPickupSchema = oilPickupSchema
+  .omit({ txHash: true })
+  .extend({ batchId: batchIdSchema });
+export const prepareOliveDeliverySchema = oliveDeliverySchema
+  .omit({ txHash: true })
+  .extend({ batchId: batchIdSchema, targetAddress: addressSchema });
+export const prepareOilDeliverySchema = oilDeliverySchema
+  .omit({ txHash: true })
+  .extend({ batchId: batchIdSchema, targetAddress: addressSchema });

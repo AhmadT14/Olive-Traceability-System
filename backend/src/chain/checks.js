@@ -19,6 +19,13 @@ function sameAddress(left, right) {
   );
 }
 
+// The stage a batch moves to when the next participant confirms receipt, or
+// null at the final stage.
+export function getStageAfter(stage) {
+  const index = Stage.indexOf(stage);
+  return index >= 0 && index < Stage.length - 1 ? Stage[index + 1] : null;
+}
+
 export function checkCanCreateBatch({ role, batchExists }) {
   if (role !== "FARMER") return deny("caller is not a farmer");
   if (batchExists) return deny("batch already exists");

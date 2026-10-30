@@ -29,9 +29,42 @@ Run every command from the repo root unless a step says otherwise.
 docker compose up --build
 ```
 
-This starts PostgreSQL, Anvil, deploys the contracts, seeds the sample farmer/mill
-and `B1` batch data, and then starts the backend. Foundry (`forge`, `cast`, and
-`anvil`) runs inside Docker; it does not need to be installed on the host.
+This starts PostgreSQL and Anvil, deploys the contracts, registers the demo
+participants on chain, creates their database tables (migrations) and stores
+their names, and then starts the backend. Run it with `--build` after pulling
+changes to `backend/`. Foundry (`forge`, `cast`, and `anvil`) runs inside
+Docker; it does not need to be installed on the host.
+
+Startup order is `anvil` → `deploy` → `seed` (chain roles and batch `B1`) →
+`migrate` (tables and demo participant rows) → `backend`. To re-run just the
+database step, for example after wiping the `postgres-data` volume:
+
+```sh
+docker compose run --rm migrate
+```
+
+#### Demo participants
+
+The seed registers one wallet per role, using Anvil's built-in dev accounts
+(account 0 is the registry admin). They all have a name and profile in the
+database, so every role can log in and appear in destination lists with no
+manual setup.
+
+| Role        | Anvil account | Address                                      | Name                    |
+| ----------- | ------------- | -------------------------------------------- | ----------------------- |
+| Admin       | 0             | `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266` | (registry admin)        |
+| FARMER      | 1             | `0x70997970C51812dc3A010C7d01b50e0d17dc79C8` | Nablus Hills Farm       |
+| MILL        | 2             | `0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC` | Al-Salam Olive Mill     |
+| TRANSPORTER | 3             | `0x90F79bf6EB2c4f870365E785982E1f101E93b906` | Al-Amal Transport       |
+| STORAGE     | 4             | `0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65` | Hebron Oil Storage      |
+| EXPORTER    | 5             | `0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc` | Palestine Olive Exports |
+| IMPORTER    | 6             | `0x976EA74026E726554dB657fA54763abd0C3a0aa9` | Levant Gourmet Imports  |
+| RETAILER    | 7             | `0x14dC79964da2C08b23698B3D3cc7Ca32193d9955` | Green Table Market      |
+
+The private keys are Anvil's public dev keys (mnemonic
+`test test test test test test test test test test test junk`). Never use them
+on a real network. Batch `B1` is created by the farmer for the mill and has no
+stored record details, so `/batches/B1/verify` reports it as `incomplete`.
 
 To start only the local blockchain:
 
@@ -60,7 +93,9 @@ Expected result: `0x7a69` (chain id 31337).
 
 Docker Compose writes the deployed contract addresses into its shared runtime
 volume before starting the backend. No manual address copying is required.
-Keep the other application settings in the root `.env` file:
+Keep the other application settings in the root `.env` file (`.env.example` is
+a template; copy it to `.env`). `JWT_SECRET` is required and must be at least 32
+characters, otherwise the backend refuses to start:
 
 ```dotenv
 RPC_URL=http://127.0.0.1:8545
@@ -71,6 +106,7 @@ BATCH_CUSTODY_ADDRESS=0x...
 DEPLOY_BLOCK=0
 DATABASE_URL=postgres://olive_app:olive_pass@localhost:5432/olive_traceability
 PORT=3000
+JWT_SECRET=change-me-to-at-least-32-random-characters
 ```
 
 Rules for this file:
@@ -103,7 +139,7 @@ Run `npm install` in `backend/` only the first time, and again when `package.jso
 bash scripts/seed.sh
 ```
 
-This registers a sample farmer and creates batch `B1`. Running it twice on the same chain fails, because `B1` already exists.
+This registers the seven demo participants (see the table above) and creates batch `B1`. Running it twice on the same chain fails, because `B1` already exists. It only touches the chain; store the participants' names in the database with `npm run db:seed` from `backend/` (after `npm run db:migrate`).
 
 ### 6. Verify the chain connection
 
@@ -138,7 +174,7 @@ bash scripts/seed.sh
 Then:
 
 - Compare the deploy addresses with `backend/.env` and update the file if they differ.
-- Clear old test rows from PostgreSQL. Their transaction hashes no longer exist on the fresh chain.
+- Clear old test rows from PostgreSQL. Their transaction hashes no longer exist on the fresh chain. With Docker, `docker compose down -v` followed by `docker compose up --build` resets the chain and the database together.
 
 ### Looking at transactions
 
@@ -158,7 +194,12 @@ npm install
 npm run dev
 ```
 
-The backend config validates `RPC_URL`, `CHAIN_ID`, both contract addresses, and optionally `DEPLOY_BLOCK`. The current `src/app.js` server is a minimal scaffold and does not yet load that config or expose API routes.
+The backend config validates `RPC_URL`, `CHAIN_ID`, both contract addresses, `JWT_SECRET`, and optionally `DEPLOY_BLOCK` and `PORT`. The database tables come from the migrations, which are not run by `npm run dev`:
+
+```sh
+npm run db:migrate   # create or update the tables
+npm run db:seed      # store the demo participants (needs the chain seeded first)
+```
 
 Frontend, in another terminal:
 
@@ -178,6 +219,7 @@ Vite prints the local URL, typically `http://localhost:5173`.
 | `No such file or directory` for a script   | Wrong folder. Run `pwd`. Scripts in `scripts/` run from the repo root, and `npm` and `node scripts/...` commands run from `backend/`. |
 | `command not found` when running `seed.sh` | A space or backslash in `backend/.env`. Check with `cat -A backend/.env`.                                                             |
 | `Cannot find package 'dotenv'`             | Dependencies not installed. Run `npm install` in `backend/`.                                                                          |
+| `relation "participants" does not exist`   | The migrations have not run. Run `docker compose run --rm migrate`, or `npm run db:migrate` in `backend/`.                            |
 | `ENOENT ... abis/*.json`                   | ABIs not generated. Run `npm run sync:abis` in `backend/`.                                                                            |
 | `Missing script: "sync:abis"`              | Add the script to `backend/package.json`.                                                                                             |
 | `read-test.js` shows `B1` as `None`        | The chain is fresh. Run deploy and seed.                                                                                              |
@@ -198,6 +240,6 @@ forge test
 - Frontend is uncustomized Vite starter content.
 - The backend requires PostgreSQL, a deployed local chain, and wallet-signature authentication for end-to-end use.
 - Variable event and role-specific profile details are stored in validated PostgreSQL JSONB fields; shared participant fields such as name, contact information, location, and availability remain relational.
-- `docker-compose.yml` deploys and seeds contracts automatically before starting the backend.
+- `docker-compose.yml` deploys and seeds contracts, runs the database migrations, and stores the demo participants automatically before starting the backend.
 - Anvil state is not persisted, so the chain resets whenever the container stops.
 - No production network, deployment, or key-management configuration is included.

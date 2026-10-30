@@ -57,20 +57,20 @@ All routes in this table require a bearer token and a JSON body. Successful resp
 | `POST /batches/prepare-storage-listing` | `batchId`, `destinationAddress`, storage outgoing record fields | Storage lists a batch for pickup (`postForPickup`). |
 | `POST /batches/prepare-exporter-listing` | `batchId`, `destinationAddress`, exporter outgoing record fields | Exporter lists the batch for pickup (`postForPickup`). |
 | `POST /batches/prepare-importer-listing` | `batchId`, `destinationAddress`, importer outgoing record fields | Importer lists the batch for pickup (`postForPickup`). |
-| `POST /batches/prepare-claim` | `batchId` and pickup record fields | Transporter claims an available job (`claimBatch`). |
-| `POST /batches/prepare-handover` | `batchId`, `targetAddress`, delivery record fields | Transporter starts the handover (`initiateHandover`). Target must match the job destination. |
+| `POST /batches/prepare-claim` | `batchId` and pickup record fields (no `txHash`; that only exists after the wallet sends the transaction) | Transporter claims an available job (`claimBatch`). |
+| `POST /batches/prepare-handover` | `batchId`, `targetAddress`, delivery record fields (no `txHash`) | Transporter starts the handover (`initiateHandover`). Target must match the job destination. |
 | `POST /batches/prepare-receipt` | `batchId` and receipt record fields for the current stage | Destination confirms receipt (`confirmReceipt`). |
 | `POST /admin/participants/prepare-role-change` | `address`, `role`, `action` (`register` or `revoke`) | Registry admin prepares a participant role grant or revoke. |
 
-Record fields are optional except where stated. The field names are snake_case because they are part of the canonical hash input.
+Record fields are optional except where stated. Quantity fields (`quantity`, `quantity_received`, `quantity_shipped`, `quantity_released`, `quantity_picked_up`, `quantity_delivered`, `output_quantity`) accept a number or a numeric string and are rounded to two decimal places before hashing, so `12.5`, `"12.5"` and `"12.50"` produce the same hash. The field names are snake_case because they are part of the canonical hash input.
 
-- Farm: `harvest_date` (required), `location`, `olive_type`, `quantity`, `cultivation_method`, `irrigation_method`, `fertilizer_details`, `pesticide_details`, `harvesting_method`, `quality_details`, `farm_notes`.
+- Farm: `harvest_date`, `location` and `olive_type` (all three required and non-empty), `quantity`, `cultivation_method`, `irrigation_method`, `fertilizer_details`, `pesticide_details`, `harvesting_method`, `quality_details`, `farm_notes`.
 - Mill outgoing: `pressing_date`, `extraction_method`, `output_quantity`, `oil_quality`, `packaging_details`, `qr_code_reference`, `notes`.
 - Storage outgoing: `quantity_released`, `storage_end_date`, `product_condition`, `packaging_condition`, `loading_details`, `notes`.
 - Transport pickup: `truck_details`, `quantity_picked_up`, `loading_details`, `transport_conditions`, `notes`, and `pickup_condition` plus `olive_condition` for olives, or `oil_condition` plus `packaging_condition` for oil.
 - Transport delivery: `quantity_delivered`, `unloading_details`, `transport_conditions`, `notes`, plus `olive_condition` for olives, or `oil_condition` and `packaging_condition` for oil.
 - Mill receipt (olive intake): `arrival_condition`, `quantity_received`, `olive_quality`, `storage_condition`, `notes`.
-- Storage receipt: `quantity_received`, `storage_start_date`, integer `expected_duration`, `conditions`, `product_condition`, `notes`.
+- Storage receipt: `quantity_received`, `storage_start_date`, integer `expected_duration` (in days), `conditions`, `product_condition`, `notes`.
 - Exporter receipt: `quantity_received`, `shipment_arrival_details`, `received_product_details`, `product_condition`, `notes`.
 - Exporter outgoing: `quantity_shipped`, `shipment_details`, `product_condition`, `packaging_condition`, `notes`.
 - Importer receipt: `quantity_received`, `shipment_arrival_details`, `received_product_details`, `product_condition`, `notes`.
@@ -129,7 +129,7 @@ curl http://localhost:3000/batches/B1/destinations \
 
 ## Implementation notes
 
-- Route paths and validation are defined in `src/app.js` and `src/routes/`.
+- Route paths are registered in `src/app.js` and defined in `src/api/routes/`; request validation lives in `src/validation/`.
 - Contract reads and transaction event decoding use the configured RPC connection and generated ABIs.
 - Off chain details are inserted into PostgreSQL only after the API validates the matching on chain transaction and hash.
 - The API currently has no pagination or versioned `/api` prefix.

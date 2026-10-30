@@ -6,12 +6,18 @@ import {
   txHashSchema,
 } from "./common.schemas.js";
 
+// Required on both the prepare and the save step, and the two must agree: the
+// hash the wallet signs is computed from exactly these values.
+const requiredBatchFields = {
+  harvest_date: z.string().trim().min(1),
+  location: z.string().trim().min(1).max(255),
+  olive_type: z.string().trim().min(1).max(128),
+};
+
 export const createBatchSchema = z.object({
   txHash: txHashSchema,
   batchId: batchIdSchema,
-  harvest_date: z.string(),
-  location: z.string().max(255),
-  olive_type: z.string().max(128),
+  ...requiredBatchFields,
   quantity: quantitySchema.optional(),
   cultivation_method: z.string().optional(),
   irrigation_method: z.string().optional(),
@@ -25,9 +31,7 @@ export const createBatchSchema = z.object({
 export const farmPreparationSchema = z.object({
   batchId: batchIdSchema,
   destinationAddress: addressSchema,
-  harvest_date: z.string().min(1),
-  location: z.string().max(255),
-  olive_type: z.string().max(128),
+  ...requiredBatchFields,
   quantity: quantitySchema.optional(),
   cultivation_method: z.string().optional(),
   irrigation_method: z.string().optional(),

@@ -9,7 +9,9 @@
     "test": "node --test",
     "format": "prettier --write \"src/**/*.js\" \"test/**/*.js\"",
     "format:check": "prettier --check \"src/**/*.js\" \"test/**/*.js\"",
-    "lint": "npm run format:check"
+    "lint": "npm run format:check",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "node scripts/seed-db.js"
   },
   "keywords": [],
   "author": "",

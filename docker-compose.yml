@@ -9,11 +9,45 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U olive_app -d olive_traceability"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  # One-shot job: creates the tables, then stores the demo participants.
+  # Safe to run again; migrations that already ran are skipped and existing
+  # demo rows are left alone. Re-run on its own with:
+  #   docker compose run --rm migrate
+  migrate:
+    build: ./backend
+    environment:
+      - DATABASE_URL=postgres://olive_app:olive_pass@postgres:5432/olive_traceability
+      - RPC_URL=http://anvil:8545
+    env_file:
+      - .env
+    volumes:
+      - deployment-data:/runtime
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        set -a
+        . /runtime/deployment.env
+        set +a
+        npm run db:migrate
+        npm run db:seed
+    depends_on:
+      postgres:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
 
   backend:
     build: ./backend
     environment:
-      - DATABASE_URL=******postgres:5432/olive_traceability
+      - DATABASE_URL=postgres://olive_app:olive_pass@postgres:5432/olive_traceability
       - PORT=3000
       - RPC_URL=http://anvil:8545
     env_file:
@@ -31,9 +65,7 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      postgres:
-        condition: service_started
-      seed:
+      migrate:
         condition: service_completed_successfully
 
   anvil:
