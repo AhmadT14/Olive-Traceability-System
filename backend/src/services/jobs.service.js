@@ -3,6 +3,7 @@ import { AppError, forbidden, internalError } from "../errors.js";
 import * as batchEventRepository from "../repositories/batchEvent.repository.js";
 import * as participantRepository from "../repositories/participant.repository.js";
 import * as transporterJobRepository from "../repositories/transporterJob.repository.js";
+import { parseMineQuery } from "../validation/parse.js";
 
 // Maps each outgoing record type to the camelCase shape the transporter job
 // board exposes. Unknown types return null and are filtered out.
@@ -26,13 +27,23 @@ const OUTGOING_DETAIL_MAPPERS = {
   }),
 };
 
-export async function listAvailableJobs(user) {
+// The job board. By default it lists the open jobs any transporter may claim.
+// With ?mine=true it lists the caller's own jobs that are still in progress
+// (claimed, or handed over and waiting for the facility to confirm), so a
+// transporter can find a job again after claiming it.
+export async function listJobs(user, rawMine) {
+  const mine = parseMineQuery(rawMine);
+
   try {
     if (!(await hasRole("TRANSPORTER", user.address))) {
       throw forbidden("caller is not a transporter");
     }
 
-    const jobs = await transporterJobRepository.listAvailable();
+    const jobs = mine
+      ? await transporterJobRepository.listActiveForTransporter(
+          user.address.toLowerCase(),
+        )
+      : await transporterJobRepository.listAvailable();
     if (jobs.length === 0) return { jobs: [] };
 
     const addresses = [
@@ -81,9 +92,12 @@ export async function listAvailableJobs(user) {
 
     const availableJobs = jobs.flatMap((job, index) => {
       const batch = chainBatches[index];
+      // An open job is only claimable while the batch is still listed by the
+      // party that posted it. The caller's own jobs follow the job row.
       if (
-        batch.status !== "Listed" ||
-        batch.custodian.toLowerCase() !== job.sourceParty.toLowerCase()
+        !mine &&
+        (batch.status !== "Listed" ||
+          batch.custodian.toLowerCase() !== job.sourceParty.toLowerCase())
       ) {
         return [];
       }
@@ -98,6 +112,7 @@ export async function listAvailableJobs(user) {
       return [
         {
           id: job.id,
+          status: job.status,
           batchId: job.batchId,
           stage: batch.stage,
           source: {

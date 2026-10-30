@@ -21,10 +21,10 @@ Login uses a wallet signature. Request a one time nonce, sign the returned `mess
 | Method and path | Auth | Purpose |
 | --- | --- | --- |
 | `POST /auth/nonce` | No | Body: `{ "address": "0x…" }`. Returns `{ address, nonce, message }`. |
-| `POST /auth/login` | No | Body: `{ "address": "0x…", "signature": "0x…" }`. Verifies the signature, reads active on chain roles, and returns `{ address, roles, token }`. |
-| `GET /auth/me` | Bearer | Returns the authenticated user's `{ address, roles }`. |
+| `POST /auth/login` | No | Body: `{ "address": "0x…", "signature": "0x…" }`. Verifies the signature, reads active on chain roles, and returns `{ address, roles, isAdmin, expiresAt, token }`. |
+| `GET /auth/me` | Bearer | Returns `{ address, roles, isAdmin, expiresAt }`. |
 
-Tokens expire after one hour. Roles are read from the registry at login time.
+Tokens expire after one hour. `expiresAt` is the token's expiry as an ISO 8601 timestamp, returned by both `/auth/login` and `/auth/me`. `roles` are read from the registry at login time and stay as they were when the token was issued. `isAdmin` is true when the wallet holds the registry admin role; `/auth/me` reads it from the registry on every call, so it follows an admin handover without a new login.
 
 ## Read routes
 
@@ -32,15 +32,29 @@ Tokens expire after one hour. Roles are read from the registry at login time.
 | --- | --- | --- |
 | `GET /health` | No | Liveness check: `{ "ok": true }`. |
 | `GET /participants/:address/roles` | No | Reads the participant's active registry roles. |
+| `GET /participants/:address/profile` | No | Public profile for the consumer page: `{ address, name, location, roles }`. Contact details (phone, email, postal address) are never included. `404` if the backend has no profile for the wallet. |
 | `GET /batches/:id/chain` | No | Reads current batch state from the custody contract. |
 | `GET /batches/:id/history` | No | Combines on chain events with matching off chain record details. An event without stored details has `details: null`. |
 | `GET /batches/:id/verify` | No | Recomputes hashes for stored records and compares them to their on chain events. See [Integrity results](#integrity-results). |
 | `GET /tx/:hash` | No | Decodes a mined transaction and its recognized contract events. |
 | `GET /destinations?role=MILL` | Bearer | Lists registered participants that currently have the MILL role. Used when creating a batch. Other roles are not accepted by this route. |
 | `GET /batches/:id/destinations` | Bearer | Lists participants with the next stage's role for a batch that is ready to be listed by its current custodian. |
-| `GET /transporter-jobs` | Bearer | Lists transporter jobs available to or associated with the authenticated transporter. |
+| `GET /transporter-jobs` | Bearer | Transporter only. Lists the open jobs that can be claimed (`status: "available"`). Each job has `id`, `status`, `batchId`, `stage`, `source`, `destination`, `outgoingDetails` and `createdAt`. |
+| `GET /transporter-jobs?mine=true` | Bearer | Transporter only. Lists the caller's own jobs that are still in progress, same shape, with `status` `claimed` (picked up) or `handover_pending` (handed over, waiting for the facility to confirm). A completed job drops off the list. Any value other than `true` or `false` is a `400`. |
+| `GET /me/batches` | Bearer | Batches that concern the caller, read from live chain state: `{ holding, listedByMe, awaitingMyConfirmation }`, each a list of `{ batchId, status, stage, custodian, pendingTarget, destination }`. `holding` is every batch the caller is custodian of that is not listed (a transporter keeps a batch here until the facility confirms receipt). `listedByMe` is the caller's batches waiting for a transporter. `awaitingMyConfirmation` is batches a transporter has handed over to the caller. Only batches saved through this API are included. |
+| `GET /me/profile` | Bearer | The caller's own profile: `{ address, roles, profile: { name, contactPhone, email, address, location, availability, details } }`. `profile.address` is the postal address. `404` if the wallet has no profile (ask the admin to register it). |
+| `GET /admin/participants` | Bearer (admin) | The participant directory: `{ participants: [{ address, name, location, availability, roles }] }`. A participant whose roles were all revoked stays in the list with `roles: []`. `403` for a non-admin. |
 
 `/batches/:id/chain` returns `batchId` with the contract state, including stage, status, custodian, active destination, and pending target as applicable. `/history` returns `{ batchId, events }`. `/tx/:hash` returns `{ hash, success, blockNumber, events }`. Chain state is authoritative; database rows are only off-chain details and workflow indexes.
+
+## Profile routes
+
+These change the caller's own record and need a bearer token. They do not involve a transaction.
+
+| Method and path | Body | Purpose |
+| --- | --- | --- |
+| `PATCH /me/profile` | Any of `name`, `contactPhone`, `email`, `address`, `location`, `details` (at least one) | Updates the sent fields and leaves the rest. `details` is merged into the stored details key by key, then validated for the participant's role (the first role, for a wallet that holds several). Returns the same shape as `GET /me/profile`. `422` for an invalid field. `availability` is not accepted here. |
+| `PATCH /me/availability` | `{ "availability": "available" \| "unavailable" }` | Sets availability. Returns `{ address, availability }`. `422` for any other value. |
 
 ## Wallet transaction workflow
 

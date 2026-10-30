@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../../auth/middleware.js";
-import { listAvailableJobs } from "../../services/jobs.service.js";
+import { listJobs } from "../../services/jobs.service.js";
 import { jobsResponseSchema } from "../../validation/response.schemas.js";
 import { handle } from "../response.js";
 
@@ -12,7 +12,7 @@ router.get(
   handle(
     async (req) => ({
       status: 200,
-      body: await listAvailableJobs(req.user),
+      body: await listJobs(req.user, req.query.mine),
     }),
     jobsResponseSchema,
   ),

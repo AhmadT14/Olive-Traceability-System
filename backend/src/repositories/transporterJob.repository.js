@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "../db/db.js";
 import { transporterJobs } from "../db/schema.js";
 
@@ -88,10 +88,32 @@ export function transition(id, fromStatus, patch, exec = db) {
     .returning({ id: transporterJobs.id });
 }
 
+export function listActiveForTransporter(transporter, exec = db) {
+  return exec
+    .select({
+      id: transporterJobs.id,
+      status: transporterJobs.status,
+      batchId: transporterJobs.batchId,
+      sourceParty: transporterJobs.sourceParty,
+      destinationParty: transporterJobs.destinationParty,
+      listingTxHash: transporterJobs.listingTxHash,
+      createdAt: transporterJobs.createdAt,
+    })
+    .from(transporterJobs)
+    .where(
+      and(
+        eq(transporterJobs.transporter, transporter),
+        inArray(transporterJobs.status, ["claimed", "handover_pending"]),
+      ),
+    )
+    .orderBy(desc(transporterJobs.createdAt));
+}
+
 export function listAvailable(exec = db) {
   return exec
     .select({
       id: transporterJobs.id,
+      status: transporterJobs.status,
       batchId: transporterJobs.batchId,
       sourceParty: transporterJobs.sourceParty,
       destinationParty: transporterJobs.destinationParty,

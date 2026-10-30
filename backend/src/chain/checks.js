@@ -26,6 +26,36 @@ export function getStageAfter(stage) {
   return index >= 0 && index < Stage.length - 1 ? Stage[index + 1] : null;
 }
 
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+// The zero address is how the chain says "nobody" (no pending target, no
+// custodian), so it never counts as a participant.
+const sameWallet = (left, right) =>
+  typeof left === "string" &&
+  typeof right === "string" &&
+  left.toLowerCase() === right.toLowerCase() &&
+  left.toLowerCase() !== ZERO_ADDRESS;
+
+// Where a batch belongs on a participant's "my batches" screen, from chain
+// state alone. A transporter that has named the next facility still holds the
+// batch until that facility confirms receipt, so that stays under "holding".
+// Returns null when the batch is not theirs.
+export function classifyBatchForParticipant(batch, address) {
+  if (!batch) return null;
+  if (
+    batch.status === "PendingHandover" &&
+    sameWallet(batch.pendingTarget, address)
+  ) {
+    return "awaitingMyConfirmation";
+  }
+  if (!sameWallet(batch.custodian, address)) return null;
+  if (batch.status === "Listed") return "listedByMe";
+  if (batch.status === "Created" || batch.status === "PendingHandover") {
+    return "holding";
+  }
+  return null;
+}
+
 export function checkCanCreateBatch({ role, batchExists }) {
   if (role !== "FARMER") return deny("caller is not a farmer");
   if (batchExists) return deny("batch already exists");

@@ -12,6 +12,9 @@ export const batchIdParamSchema = batchIdSchema;
 export const txHashParamSchema = txHashSchema;
 export const walletAddressParamSchema = walletAddressSchema;
 
+// ?mine=true switches the transporter job board to the caller's own jobs.
+export const mineQuerySchema = z.enum(["true", "false"]).optional();
+
 // The only supported pre-batch destination lookup is a mill. Accept any case
 // for backwards compatibility, then normalise the result.
 export const destinationRoleQuerySchema = z

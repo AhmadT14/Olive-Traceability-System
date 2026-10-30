@@ -28,9 +28,14 @@ export const chainBatchSchema = z.object({
   destination: z.string(),
 });
 
-export const sessionSchema = z.object({
+export const participantRolesResponseSchema = z.object({
   address: z.string(),
   roles,
+});
+
+export const sessionSchema = participantRolesResponseSchema.extend({
+  isAdmin: z.boolean(),
+  expiresAt: z.string(),
 });
 
 export const nonceResponseSchema = z.object({
@@ -39,13 +44,9 @@ export const nonceResponseSchema = z.object({
   message: z.string(),
 });
 
-export const loginResponseSchema = z.object({
-  address: z.string(),
-  roles,
+export const loginResponseSchema = sessionSchema.extend({
   token: z.string(),
 });
-
-export const participantRolesResponseSchema = sessionSchema;
 
 export const chainBatchResponseSchema = chainBatchSchema;
 
@@ -174,6 +175,7 @@ export const jobsResponseSchema = z.object({
   jobs: z.array(
     z.object({
       id: z.number(),
+      status: z.string(),
       batchId: z.string(),
       stage: z.string(),
       source: jobPartySchema,
@@ -227,4 +229,50 @@ export const roleChangeConfirmedResponseSchema = z.object({
   txHash: z.string(),
   roles,
   profileStored: z.boolean(),
+});
+
+export const publicProfileResponseSchema = z.object({
+  address: z.string(),
+  name: z.string().nullable(),
+  location: z.string().nullable(),
+  roles,
+});
+
+const profileFieldsSchema = z.object({
+  name: z.string().nullable(),
+  contactPhone: z.string().nullable(),
+  email: z.string().nullable(),
+  address: z.string().nullable(),
+  location: z.string().nullable(),
+  availability: z.string().nullable(),
+  details: jsonObject,
+});
+
+export const myProfileResponseSchema = z.object({
+  address: z.string(),
+  roles,
+  profile: profileFieldsSchema,
+});
+
+export const availabilityResponseSchema = z.object({
+  address: z.string(),
+  availability: z.string(),
+});
+
+export const myBatchesResponseSchema = z.object({
+  holding: z.array(chainBatchSchema),
+  listedByMe: z.array(chainBatchSchema),
+  awaitingMyConfirmation: z.array(chainBatchSchema),
+});
+
+export const adminParticipantsResponseSchema = z.object({
+  participants: z.array(
+    z.object({
+      address: z.string(),
+      name: z.string().nullable(),
+      location: z.string().nullable(),
+      availability: z.string().nullable(),
+      roles,
+    }),
+  ),
 });

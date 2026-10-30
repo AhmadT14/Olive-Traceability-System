@@ -43,6 +43,40 @@ export function listWithNamesByWallets(wallets, exec = db) {
     .where(inArray(participants.walletAddress, wallets));
 }
 
+export async function findProfile(walletAddress, exec = db) {
+  const rows = await exec
+    .select()
+    .from(participantProfiles)
+    .where(eq(participantProfiles.walletAddress, walletAddress))
+    .limit(1);
+  return rows[0];
+}
+
+export async function updateProfile(walletAddress, patch, exec = db) {
+  const rows = await exec
+    .update(participantProfiles)
+    .set(patch)
+    .where(eq(participantProfiles.walletAddress, walletAddress))
+    .returning();
+  return rows[0];
+}
+
+export function listDirectory(exec = db) {
+  return exec
+    .select({
+      address: participants.walletAddress,
+      name: participantProfiles.name,
+      location: participantProfiles.location,
+      availability: participantProfiles.availability,
+    })
+    .from(participants)
+    .leftJoin(
+      participantProfiles,
+      eq(participantProfiles.walletAddress, participants.walletAddress),
+    )
+    .orderBy(participants.walletAddress);
+}
+
 export function insertIgnore(walletAddress, exec = db) {
   return exec
     .insert(participants)

@@ -2,6 +2,7 @@ import { badRequest, internalError, unprocessable } from "../errors.js";
 import {
   batchIdParamSchema,
   destinationRoleQuerySchema,
+  mineQuerySchema,
   txHashParamSchema,
   walletAddressParamSchema,
 } from "./request.schemas.js";
@@ -60,6 +61,12 @@ export function parseDestinationRole(raw) {
   const parsed = destinationRoleQuerySchema.safeParse(raw);
   if (!parsed.success) throw badRequest("role must be MILL");
   return parsed.data;
+}
+
+export function parseMineQuery(raw) {
+  const parsed = mineQuerySchema.safeParse(raw);
+  if (!parsed.success) throw badRequest("mine must be true or false");
+  return parsed.data === "true";
 }
 
 // -- responses ------------------------------------------------------------

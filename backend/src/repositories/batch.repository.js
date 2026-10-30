@@ -15,6 +15,13 @@ export async function existsById(batchId, exec = db) {
   return rows.length > 0;
 }
 
+export function listIds(exec = db) {
+  return exec
+    .select({ batchId: batches.batchId })
+    .from(batches)
+    .orderBy(batches.batchId);
+}
+
 export function insert(batchId, exec = db) {
   return exec.insert(batches).values({ batchId });
 }

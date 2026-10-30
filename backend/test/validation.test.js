@@ -74,6 +74,8 @@ test("response schemas accept the shapes the services return", () => {
     loginResponseSchema.safeParse({
       address: "0x1",
       roles: ["FARMER"],
+      isAdmin: false,
+      expiresAt: "2026-10-30T12:00:00.000Z",
       token: "a.b.c",
     }).success,
     true,

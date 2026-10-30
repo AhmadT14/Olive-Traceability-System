@@ -24,6 +24,7 @@ import {
 } from "../validation/admin.schemas.js";
 import { parseBody } from "../validation/parse.js";
 import { profileDetailsSchemas } from "../validation/participant.schemas.js";
+import { readRoles } from "./participant.service.js";
 
 export async function prepareRoleChange(user, body) {
   const parsed = parseBody(prepareRoleChangeSchema, body);
@@ -158,5 +159,32 @@ export async function confirmRoleChange(user, body) {
   } catch (err) {
     if (err instanceof AppError) throw err;
     throw internalError("role change confirmation failed", err);
+  }
+}
+
+// The admin's directory: every participant the backend has a record for, with
+// the roles they hold on chain right now. A participant whose roles were all
+// revoked still appears, with an empty list, so they can be registered again.
+export async function listParticipants(user) {
+  try {
+    if (!(await hasAdminRole(user.address))) {
+      throw forbidden("caller is not a registry admin");
+    }
+
+    const rows = await participantRepository.listDirectory();
+    const roles = await Promise.all(rows.map((row) => readRoles(row.address)));
+
+    return {
+      participants: rows.map((row, index) => ({
+        address: row.address,
+        name: row.name ?? null,
+        location: row.location ?? null,
+        availability: row.availability ?? null,
+        roles: roles[index],
+      })),
+    };
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    throw internalError("participant directory lookup failed", err);
   }
 }

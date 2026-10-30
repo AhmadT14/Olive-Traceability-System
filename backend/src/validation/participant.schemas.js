@@ -49,6 +49,21 @@ export const profileSchema = z.object({
   details: z.record(z.string(), z.unknown()).optional(),
 });
 
+export const availabilityValues = ["available", "unavailable"];
+
+export const updateAvailabilitySchema = z.object({
+  availability: z.enum(availabilityValues),
+});
+
+// A participant edits their own profile field by field. Availability has its
+// own endpoint, so it is not accepted here.
+export const updateProfileSchema = profileSchema
+  .omit({ availability: true })
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "provide at least one field to update",
+  });
+
 export const validateProfileDetails = (role, details) => {
   const schema = profileDetailsSchemas[role];
   if (!schema)

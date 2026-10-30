@@ -17,6 +17,7 @@ import receiptRoutes from "./api/routes/receipt.routes.js";
 import jobsRoutes from "./api/routes/jobs.routes.js";
 import verificationRoutes from "./api/routes/verification.routes.js";
 import adminRoutes from "./api/routes/admin.routes.js";
+import meRoutes from "./api/routes/me.routes.js";
 import { errorHandler, notFoundHandler } from "./api/errorHandler.js";
 
 const app = express();
@@ -43,6 +44,7 @@ app.use(receiptRoutes);
 app.use(jobsRoutes);
 app.use(verificationRoutes);
 app.use(adminRoutes);
+app.use(meRoutes);
 
 // Keep every failure — including unknown routes and malformed bodies — in the
 // same JSON shape: { error, details? }.

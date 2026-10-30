@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { requireAuth } from "../../auth/middleware.js";
 import { unauthorized } from "../../errors.js";
-import { createLoginNonce, login } from "../../services/auth.service.js";
+import {
+  createLoginNonce,
+  getSession,
+  login,
+} from "../../services/auth.service.js";
 import {
   loginResponseSchema,
   nonceResponseSchema,
@@ -38,7 +42,7 @@ router.get(
   requireAuth,
   handle(async (req) => {
     if (!req.user) throw unauthorized("missing token");
-    return { status: 200, body: req.user };
+    return { status: 200, body: await getSession(req.user) };
   }, sessionSchema),
 );
 
