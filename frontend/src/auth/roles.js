@@ -21,8 +21,6 @@ export const ROLE_NAV = {
   farmer: [
     { path: "/farmer", label: "Overview" },
     { path: "/farmer/batches/new", label: "Create batch" },
-    // Temporary Phase 2 test page, removed in Phase 4.
-    { path: "/dev/create-batch", label: "Test: create batch" },
   ],
   transporter: [
     { path: "/transporter/jobs", label: "Job board" },

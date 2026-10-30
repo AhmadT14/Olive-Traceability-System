@@ -22,7 +22,7 @@ The dev server proxies `/api` to `http://localhost:3000` and strips the prefix, 
 
 ## Testing by hand
 
-What is built so far: the public landing and trace page (Phase 3), wallet login with role areas (Phase 1), and the shared transaction flow with batch pages (Phase 2). Role screens beyond that are placeholders.
+What is built so far: wallet login with role areas (Phase 1), the shared transaction flow with batch pages (Phase 2), the public landing and trace page (Phase 3), and the farmer pages (Phase 4). Other role screens are placeholders.
 
 ### Mock mode or real backend
 
@@ -31,7 +31,7 @@ Set `VITE_USE_MOCKS` in `.env`, then stop and restart `npm run dev`. Vite reads 
 - `true`: no backend or Docker needed. MetaMask is still used to sign in (it signs a message, no transaction), but transactions are faked and nothing is sent to the chain.
 - `false`: calls the real API through the proxy. See [Real backend](#real-backend) for what works there today.
 
-In mock mode the fake chain is kept per browser tab, so it survives a reload. Close the tab and open a new one to start again with only the demo batches.
+In mock mode the fake chain is shared by every tab and survives a reload and a browser restart, so a copied link works in a new tab. "Reset mock data" in the app header (mock mode only) goes back to the demo batches.
 
 ### Wallets
 
@@ -112,18 +112,19 @@ Address and private key of each account:
 
 1. Sign in with each account. Each lands on its own area with its own sidebar links: farmer on `/farmer`, mill on `/mill/inbox`, admin on `/admin`.
 2. As the farmer, type `/mill/inbox` in the address bar. You are sent back to `/farmer`.
-3. Reload. You stay signed in.
+3. Reload, or close the tab and open the app in a new one. You stay signed in until the session ends (one hour after signing in). Sign out in one tab and the other tabs sign out too.
 4. Switch account in MetaMask. You are signed out with a message.
 5. In MetaMask, disconnect `localhost:5173`. You stay signed in and a yellow bar says MetaMask is not connected, with a "Connect wallet" button. (Locking MetaMask shows nothing; it asks for the password when you sign.)
 6. Switch MetaMask to another network. A yellow bar offers "Switch network".
 
-**Batch pages and the transaction flow (sign in as the farmer)**
+**Farmer pages (sign in as account 1)**
 
-1. "Find a batch", then `B1`: status card, integrity, and timeline. `NOPE` shows "Batch not found on chain".
-2. "Test: create batch" (temporary page): submitting empty marks the three required fields.
-3. Fill harvest date, location and variety, keep ID `B2`, submit. The four steps (Preparing, Waiting for wallet, Mining, Saving details) turn green. "Open batch B2" shows your values.
-4. Submit `B2` again. It fails at Preparing because the batch exists.
-5. Retry test: "Start over", ID `B3`, Farm notes exactly `mock: fail save once`, submit. Saving fails and "Retry saving details" appears. Reload: the button is still there. Click it: it saves without asking to sign.
+1. "Overview" (`/farmer`) lists the farmer's batches with stage, status and who holds them. In mock mode that is `B1` and `DEMO-1` to `DEMO-3`; on the real backend only batches still waiting for pickup (a note says so).
+2. "Create batch": the batch ID is filled in and cannot be edited, and Farm location starts as the farm profile location ("Nablus", so the ID starts with `NAB-`). Changing the location or harvest year changes the ID.
+3. Submitting empty marks harvest date and olive variety (and location if you cleared it).
+4. Fill the required fields and submit. The four steps (Preparing, Waiting for wallet, Mining, Saving details) turn green, then the success screen shows the batch ID, a copyable public link, and links to the batch page and the public page. The new batch is now on "Overview".
+5. Retry test (mock mode): Farm notes exactly `mock: fail save once`. Saving fails and "Retry saving details" appears. Reload: the button is still there. Click it: it saves without asking to sign.
+6. "Find a batch", then `B1`: status card, integrity, and timeline. `NOPE` shows "Batch not found on chain".
 
 ### Real backend
 

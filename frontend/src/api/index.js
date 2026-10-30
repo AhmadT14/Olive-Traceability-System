@@ -3,6 +3,14 @@ export * from "./auth";
 export * from "./batches";
 export * from "./destinations";
 export * from "./participants";
+export * from "./me";
 export { readableError } from "./errors";
-export { ApiError, setToken, getToken, setUnauthorizedHandler } from "./client";
+export {
+  ApiError,
+  TOKEN_KEY,
+  setToken,
+  getToken,
+  setUnauthorizedHandler,
+} from "./client";
 export { USE_MOCKS, CHAIN_ID } from "./config";
+export { resetMockChain as resetMockData } from "../mocks/batches";

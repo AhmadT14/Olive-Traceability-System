@@ -25,6 +25,17 @@ export async function verifyBatch(batchId) {
   return request(`/batches/${enc(batchId)}/verify`);
 }
 
+// True when the chain already has a batch with this ID (404 means free).
+export async function isBatchIdTaken(batchId) {
+  try {
+    await getBatchChain(batchId);
+    return true;
+  } catch (err) {
+    if (err.status === 404) return false;
+    throw err;
+  }
+}
+
 // Body: batchId, destinationAddress and the farm record fields.
 export async function prepareBatch(body) {
   if (USE_MOCKS) return prepareBatchMock(body);

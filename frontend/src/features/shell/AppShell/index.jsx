@@ -7,7 +7,12 @@ import {
   ROLE_NAV,
   SHARED_NAV,
 } from "../../../auth/roles";
-import { CHAIN_ID, getParticipantProfile } from "../../../api";
+import {
+  CHAIN_ID,
+  USE_MOCKS,
+  getParticipantProfile,
+  resetMockData,
+} from "../../../api";
 import { useAsync } from "../../../hooks/useAsync";
 import Badge from "../../../components/Badge";
 import Button from "../../../components/Button";
@@ -29,6 +34,13 @@ export default function AppShell() {
   );
   const walletUnavailable =
     wallet.hasProvider && wallet.ready && !wallet.account;
+
+  // Mock mode only: back to the demo batches, in every tab.
+  function handleResetMocks() {
+    if (!window.confirm("Delete every batch made in mock mode?")) return;
+    resetMockData();
+    window.location.reload();
+  }
 
   function handleRoleChange(event) {
     const next = event.target.value;
@@ -71,6 +83,11 @@ export default function AppShell() {
           <span className="app-shell__wallet" title={session.address}>
             {(profile && profile.name) || shortAddress(session.address)}
           </span>
+          {USE_MOCKS && (
+            <Button variant="secondary" onClick={handleResetMocks}>
+              Reset mock data
+            </Button>
+          )}
           <Button variant="secondary" onClick={() => logout()}>
             Sign out
           </Button>

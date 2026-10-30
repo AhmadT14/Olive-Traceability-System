@@ -41,28 +41,62 @@ function canonical(record) {
   );
 }
 
-// Kept in sessionStorage so the mock chain survives a reload, like a real
-// chain does. Close the tab to start again with only the seed batches.
+// Kept in localStorage, so every tab sees the same mock chain, like a real
+// chain. Each mock call reloads it first, so two open tabs (for example a
+// farmer and a transporter) never overwrite each other. "Reset mock data" in
+// the app header clears it.
 const STORE_KEY = "olive_mock_chain";
 
 function loadStore() {
   try {
-    return JSON.parse(sessionStorage.getItem(STORE_KEY));
+    return JSON.parse(localStorage.getItem(STORE_KEY));
   } catch {
     return null;
   }
 }
 
-const saved = loadStore();
-let block = saved ? saved.block : 10;
-const batches = new Map(saved ? saved.batches : []);
-const prepared = new Map(saved ? saved.prepared : []); // tx data -> action
-const failedOnce = new Set(saved ? saved.failedOnce : []);
-const canonicalByTx = new Map(saved ? saved.canonicalByTx : []); // txHash -> record
+let block = 100;
+const batches = new Map();
+const prepared = new Map(); // tx data -> action
+const failedOnce = new Set();
+const canonicalByTx = new Map(); // txHash -> record
+
+// Replaces the in-memory state with the stored one, then adds any missing
+// demo batches.
+function refresh() {
+  const saved = loadStore();
+  // New mock batches get blocks after the demo batches (blocks 20 to 40).
+  block = Math.max(saved ? saved.block : 0, 100);
+  batches.clear();
+  prepared.clear();
+  failedOnce.clear();
+  canonicalByTx.clear();
+  if (saved) {
+    saved.batches.forEach(([k, v]) => batches.set(k, v));
+    saved.prepared.forEach(([k, v]) => prepared.set(k, v));
+    saved.failedOnce.forEach((k) => failedOnce.add(k));
+    saved.canonicalByTx.forEach(([k, v]) => canonicalByTx.set(k, v));
+  }
+  for (const [id, batch] of Object.entries(SEED_BATCHES)) {
+    if (!batches.has(id)) batches.set(id, structuredClone(batch));
+  }
+}
+
+export function resetMockChain() {
+  try {
+    localStorage.removeItem(STORE_KEY);
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith("olive_pending_save:")) localStorage.removeItem(key);
+    }
+  } catch {
+    /* storage unavailable */
+  }
+  refresh();
+}
 
 function persist() {
   try {
-    sessionStorage.setItem(
+    localStorage.setItem(
       STORE_KEY,
       JSON.stringify({
         block,
@@ -77,10 +111,6 @@ function persist() {
   }
 }
 
-// Demo batches are added if missing, also on top of a saved mock chain.
-for (const [id, batch] of Object.entries(SEED_BATCHES)) {
-  if (!batches.has(id)) batches.set(id, structuredClone(batch));
-}
 
 function findBatch(batchId, message) {
   const batch = batches.get(batchId);
@@ -90,12 +120,14 @@ function findBatch(batchId, message) {
 
 export async function chainMock(batchId) {
   await wait();
+  refresh();
   const batch = findBatch(batchId, "batch not found on chain");
   return { batchId, ...batch.chain };
 }
 
 export async function historyMock(batchId) {
   await wait();
+  refresh();
   const batch = findBatch(batchId, "no events found for this batch");
   return { batchId, events: batch.events };
 }
@@ -117,6 +149,7 @@ function integrityOf(event) {
 
 export async function verifyMock(batchId) {
   await wait();
+  refresh();
   const batch = findBatch(batchId, "batch not found");
   const events = batch.events
     .filter((e) => e.details)
@@ -139,8 +172,43 @@ export async function verifyMock(batchId) {
   return { batch: { batchId, ...batch.chain }, integrityStatus, events };
 }
 
+const same = (a, b) => String(a).toLowerCase() === String(b).toLowerCase();
+
+// Shape of GET /me/batches, sorted like backend chain/checks.js.
+export async function myBatchesMock() {
+  await wait();
+  refresh();
+  const caller = mockCaller();
+  const result = { holding: [], listedByMe: [], awaitingMyConfirmation: [] };
+  for (const [batchId, { chain }] of batches) {
+    const item = { batchId, ...chain };
+    if (chain.status === "PendingHandover" && same(chain.pendingTarget, caller))
+      result.awaitingMyConfirmation.push(item);
+    else if (!same(chain.custodian, caller)) continue;
+    else if (chain.status === "Listed") result.listedByMe.push(item);
+    else result.holding.push(item);
+  }
+  return result;
+}
+
+// Needs from backend: a list of the batches the caller created as farmer.
+// Proposed shape { batches: [chain state] }, newest first.
+export async function farmerBatchesMock() {
+  await wait();
+  refresh();
+  const caller = mockCaller();
+  const list = [];
+  for (const [batchId, { chain, events }] of batches) {
+    const created = events.find((e) => e.name === "BatchCreated");
+    if (created && same(created.args.farmer, caller))
+      list.push({ batchId, ...chain });
+  }
+  return { batches: list.reverse() };
+}
+
 export async function prepareBatchMock(body) {
   await wait();
+  refresh();
   const caller = mockCaller();
   if (!mockRoles(caller).includes("FARMER")) {
     throw new ApiError(403, "caller is not a farmer");
@@ -179,6 +247,7 @@ export async function prepareBatchMock(body) {
 
 // Called by the mock wallet in place of MetaMask. Applies the chain change.
 export function mineMockTx(transaction) {
+  refresh();
   const action = prepared.get(transaction.data);
   if (!action)
     throw Object.assign(new Error("Unknown transaction."), {
@@ -217,6 +286,7 @@ export function mineMockTx(transaction) {
 
 export async function saveBatchMock(body) {
   await wait();
+  refresh();
   const { txHash, batchId, ...record } = body;
   const batch = batches.get(batchId);
   const event = batch && batch.events.find((e) => e.txHash === txHash);

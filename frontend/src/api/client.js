@@ -1,10 +1,10 @@
 import { API_URL } from "./config";
 
-const TOKEN_KEY = "olive_token";
+export const TOKEN_KEY = "olive_token";
 
 export function getToken() {
   try {
-    return sessionStorage.getItem(TOKEN_KEY);
+    return localStorage.getItem(TOKEN_KEY);
   } catch {
     return null;
   }
@@ -12,8 +12,8 @@ export function getToken() {
 
 export function setToken(token) {
   try {
-    if (token) sessionStorage.setItem(TOKEN_KEY, token);
-    else sessionStorage.removeItem(TOKEN_KEY);
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
   } catch {
     /* storage unavailable */
   }

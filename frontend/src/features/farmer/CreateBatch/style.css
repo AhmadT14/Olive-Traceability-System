@@ -1,0 +1,30 @@
+.create-batch__done {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin-block: var(--space-4);
+}
+.create-batch__done dt {
+  color: var(--color-text-muted);
+}
+.create-batch__done dd {
+  margin: 0;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.create-batch__id {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.create-batch__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+@media (max-width: 480px) {
+  .create-batch__done {
+    grid-template-columns: 1fr;
+  }
+}

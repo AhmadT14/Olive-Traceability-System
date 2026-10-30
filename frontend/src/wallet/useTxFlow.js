@@ -22,7 +22,7 @@ const IDLE = {
 
 function readPending(key) {
   try {
-    const raw = sessionStorage.getItem(PENDING_PREFIX + key);
+    const raw = localStorage.getItem(PENDING_PREFIX + key);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -32,9 +32,9 @@ function readPending(key) {
 function writePending(key, pending) {
   try {
     if (pending) {
-      sessionStorage.setItem(PENDING_PREFIX + key, JSON.stringify(pending));
+      localStorage.setItem(PENDING_PREFIX + key, JSON.stringify(pending));
     } else {
-      sessionStorage.removeItem(PENDING_PREFIX + key);
+      localStorage.removeItem(PENDING_PREFIX + key);
     }
   } catch {
     /* storage unavailable */
@@ -58,7 +58,7 @@ function pendingState(pending) {
 // Prepare, sign, wait, save. `prepare(payload)` and `save(payload, txHash)`
 // are api/ functions. The same payload object goes to both, so the record
 // hash matches. If saving fails after mining, the payload and hash are kept
-// in sessionStorage under `key`, and retrySave() never asks to sign again.
+// in localStorage under `key`, and retrySave() never asks to sign again.
 export function useTxFlow({ key, prepare, save }) {
   const wallet = useWallet();
   const [state, setState] = useState(() => {

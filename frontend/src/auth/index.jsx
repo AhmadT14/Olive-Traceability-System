@@ -3,7 +3,9 @@ import {
   getNonce,
   getMe,
   login as loginRequest,
+  getToken,
   setToken,
+  TOKEN_KEY,
   setUnauthorizedHandler,
 } from "../api";
 import { useWallet } from "../wallet/useWallet";
@@ -14,8 +16,8 @@ const SESSION_KEY = "olive_session";
 
 function saveSession(session) {
   try {
-    if (session) sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    else sessionStorage.removeItem(SESSION_KEY);
+    if (session) localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    else localStorage.removeItem(SESSION_KEY);
   } catch {
     /* storage unavailable */
   }
@@ -23,7 +25,7 @@ function saveSession(session) {
 
 function loadSession() {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
+    const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
     const session = JSON.parse(raw);
     if (Date.now() > session.expiresAt) {
@@ -80,6 +82,39 @@ export function AuthProvider({ children }) {
     },
     [toast],
   );
+
+  // The session is shared by every tab: follow sign in and sign out done in
+  // another tab. Checked on storage changes and again when the tab is shown.
+  useEffect(() => {
+    function sync() {
+      const next = getToken() ? loadSession() : null;
+      const prev = sessionRef.current;
+      if (!next && prev) {
+        sessionRef.current = null;
+        setSession(null);
+      } else if (next && JSON.stringify(next) !== JSON.stringify(prev)) {
+        sessionRef.current = next;
+        setSession(next);
+      }
+    }
+    function onStorage(event) {
+      if (
+        event.key === null ||
+        event.key === SESSION_KEY ||
+        event.key === TOKEN_KEY
+      )
+        sync();
+    }
+    function onVisible() {
+      if (document.visibilityState === "visible") sync();
+    }
+    window.addEventListener("storage", onStorage);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
 
   // Any 401 from the API ends the session (only if one exists).
   useEffect(() => {

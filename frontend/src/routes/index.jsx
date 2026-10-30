@@ -11,12 +11,14 @@ import AppShell from "../features/shell/AppShell";
 import RolePlaceholder from "../features/shell/RolePlaceholder";
 import FindBatch from "../features/batch/FindBatch";
 import BatchDetail from "../features/batch/BatchDetail";
-import CreateBatchTest from "../features/dev/CreateBatchTest";
+import FarmerOverview from "../features/farmer/Overview";
+import CreateBatch from "../features/farmer/CreateBatch";
 
 // Nav paths that have a real page. The rest show a placeholder.
 const PAGES = {
   "/batches": FindBatch,
-  "/dev/create-batch": CreateBatchTest,
+  "/farmer": FarmerOverview,
+  "/farmer/batches/new": CreateBatch,
 };
 
 function page(path, title) {
