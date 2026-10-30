@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getHealth, USE_MOCKS } from "../../../api";
+import { useAuth } from "../../../auth/useAuth";
 import BatchLookup from "../../../components/BatchLookup";
 import Badge from "../../../components/Badge";
 import { TEXT } from "../../consumer/strings";
@@ -10,6 +11,11 @@ const T = TEXT.landing;
 
 // Public landing: batch code search for consumers, sign in for members.
 export default function Home() {
+  const { session } = useAuth();
+  // Signed in users go to their dashboard; /app picks the role's home.
+  const account = session
+    ? { to: "/app", label: T.dashboard }
+    : { to: "/login", label: T.signIn };
   const [state, setState] = useState({ status: "loading", message: "" });
 
   useEffect(() => {
@@ -23,9 +29,11 @@ export default function Home() {
   return (
     <div className="home">
       <header className="home__bar">
-        <span className="home__brand">{TEXT.brand}</span>
-        <Link to="/login" className="home__sign-in">
-          {T.signIn}
+        <Link to="/" className="home__brand">
+          {TEXT.brand}
+        </Link>
+        <Link to={account.to} className="home__sign-in">
+          {account.label}
         </Link>
       </header>
 
@@ -38,7 +46,7 @@ export default function Home() {
         </div>
 
         <p className="home__members">
-          {T.members} <Link to="/login">{T.signIn}</Link>
+          {T.members} <Link to={account.to}>{account.label}</Link>
         </p>
 
         <p className="home__status">

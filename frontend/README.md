@@ -18,7 +18,6 @@ The dev server proxies `/api` to `http://localhost:3000` and strips the prefix, 
 | --- | --- |
 | `VITE_API_URL` | API base path, `/api` in development |
 | `VITE_CHAIN_ID` | Chain the wallet must use, `31337` for local Anvil |
-| `VITE_ADMIN_ADDRESS` | Wallet treated as admin until the backend returns an admin flag (Anvil account 0 locally) |
 | `VITE_USE_MOCKS` | `true` returns fixtures from `src/mocks` instead of calling the API |
 
 ## Testing by hand
@@ -40,16 +39,18 @@ These are the default Anvil test accounts. Their keys are public and the same on
 
 To add one in MetaMask: account menu, then **Add account or hardware wallet**, then **Import account**, and paste the private key. Add the local network first if MetaMask does not have it: RPC URL `http://127.0.0.1:8545`, chain ID `31337`, currency `ETH` (signing in from the app also offers to add it).
 
-| Account | Mock role | Mock name |
+The same roles and names are used in mock mode and on the real backend (`seed.sh` and `backend/scripts/seed-db.js`).
+
+| Account | Role | Name |
 | --- | --- | --- |
-| 0 | Admin | Ministry of Agriculture |
-| 1 | Farmer | Al Zaytoun Farm |
-| 2 | Mill | Nablus Olive Mill |
-| 3 | Transporter | Green Road Transport |
+| 0 | Admin | (no profile, the header shows the address) |
+| 1 | Farmer | Nablus Hills Farm |
+| 2 | Mill | Al-Salam Olive Mill |
+| 3 | Transporter | Al-Amal Transport |
 | 4 | Storage | Hebron Oil Storage |
-| 5 | Exporter | Holy Land Exports |
-| 6 | Importer | Amman Olive Imports |
-| 7 | Retailer | Bethlehem Market |
+| 5 | Exporter | Palestine Olive Exports |
+| 6 | Importer | Levant Gourmet Imports |
+| 7 | Retailer | Green Table Market |
 
 Address and private key of each account:
 
@@ -87,8 +88,6 @@ Address and private key of each account:
    Private key: 0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356
 ```
 
-On the real backend only accounts 1 (farmer) and 2 (mill) are registered by `seed.sh`. Account 0 is admin through `VITE_ADMIN_ADDRESS`.
-
 ### Demo batches (mock mode)
 
 | Batch | What it shows |
@@ -103,7 +102,7 @@ On the real backend only accounts 1 (farmer) and 2 (mill) are registered by `see
 **Public pages (no sign in)**
 
 1. Open `/`. You see the title, the batch code box, and the system status. Submitting an empty box shows an error.
-2. Trace `DEMO-1`: "Olive oil", "Now at Bethlehem Market", a green "Verified on the blockchain" banner, all six stages filled, each record marked "Matches". "Show the blockchain proof" opens a table of blocks and transactions, and "Transport details" opens each transport leg.
+2. Trace `DEMO-1`: "Olive oil", "Now at Green Table Market", a green "Verified on the blockchain" banner, all six stages filled, each record marked "Matches". "Show the blockchain proof" opens a table of blocks and transactions, and "Transport details" opens each transport leg.
 3. Trace `DEMO-2`: two stages filled, the other four say "Not yet" with a dashed line.
 4. Trace `DEMO-3`: a red "Records do not match" banner, and the mill "On arrival" record is marked "Changed".
 5. Open `/trace/XYZ`: "Batch not found" with a box to search again.
@@ -128,17 +127,7 @@ On the real backend only accounts 1 (farmer) and 2 (mill) are registered by `see
 
 ### Real backend
 
-Start the stack with `docker compose up -d` from the repo root. Today these work: `/health`, sign in, and reading a batch from the chain. History, verification and creating a batch fail until the backend fixes these:
-
-1. `DATABASE_URL` in `docker-compose.yml` has its credentials replaced with `******`. It should be `postgres://olive_app:olive_pass@postgres:5432/olive_traceability`.
-2. Migrations do not run on startup, so the database has no tables.
-3. `seed.sh` registers the farmer and mill on chain only, so the mill dropdown is empty. After 1 and 2, add them by hand:
-
-```sh
-docker compose exec postgres psql -U olive_app -d olive_traceability -c "INSERT INTO participants (wallet_address) VALUES ('0x70997970c51812dc3a010c7d01b50e0d17dc79c8'),('0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc') ON CONFLICT DO NOTHING; INSERT INTO participant_profiles (wallet_address, name) VALUES ('0x70997970c51812dc3a010c7d01b50e0d17dc79c8','Al Zaytoun Farm'),('0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc','Nablus Olive Mill') ON CONFLICT DO NOTHING;"
-```
-
-Facility names on every page come from mock profiles even with mocks off, because the API has no public profile route yet.
+From the repo root, run `docker compose down -v`, then `docker compose up --build`. The `migrate` service creates the tables and stores the participant profiles, and `seed.sh` registers all seven roles on chain. After that, everything above works on the real backend too, except the mock demo batches (`DEMO-1` to `DEMO-3`) and the save retry test, which only exist in mock mode.
 
 ## Scripts
 

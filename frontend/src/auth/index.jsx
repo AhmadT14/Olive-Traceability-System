@@ -5,14 +5,12 @@ import {
   login as loginRequest,
   setToken,
   setUnauthorizedHandler,
-  ADMIN_ADDRESS,
 } from "../api";
 import { useWallet } from "../wallet/useWallet";
 import { useToast } from "../components/Toast/useToast";
 import { AuthContext } from "./context";
 
 const SESSION_KEY = "olive_session";
-const SESSION_MS = 55 * 60 * 1000; // token lasts 1 hour, expire a little early
 
 function saveSession(session) {
   try {
@@ -46,14 +44,16 @@ function normalizeRole(role) {
     .replace(/_role$/, "");
 }
 
-// Login gives the participant roles. Admin is added from the env address
-// (workaround for gap 2).
-function buildRoles(address, apiRoles) {
+// Login and /auth/me give the participant roles plus an isAdmin flag.
+function buildRoles(apiRoles, isAdmin) {
   const roles = (apiRoles || []).map(normalizeRole);
-  if (address.toLowerCase() === ADMIN_ADDRESS && !roles.includes("admin")) {
-    roles.push("admin");
-  }
+  if (isAdmin && !roles.includes("admin")) roles.push("admin");
   return roles;
+}
+
+// expiresAt from the API is an ISO timestamp; the session keeps milliseconds.
+function expiryMs(expiresAt) {
+  return Date.parse(expiresAt) || Date.now();
 }
 
 export function AuthProvider({ children }) {
@@ -89,7 +89,7 @@ export function AuthProvider({ children }) {
   }, [logout]);
 
   // On page load, check the stored token with /auth/me. A 401 ends the
-  // session through the handler above; otherwise refresh the roles.
+  // session through the handler above; otherwise refresh roles and expiry.
   useEffect(() => {
     if (!sessionRef.current) return undefined;
     let active = true;
@@ -97,10 +97,11 @@ export function AuthProvider({ children }) {
       .then((me) => {
         const prev = sessionRef.current;
         if (!active || !prev) return;
-        const roles = buildRoles(prev.address, me.roles);
+        const roles = buildRoles(me.roles, me.isAdmin);
         const next = {
           ...prev,
           roles,
+          expiresAt: expiryMs(me.expiresAt),
           activeRole: roles.includes(prev.activeRole)
             ? prev.activeRole
             : roles[0] || null,
@@ -115,7 +116,7 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // Token expiry after about 1 hour.
+  // Log out when the token expires.
   useEffect(() => {
     if (!session) return undefined;
     const ms = Math.max(session.expiresAt - Date.now(), 0);
@@ -154,14 +155,14 @@ export function AuthProvider({ children }) {
       const signature = await signer.signMessage(message);
       const res = await loginRequest(address, signature);
 
-      const roles = buildRoles(address, res.roles);
+      const roles = buildRoles(res.roles, res.isAdmin);
 
       setToken(res.token);
       const next = {
         address: address.toLowerCase(),
         roles,
         activeRole: roles[0] || null,
-        expiresAt: Date.now() + SESSION_MS,
+        expiresAt: expiryMs(res.expiresAt),
       };
       saveSession(next);
       sessionRef.current = next;

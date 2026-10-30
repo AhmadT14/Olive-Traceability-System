@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { getBatchChain, getBatchHistory, verifyBatch } from "../../../api";
 import { useAsync } from "../../../hooks/useAsync";
 import Card from "../../../components/Card";
@@ -39,6 +39,12 @@ export default function BatchDetail() {
               <IntegrityBadge status={verify.data.integrityStatus} />
             )}
             {verify.loading && !verify.data && <Loading text="Checking" />}
+            <Link
+              to={`/trace/${encodeURIComponent(batchId)}`}
+              className="batch-detail__public"
+            >
+              View public page
+            </Link>
             <Button variant="secondary" onClick={refresh}>
               Refresh
             </Button>

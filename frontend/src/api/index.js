@@ -5,4 +5,4 @@ export * from "./destinations";
 export * from "./participants";
 export { readableError } from "./errors";
 export { ApiError, setToken, getToken, setUnauthorizedHandler } from "./client";
-export { USE_MOCKS, CHAIN_ID, ADMIN_ADDRESS } from "./config";
+export { USE_MOCKS, CHAIN_ID } from "./config";

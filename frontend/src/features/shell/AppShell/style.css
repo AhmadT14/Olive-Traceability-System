@@ -9,7 +9,10 @@
   color: #fff;
 }
 .app-shell__brand {
+  display: block;
+  color: inherit;
   font-weight: 700;
+  text-decoration: none;
   margin-bottom: var(--space-3);
 }
 .app-shell__nav {

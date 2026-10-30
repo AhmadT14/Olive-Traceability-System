@@ -18,6 +18,7 @@ export const TEXT = {
     mockHint: "Mock mode is on. Try DEMO-1, DEMO-2, DEMO-3 or B1.",
     members: "Farm, mill or other supply chain member?",
     signIn: "Sign in",
+    dashboard: "Go to my dashboard",
     status: "System status",
     checking: "Checking",
     connected: "Connected",

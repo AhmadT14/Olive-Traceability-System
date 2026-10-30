@@ -1,4 +1,5 @@
-// Names for the default Anvil accounts 0 to 7 (gap 6: no public profile route).
+// Default Anvil accounts 0 to 7. Names and locations match
+// backend/scripts/seed-db.js. The admin (account 0) has no profile there.
 export const MOCK_ACCOUNTS = {
   admin: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
   farmer: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
@@ -11,22 +12,50 @@ export const MOCK_ACCOUNTS = {
 };
 
 const PROFILES = {
-  [MOCK_ACCOUNTS.admin]: {
-    name: "Ministry of Agriculture",
-    location: "Ramallah",
+  [MOCK_ACCOUNTS.farmer]: {
+    name: "Nablus Hills Farm",
+    location: "Nablus",
+    roles: ["FARMER"],
   },
-  [MOCK_ACCOUNTS.farmer]: { name: "Al Zaytoun Farm", location: "Jenin" },
-  [MOCK_ACCOUNTS.mill]: { name: "Nablus Olive Mill", location: "Nablus" },
+  [MOCK_ACCOUNTS.mill]: {
+    name: "Al-Salam Olive Mill",
+    location: "Jenin",
+    roles: ["MILL"],
+  },
   [MOCK_ACCOUNTS.transporter]: {
-    name: "Green Road Transport",
-    location: "Tulkarm",
+    name: "Al-Amal Transport",
+    location: "Ramallah",
+    roles: ["TRANSPORTER"],
   },
-  [MOCK_ACCOUNTS.storage]: { name: "Hebron Oil Storage", location: "Hebron" },
-  [MOCK_ACCOUNTS.exporter]: { name: "Holy Land Exports", location: "Ramallah" },
-  [MOCK_ACCOUNTS.importer]: { name: "Amman Olive Imports", location: "Amman" },
-  [MOCK_ACCOUNTS.retailer]: { name: "Bethlehem Market", location: "Bethlehem" },
+  [MOCK_ACCOUNTS.storage]: {
+    name: "Hebron Oil Storage",
+    location: "Hebron",
+    roles: ["STORAGE"],
+  },
+  [MOCK_ACCOUNTS.exporter]: {
+    name: "Palestine Olive Exports",
+    location: "Ramallah",
+    roles: ["EXPORTER"],
+  },
+  [MOCK_ACCOUNTS.importer]: {
+    name: "Levant Gourmet Imports",
+    location: "Amman",
+    roles: ["IMPORTER"],
+  },
+  [MOCK_ACCOUNTS.retailer]: {
+    name: "Green Table Market",
+    location: "Amman",
+    roles: ["RETAILER"],
+  },
 };
 
+// Roles for each account, as login returns them.
+export function mockRoles(address) {
+  const profile = PROFILES[String(address).toLowerCase()];
+  return profile ? profile.roles : [];
+}
+
+// Shape of GET /participants/:address/profile; null stands for the 404.
 export function profileMock(address) {
   const key = String(address).toLowerCase();
   const profile = PROFILES[key];

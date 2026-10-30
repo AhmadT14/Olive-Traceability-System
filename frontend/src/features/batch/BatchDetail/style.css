@@ -10,6 +10,7 @@
   gap: var(--space-3);
   margin-top: var(--space-4);
 }
-.batch-detail__row .button {
-  margin-left: auto;
+.batch-detail__public {
+  margin-inline-start: auto;
+  font-size: var(--text-sm);
 }

@@ -1,24 +1,26 @@
 import { getToken } from "../api/client";
-import { MOCK_ACCOUNTS } from "./participants";
+import { MOCK_ACCOUNTS, mockRoles } from "./participants";
 
-// One role per default Anvil account. Account 0 is the admin.
-const MOCK_ROLES = {
-  [MOCK_ACCOUNTS.farmer]: ["FARMER"],
-  [MOCK_ACCOUNTS.mill]: ["MILL"],
-  [MOCK_ACCOUNTS.transporter]: ["TRANSPORTER"],
-  [MOCK_ACCOUNTS.storage]: ["STORAGE"],
-  [MOCK_ACCOUNTS.exporter]: ["EXPORTER"],
-  [MOCK_ACCOUNTS.importer]: ["IMPORTER"],
-  [MOCK_ACCOUNTS.retailer]: ["RETAILER"],
-};
+export { mockRoles };
 
-export function mockRoles(address) {
-  return MOCK_ROLES[String(address).toLowerCase()] || [];
-}
+const TOKEN_MS = 60 * 60 * 1000;
 
-// The mock token carries the address, so mocks know who is calling.
+// The mock token carries the address and expiry, so mocks know who is calling.
 export function mockCaller() {
   return (getToken() || "").split(":")[1] || "";
+}
+
+function mockExpiry() {
+  return Number((getToken() || "").split(":")[2]) || Date.now() + TOKEN_MS;
+}
+
+function session(address, expiresMs) {
+  return {
+    address,
+    roles: mockRoles(address),
+    isAdmin: String(address).toLowerCase() === MOCK_ACCOUNTS.admin,
+    expiresAt: new Date(expiresMs).toISOString(),
+  };
 }
 
 export function nonceMock(address) {
@@ -31,14 +33,13 @@ export function nonceMock(address) {
 }
 
 export function loginMock(address) {
+  const expiresMs = Date.now() + TOKEN_MS;
   return {
-    address,
-    roles: mockRoles(address),
-    token: `mock-token:${address.toLowerCase()}`,
+    ...session(address, expiresMs),
+    token: `mock-token:${address.toLowerCase()}:${expiresMs}`,
   };
 }
 
 export function meMock() {
-  const address = mockCaller();
-  return { address, roles: mockRoles(address) };
+  return session(mockCaller(), mockExpiry());
 }

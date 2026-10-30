@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../auth/useAuth";
 import { useWallet } from "../../../wallet/useWallet";
 import {
@@ -7,7 +7,8 @@ import {
   ROLE_NAV,
   SHARED_NAV,
 } from "../../../auth/roles";
-import { CHAIN_ID } from "../../../api";
+import { CHAIN_ID, getParticipantProfile } from "../../../api";
+import { useAsync } from "../../../hooks/useAsync";
 import Badge from "../../../components/Badge";
 import Button from "../../../components/Button";
 import { shortAddress } from "../../../utils/format";
@@ -22,6 +23,10 @@ export default function AppShell() {
   const wallet = useWallet();
   const navigate = useNavigate();
   const role = session.activeRole;
+  const { data: profile } = useAsync(
+    () => getParticipantProfile(session.address),
+    session.address,
+  );
   const walletUnavailable =
     wallet.hasProvider && wallet.ready && !wallet.account;
 
@@ -34,7 +39,9 @@ export default function AppShell() {
   return (
     <div className="app-shell">
       <aside className="app-shell__sidebar">
-        <div className="app-shell__brand">Olive Traceability</div>
+        <Link to={ROLE_HOME[role]} className="app-shell__brand">
+          Olive Traceability
+        </Link>
         <nav className="app-shell__nav">
           {[...ROLE_NAV[role], ...SHARED_NAV].map((link) => (
             <NavLink key={link.path} to={link.path} end className={linkClass}>
@@ -62,7 +69,7 @@ export default function AppShell() {
             <Badge tone="success">{ROLE_LABELS[role] || role}</Badge>
           )}
           <span className="app-shell__wallet" title={session.address}>
-            {shortAddress(session.address)}
+            {(profile && profile.name) || shortAddress(session.address)}
           </span>
           <Button variant="secondary" onClick={() => logout()}>
             Sign out

@@ -13,6 +13,7 @@
 .home__brand {
   color: #fff;
   font-weight: 700;
+  text-decoration: none;
 }
 .home__sign-in {
   color: #fff;
