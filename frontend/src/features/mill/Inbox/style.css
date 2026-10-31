@@ -1,0 +1,41 @@
+.mill-inbox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.mill-inbox__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+.mill-inbox__title {
+  margin: 0;
+  font-size: var(--text-xl);
+}
+.mill-inbox__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.mill-inbox__stat {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 10rem;
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+.mill-inbox__number {
+  color: var(--color-text);
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+.mill-inbox .table .button {
+  text-decoration: none;
+  white-space: nowrap;
+}

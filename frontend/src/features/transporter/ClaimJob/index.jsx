@@ -17,10 +17,10 @@ import ParticipantName from "../../../components/ParticipantName";
 import TxProgress from "../../../components/TxProgress";
 import { Loading, ErrorMessage } from "../../../components/State";
 import JobSummary from "../JobSummary";
-import PendingNotice from "../PendingNotice";
-import { CLAIM_KEY, pickupForm } from "../jobs";
+import PendingNotice from "../../../components/PendingNotice";
+import { CLAIM_KEY, pickupForm, PENDING_KINDS } from "../jobs";
 import { TEXT } from "../strings";
-import "../form.css";
+import "../../../forms/form-page.css";
 
 const T = TEXT.claim;
 const enc = encodeURIComponent;
@@ -42,13 +42,13 @@ function Claimed({ batchId, destination }) {
   return (
     <Card title={D.title}>
       <p>{D.intro(batchId)}</p>
-      <dl className="transporter-form__facts">
+      <dl className="form-page__facts">
         <dt>{D.deliverTo}</dt>
         <dd>
           <ParticipantName address={destination} />
         </dd>
       </dl>
-      <div className="transporter-form__links">
+      <div className="form-page__links">
         <Link
           to={`/transporter/active/${enc(batchId)}/deliver`}
           className="button button--primary"
@@ -86,7 +86,7 @@ export default function ClaimJob() {
   if (pending && !pendingHere) {
     return (
       <Card title={T.title(batchId)}>
-        <PendingNotice only={CLAIM_KEY} blocked />
+        <PendingNotice kinds={PENDING_KINDS} only={CLAIM_KEY} blocked />
       </Card>
     );
   }
@@ -110,7 +110,7 @@ export default function ClaimJob() {
     return (
       <Card title={T.title(batchId)}>
         <p>{T.gone}</p>
-        <div className="transporter-form__links">
+        <div className="form-page__links">
           <Link to="/transporter/jobs">{T.backToBoard}</Link>
           <Link to="/transporter/active">{T.toMyJobs}</Link>
         </div>
@@ -144,7 +144,7 @@ export default function ClaimJob() {
   return (
     <Card title={T.title(batchId)}>
       {job && <JobSummary job={job} />}
-      <p className="transporter-form__intro">{T.intro}</p>
+      <p className="form-page__intro">{T.intro}</p>
       <form onSubmit={submit} noValidate>
         <RecordFields
           fields={fields}

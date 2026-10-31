@@ -62,16 +62,14 @@ export function profileMock(address) {
   return profile ? { address: key, ...profile } : null;
 }
 
+// Registered participants holding `role`, as destination entries.
+export function participantsWithRole(role) {
+  return Object.entries(PROFILES)
+    .filter(([, p]) => p.roles.includes(role))
+    .map(([address, p]) => ({ address, name: p.name, role }));
+}
+
 // Shape of GET /destinations?role=MILL.
 export async function millDestinationsMock() {
-  return {
-    role: "MILL",
-    destinations: [
-      {
-        address: MOCK_ACCOUNTS.mill,
-        name: PROFILES[MOCK_ACCOUNTS.mill].name,
-        role: "MILL",
-      },
-    ],
-  };
+  return { role: "MILL", destinations: participantsWithRole("MILL") };
 }

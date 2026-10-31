@@ -1,42 +1,42 @@
-/* Shared by the claim and delivery pages. */
-.transporter-form__intro {
+/* Shared by the record pages: claim, delivery, intake, listing. */
+.form-page__intro {
   margin-block: var(--space-4);
   color: var(--color-text-muted);
 }
-.transporter-form__facts {
+.form-page__facts {
   display: grid;
   grid-template-columns: max-content 1fr;
   gap: var(--space-2) var(--space-4);
   margin-block: var(--space-4);
 }
-.transporter-form__facts dt {
+.form-page__facts dt {
   color: var(--color-text-muted);
 }
-.transporter-form__facts dd {
+.form-page__facts dd {
   margin: 0;
   min-inline-size: 0;
   overflow-wrap: anywhere;
 }
-.transporter-form__strong {
+.form-page__strong {
   font-size: var(--text-lg);
   font-weight: 700;
 }
-.transporter-form__links {
+.form-page__links {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-4);
   margin-block-start: var(--space-4);
 }
-.transporter-form__links .button {
+.form-page__links .button {
   text-decoration: none;
 }
 @media (max-width: 480px) {
-  .transporter-form__facts {
+  .form-page__facts {
     grid-template-columns: 1fr;
   }
 }
-.transporter-form__hint {
+.form-page__hint {
   display: block;
   color: var(--color-text-muted);
   font-size: var(--text-sm);

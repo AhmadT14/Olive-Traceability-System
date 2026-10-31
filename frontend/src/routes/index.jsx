@@ -17,6 +17,10 @@ import JobBoard from "../features/transporter/JobBoard";
 import ClaimJob from "../features/transporter/ClaimJob";
 import MyJobs from "../features/transporter/MyJobs";
 import DeliverJob from "../features/transporter/DeliverJob";
+import MillInbox from "../features/mill/Inbox";
+import MillIntake from "../features/mill/Intake";
+import ListOil from "../features/mill/ListOil";
+import Label from "../features/mill/Label";
 
 // Nav paths that have a real page. The rest show a placeholder.
 const PAGES = {
@@ -25,6 +29,7 @@ const PAGES = {
   "/farmer/batches/new": CreateBatch,
   "/transporter/jobs": JobBoard,
   "/transporter/active": MyJobs,
+  "/mill/inbox": MillInbox,
 };
 
 // Role pages that are not in the sidebar.
@@ -39,6 +44,8 @@ const ROLE_PAGES = [
     path: "/transporter/active/:batchId/deliver",
     Page: DeliverJob,
   },
+  { role: "mill", path: "/mill/batches/:batchId/intake", Page: MillIntake },
+  { role: "mill", path: "/mill/batches/:batchId/list", Page: ListOil },
 ];
 
 function page(path, title) {
@@ -62,6 +69,15 @@ export default function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/no-role" element={<NoRole />} />
       <Route path="/app" element={<AppHome />} />
+      {/* A print view, so it has no app shell around it. */}
+      <Route
+        path="/mill/batches/:batchId/label"
+        element={
+          <RequireRole role="mill">
+            <Label />
+          </RequireRole>
+        }
+      />
       <Route
         element={
           <RequireRole>

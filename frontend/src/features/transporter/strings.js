@@ -27,9 +27,6 @@ export const TEXT = {
       `Your pickup of batch ${batchId} is on chain, but its details were not saved yet.`,
     handover: (batchId) =>
       `Your delivery of batch ${batchId} is on chain, but its details were not saved yet.`,
-    open: "Open it and retry saving",
-    blocked:
-      "Finish saving that one first. You cannot start another until it is saved.",
   },
 
   board: {

@@ -1,6 +1,6 @@
 import { ApiError } from "../api/client";
 import { mockCaller, mockRoles } from "./auth";
-import { profileMock } from "./participants";
+import { participantsWithRole, profileMock } from "./participants";
 import { SEED_BATCHES, TAMPERED_TX } from "./seedBatches";
 
 // A small in-memory chain plus database. Responses use the shapes from the
@@ -230,8 +230,9 @@ export async function prepareBatchMock(body) {
 
   const dataHash = randomHash();
   prepared.set(dataHash, {
+    kind: "create",
     batchId,
-    farmer: caller,
+    caller,
     destination: destinationAddress.toLowerCase(),
     canonical: canonical(record),
   });
@@ -246,6 +247,107 @@ export async function prepareBatchMock(body) {
   };
 }
 
+// The chain change for each prepared action, like the contract functions.
+// Each returns false when the contract would revert (the state moved on).
+const APPLY = {
+  create(action, event) {
+    batches.set(action.batchId, {
+      createdAt: new Date().toISOString(),
+      chain: {
+        status: "Listed",
+        stage: "Farm",
+        custodian: action.caller,
+        pendingTarget: ZERO,
+        destination: action.destination,
+      },
+      events: [
+        event("BatchCreated", {
+          farmer: action.caller,
+          destinationAddress: action.destination,
+          harvestDataHash: action.dataHash,
+        }),
+      ],
+    });
+    return true;
+  },
+  claim(action, event, batch) {
+    if (batch.chain.status !== "Listed") return false;
+    batch.chain = {
+      ...batch.chain,
+      status: "Created",
+      custodian: action.caller,
+    };
+    batch.events.push(
+      event("BatchClaimed", {
+        transporter: action.caller,
+        intakeDataHash: action.dataHash,
+      }),
+    );
+    return true;
+  },
+  handover(action, event, batch) {
+    if (
+      batch.chain.status !== "Created" ||
+      !same(batch.chain.custodian, action.caller)
+    )
+      return false;
+    batch.chain = {
+      ...batch.chain,
+      status: "PendingHandover",
+      pendingTarget: action.target,
+    };
+    batch.events.push(
+      event("HandoverInitiated", {
+        currentCustodian: action.caller,
+        targetAddress: action.target,
+        outgoingDataHash: action.dataHash,
+      }),
+    );
+    return true;
+  },
+  receipt(action, event, batch) {
+    if (
+      batch.chain.status !== "PendingHandover" ||
+      !same(batch.chain.pendingTarget, action.caller)
+    )
+      return false;
+    batch.chain = {
+      status: "Created",
+      stage: NEXT_STAGE[batch.chain.stage],
+      custodian: action.caller,
+      pendingTarget: ZERO,
+      destination: ZERO,
+    };
+    batch.events.push(
+      event("ReceiptConfirmed", {
+        newCustodian: action.caller,
+        intakeDataHash: action.dataHash,
+      }),
+    );
+    return true;
+  },
+  listing(action, event, batch) {
+    if (
+      batch.chain.status !== "Created" ||
+      !same(batch.chain.custodian, action.caller)
+    )
+      return false;
+    batch.chain = {
+      ...batch.chain,
+      status: "Listed",
+      destination: action.destination,
+    };
+    batch.events.push(
+      event("BatchListed", {
+        custodian: action.caller,
+        destinationAddress: action.destination,
+        outgoingDataHash: action.dataHash,
+      }),
+    );
+    return true;
+  },
+};
+
 // Called by the mock wallet in place of MetaMask. Applies the chain change.
 export function mineMockTx(transaction) {
   refresh();
@@ -256,72 +358,23 @@ export function mineMockTx(transaction) {
     });
   prepared.delete(transaction.data);
   const txHash = randomHash();
-  block += 1;
   const event = (name, args) => ({
     name,
     txHash,
-    blockNumber: block,
+    blockNumber: block + 1,
     args: { batchId: randomHash(), ...args },
     details: null,
   });
-
-  if (action.kind === "claim" || action.kind === "handover") {
-    const batch = batches.get(action.batchId);
-    // Same rules as the contract: another claim or handover got there first.
-    const ok =
-      action.kind === "claim"
-        ? batch.chain.status === "Listed"
-        : batch.chain.status === "Created" &&
-          same(batch.chain.custodian, action.caller);
-    if (!ok)
-      throw Object.assign(new Error("Transaction reverted."), {
-        code: "CALL_EXCEPTION",
-      });
-    if (action.kind === "claim") {
-      batch.chain = {
-        ...batch.chain,
-        status: "Created",
-        custodian: action.caller,
-      };
-      batch.events.push(
-        event("BatchClaimed", {
-          transporter: action.caller,
-          intakeDataHash: transaction.data,
-        }),
-      );
-    } else {
-      batch.chain = {
-        ...batch.chain,
-        status: "PendingHandover",
-        pendingTarget: action.target,
-      };
-      batch.events.push(
-        event("HandoverInitiated", {
-          currentCustodian: action.caller,
-          targetAddress: action.target,
-          outgoingDataHash: transaction.data,
-        }),
-      );
-    }
-  } else {
-    batches.set(action.batchId, {
-      createdAt: new Date().toISOString(),
-      chain: {
-        status: "Listed",
-        stage: "Farm",
-        custodian: action.farmer,
-        pendingTarget: ZERO,
-        destination: action.destination,
-      },
-      events: [
-        event("BatchCreated", {
-          farmer: action.farmer,
-          destinationAddress: action.destination,
-          harvestDataHash: transaction.data,
-        }),
-      ],
+  const ok = APPLY[action.kind](
+    { ...action, dataHash: transaction.data },
+    event,
+    batches.get(action.batchId),
+  );
+  if (!ok)
+    throw Object.assign(new Error("Transaction reverted."), {
+      code: "CALL_EXCEPTION",
     });
-  }
+  block += 1;
   canonicalByTx.set(txHash, action.canonical);
   persist();
   return txHash;
@@ -560,8 +613,9 @@ export async function prepareHandoverMock(body) {
   );
 }
 
-// Saves a transporter record on the event mined by txHash.
-function saveTransporterRecord(batchId, body, eventName, kind) {
+// Saves a record on the event mined by txHash. `type` is the stored details
+// type, or a function of the batch for types that depend on its stage.
+function saveEventRecord(batchId, body, eventName, type) {
   refresh();
   const { txHash, ...record } = body;
   const batch = batches.get(batchId);
@@ -574,46 +628,161 @@ function saveTransporterRecord(batchId, body, eventName, kind) {
     throw new ApiError(409, "record does not match the on-chain hash");
   }
   if (event.details) throw new ApiError(409, "record already saved");
-  // The stage has not changed yet: it is still the stage the batch left.
-  const productType = productOf(batch.chain);
   event.details = {
-    type: `transporter_${productType}_${kind}`,
+    type: typeof type === "function" ? type(batch) : type,
     payloadVersion: 1,
     recordedAt: new Date().toISOString(),
     values: record,
   };
   persist();
-  return { event, productType };
+  return event;
 }
+
+// The stage has not changed during transport: it is the stage the batch left.
+const transportType = (kind) => (batch) =>
+  `transporter_${productOf(batch.chain)}_${kind}`;
 
 export async function saveClaimMock(batchId, body) {
   await wait();
-  const { event, productType } = saveTransporterRecord(
+  const event = saveEventRecord(
     batchId,
     body,
     "BatchClaimed",
-    "pickup",
+    transportType("pickup"),
   );
   return {
     batchId,
     txHash: event.txHash,
     transporter: event.args.transporter,
-    productType,
+    productType: productOf(batches.get(batchId).chain),
   };
 }
 
 export async function saveHandoverMock(batchId, body) {
   await wait();
-  const { event, productType } = saveTransporterRecord(
+  const event = saveEventRecord(
     batchId,
     body,
     "HandoverInitiated",
-    "delivery",
+    transportType("delivery"),
   );
   return {
     batchId,
     txHash: event.txHash,
     targetAddress: event.args.targetAddress,
-    productType,
+    productType: productOf(batches.get(batchId).chain),
   };
+}
+
+// Receipt and listing. NEXT_ROLE and NEXT_STAGE follow the fixed chain order.
+const NEXT_STAGE = {
+  Farm: "Mill",
+  Mill: "Storage",
+  Storage: "Exporter",
+  Exporter: "Importer",
+  Importer: "Retailer",
+};
+const NEXT_ROLE = {
+  Farm: "MILL",
+  Mill: "STORAGE",
+  Storage: "EXPORTER",
+  Exporter: "IMPORTER",
+  Importer: "RETAILER",
+};
+
+// Shape of POST /batches/prepare-receipt.
+export async function prepareReceiptMock(body) {
+  await wait();
+  refresh();
+  const caller = mockCaller();
+  const { batchId, ...record } = body;
+  const batch = findBatch(batchId, "batch not found");
+  const role = NEXT_ROLE[batch.chain.stage];
+  if (!role) throw new ApiError(409, "batch is already at final stage");
+  if (!mockRoles(caller).includes(role)) {
+    throw new ApiError(403, `caller is not a ${role.toLowerCase()}`);
+  }
+  if (batch.chain.status !== "PendingHandover") {
+    throw new ApiError(409, "batch not pending handover");
+  }
+  if (!same(batch.chain.pendingTarget, caller)) {
+    throw new ApiError(409, "caller is not the pending target");
+  }
+  return preparedTx(
+    { kind: "receipt", batchId, caller, canonical: canonical(record) },
+    {},
+  );
+}
+
+// Shape of GET /batches/:id/destinations.
+export async function batchDestinationsMock(batchId) {
+  await wait();
+  refresh();
+  const caller = mockCaller();
+  const batch = findBatch(batchId, "batch not found");
+  if (batch.chain.status !== "Created") {
+    throw new ApiError(409, "batch is not ready to be listed for pickup");
+  }
+  if (!same(batch.chain.custodian, caller)) {
+    throw new ApiError(403, "caller is not current custodian");
+  }
+  const role = NEXT_ROLE[batch.chain.stage];
+  if (!role) throw new ApiError(409, "batch is already at final stage");
+  return {
+    batchId,
+    stage: batch.chain.stage,
+    role,
+    destinations: participantsWithRole(role),
+  };
+}
+
+// Shape of POST /batches/prepare-listing (the mill lists its oil).
+export async function prepareMillListingMock(body) {
+  await wait();
+  refresh();
+  const caller = mockCaller();
+  if (!mockRoles(caller).includes("MILL")) {
+    throw new ApiError(403, "caller is not a mill");
+  }
+  const { batchId, destinationAddress, ...record } = body;
+  if (!destinationAddress) {
+    throw new ApiError(422, "invalid payload", {
+      formErrors: [],
+      fieldErrors: { destinationAddress: ["Required"] },
+    });
+  }
+  const batch = findBatch(batchId, "batch not found");
+  if (batch.chain.stage !== "Mill") {
+    throw new ApiError(409, "batch is not at the mill stage");
+  }
+  if (batch.chain.status !== "Created" || !same(batch.chain.custodian, caller)) {
+    throw new ApiError(409, "caller is not current custodian");
+  }
+  if (!mockRoles(destinationAddress).includes("STORAGE")) {
+    throw new ApiError(400, "destination must have STORAGE role");
+  }
+  const destination = destinationAddress.toLowerCase();
+  return preparedTx(
+    {
+      kind: "listing",
+      batchId,
+      caller,
+      destination,
+      canonical: canonical(record),
+    },
+    { destinationAddress: destination, destinationRole: "STORAGE" },
+  );
+}
+
+// POST /batches/:id/mill-intake and /mill-outgoing return { batchId, txHash }.
+export async function saveMillIntakeMock(batchId, body) {
+  await wait();
+  const event = saveEventRecord(batchId, body, "ReceiptConfirmed", "mill_intake");
+  return { batchId, txHash: event.txHash };
+}
+
+export async function saveMillOutgoingMock(batchId, body) {
+  await wait();
+  const event = saveEventRecord(batchId, body, "BatchListed", "mill_outgoing");
+  return { batchId, txHash: event.txHash };
 }

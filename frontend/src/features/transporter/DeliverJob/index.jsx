@@ -17,10 +17,10 @@ import ParticipantName from "../../../components/ParticipantName";
 import TxProgress from "../../../components/TxProgress";
 import { Loading, ErrorMessage } from "../../../components/State";
 import JobSummary from "../JobSummary";
-import PendingNotice from "../PendingNotice";
-import { DELIVER_KEY, deliveryForm, partyName } from "../jobs";
+import PendingNotice from "../../../components/PendingNotice";
+import { DELIVER_KEY, deliveryForm, partyName, PENDING_KINDS } from "../jobs";
 import { TEXT } from "../strings";
-import "../form.css";
+import "../../../forms/form-page.css";
 
 const T = TEXT.deliver;
 const enc = encodeURIComponent;
@@ -46,13 +46,13 @@ function Delivered({ batchId, target }) {
   return (
     <Card title={D.title}>
       <p>{D.intro(batchId)}</p>
-      <dl className="transporter-form__facts">
+      <dl className="form-page__facts">
         <dt>{D.receiver}</dt>
         <dd>
           <ParticipantName address={target} />
         </dd>
       </dl>
-      <div className="transporter-form__links">
+      <div className="form-page__links">
         <Link to={`/batches/${enc(batchId)}`}>{D.openBatch}</Link>
         <Link to="/transporter/active">{D.myJobs}</Link>
         <Link to="/transporter/jobs">{D.board}</Link>
@@ -85,7 +85,7 @@ export default function DeliverJob() {
   if (pending && !pendingHere) {
     return (
       <Card title={T.title(batchId)}>
-        <PendingNotice only={DELIVER_KEY} blocked />
+        <PendingNotice kinds={PENDING_KINDS} only={DELIVER_KEY} blocked />
       </Card>
     );
   }
@@ -106,7 +106,7 @@ export default function DeliverJob() {
   }
 
   const back = (
-    <div className="transporter-form__links">
+    <div className="form-page__links">
       <Link to="/transporter/active">{T.myJobs}</Link>
     </div>
   );
@@ -157,15 +157,15 @@ export default function DeliverJob() {
   return (
     <Card title={T.title(batchId)}>
       {job && <JobSummary job={job} />}
-      <p className="transporter-form__intro">{T.intro}</p>
+      <p className="form-page__intro">{T.intro}</p>
       <form onSubmit={submit} noValidate>
-        <dl className="transporter-form__facts">
+        <dl className="form-page__facts">
           <dt>{T.destination}</dt>
           <dd>
-            <span className="transporter-form__strong">
+            <span className="form-page__strong">
               <ParticipantName address={target} />
             </span>
-            <span className="transporter-form__hint">{T.destinationHint}</span>
+            <span className="form-page__hint">{T.destinationHint}</span>
           </dd>
         </dl>
         <RecordFields

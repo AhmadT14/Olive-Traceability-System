@@ -6,6 +6,7 @@ import {
   verifyMock,
   prepareBatchMock,
   saveBatchMock,
+  prepareReceiptMock,
 } from "../mocks/batches";
 
 const enc = encodeURIComponent;
@@ -46,4 +47,15 @@ export async function prepareBatch(body) {
 export async function saveBatch(body) {
   if (USE_MOCKS) return saveBatchMock(body);
   return request("/batches", { method: "POST", body, auth: true });
+}
+
+// Body: batchId and the receipt fields for the receiving stage. The caller
+// must be the batch's pending target.
+export async function prepareReceipt(body) {
+  if (USE_MOCKS) return prepareReceiptMock(body);
+  return request("/batches/prepare-receipt", {
+    method: "POST",
+    body,
+    auth: true,
+  });
 }

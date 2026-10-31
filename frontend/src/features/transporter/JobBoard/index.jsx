@@ -5,8 +5,8 @@ import Button from "../../../components/Button";
 import StageBadge from "../../../components/StageBadge";
 import { Loading, ErrorMessage, EmptyState } from "../../../components/State";
 import JobSummary from "../JobSummary";
-import PendingNotice from "../PendingNotice";
-import { CLAIM_KEY } from "../jobs";
+import PendingNotice from "../../../components/PendingNotice";
+import { CLAIM_KEY, PENDING_KINDS } from "../jobs";
 import { TEXT } from "../strings";
 import "../../../components/Button/style.css";
 import "./style.css";
@@ -49,7 +49,7 @@ export default function JobBoard() {
         </Button>
       </div>
       <p className="job-board__intro">{T.intro}</p>
-      <PendingNotice only={CLAIM_KEY} blocked />
+      <PendingNotice kinds={PENDING_KINDS} only={CLAIM_KEY} blocked />
 
       {jobs.loading && !jobs.data && <Loading text={T.loading} />}
       <ErrorMessage error={jobs.error} onRetry={jobs.reload} />

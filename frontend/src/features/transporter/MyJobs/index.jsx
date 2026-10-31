@@ -10,8 +10,8 @@ import Button from "../../../components/Button";
 import Table from "../../../components/Table";
 import { Loading, ErrorMessage } from "../../../components/State";
 import { formatDay } from "../../../utils/format";
-import PendingNotice from "../PendingNotice";
-import { partyName, productLabel } from "../jobs";
+import PendingNotice from "../../../components/PendingNotice";
+import { partyName, productLabel, PENDING_KINDS } from "../jobs";
 import { TEXT } from "../strings";
 import "../../../components/Button/style.css";
 import "./style.css";
@@ -88,7 +88,7 @@ export default function MyJobs() {
           {TEXT.refresh}
         </Button>
       </div>
-      <PendingNotice />
+      <PendingNotice kinds={PENDING_KINDS} />
 
       <Card title={T.active}>
         {active.loading && !active.data && <Loading text={T.loading} />}

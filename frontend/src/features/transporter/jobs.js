@@ -7,6 +7,22 @@ import { TEXT } from "./strings";
 export const CLAIM_KEY = "transporter-claim";
 export const DELIVER_KEY = "transporter-handover";
 
+const enc = encodeURIComponent;
+
+// For PendingNotice: where to retry each kind of save.
+export const PENDING_KINDS = [
+  {
+    key: CLAIM_KEY,
+    text: TEXT.pending.claim,
+    path: (id) => `/transporter/jobs/${enc(id)}/claim`,
+  },
+  {
+    key: DELIVER_KEY,
+    text: TEXT.pending.handover,
+    path: (id) => `/transporter/active/${enc(id)}/deliver`,
+  },
+];
+
 // Olives until the batch leaves the farm, oil after that.
 export function productOf(stage) {
   return stage === "Farm" ? "olive" : "oil";
