@@ -1,0 +1,10 @@
+.pending-notice {
+  padding: var(--space-3);
+  background: var(--color-warning-bg);
+  border-radius: var(--radius-sm);
+  color: var(--color-warning);
+  font-size: var(--text-sm);
+}
+.pending-notice p {
+  margin: 0 0 var(--space-2);
+}

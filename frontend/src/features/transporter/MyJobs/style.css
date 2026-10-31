@@ -1,0 +1,24 @@
+.my-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.my-jobs__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+.my-jobs__title {
+  margin: 0;
+  font-size: var(--text-xl);
+}
+.my-jobs .table .button {
+  text-decoration: none;
+  white-space: nowrap;
+}
+.my-jobs__note {
+  margin: 0;
+  color: var(--color-text-muted);
+}

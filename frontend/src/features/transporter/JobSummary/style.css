@@ -1,0 +1,43 @@
+.job-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.job-summary__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+}
+.job-summary__row {
+  display: contents;
+}
+.job-summary__facts dt {
+  color: var(--color-text-muted);
+}
+.job-summary__facts dd {
+  margin: 0;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.job-summary__strong {
+  font-weight: 700;
+}
+.job-summary__details summary {
+  cursor: pointer;
+  color: var(--color-primary);
+  margin-block-end: var(--space-2);
+}
+.job-summary__none {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+@media (max-width: 480px) {
+  .job-summary__facts {
+    grid-template-columns: 1fr;
+  }
+  .job-summary__facts dd {
+    margin-block-end: var(--space-2);
+  }
+}

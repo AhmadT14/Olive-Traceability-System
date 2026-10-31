@@ -13,6 +13,29 @@ stops current work.
 
 ## Database and API
 
+### Medium: completed jobs for the transporter
+
+- **Now:** `GET /transporter-jobs?mine=true` drops a job once the receiver
+  confirms it, and no other route lists finished jobs.
+- **Ask:** a way to list the caller's completed jobs, same job shape with
+  `status: "completed"`, newest first. For example `?mine=true&status=completed`
+  or a new route; your choice.
+- **Why:** the transporter's "My jobs" page has a completed jobs section
+  (Phase 5). Today it says "will appear once the system supports it".
+- **Needed by:** Phase 5 (already built on a mock).
+
+### Medium: `outgoingDetails` on the job board for farm listings
+
+- **Now:** `outgoingDetails` is filled only for mill and storage listings. A
+  farm batch (and exporter and importer listings) gives `null`.
+- **Ask:** map the farm record too (at least `quantity`, `olive_type`,
+  `harvest_date`), and the exporter and importer outgoing records, the same
+  camelCase way as the mill and storage ones.
+- **Why:** before claiming a farm job the transporter cannot see how many
+  kilograms to carry, which decides the truck.
+- **Needed by:** Phase 5. Works without it; the card says the sender
+  recorded no details.
+
 ### Medium: add `quantity` and `olive_type` to `GET /me/batches/created`
 
 - **Now:** each item has the chain state plus `harvestDate`, `createdBlock`

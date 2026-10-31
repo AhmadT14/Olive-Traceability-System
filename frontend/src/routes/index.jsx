@@ -13,13 +13,33 @@ import FindBatch from "../features/batch/FindBatch";
 import BatchDetail from "../features/batch/BatchDetail";
 import FarmerOverview from "../features/farmer/Overview";
 import CreateBatch from "../features/farmer/CreateBatch";
+import JobBoard from "../features/transporter/JobBoard";
+import ClaimJob from "../features/transporter/ClaimJob";
+import MyJobs from "../features/transporter/MyJobs";
+import DeliverJob from "../features/transporter/DeliverJob";
 
 // Nav paths that have a real page. The rest show a placeholder.
 const PAGES = {
   "/batches": FindBatch,
   "/farmer": FarmerOverview,
   "/farmer/batches/new": CreateBatch,
+  "/transporter/jobs": JobBoard,
+  "/transporter/active": MyJobs,
 };
+
+// Role pages that are not in the sidebar.
+const ROLE_PAGES = [
+  {
+    role: "transporter",
+    path: "/transporter/jobs/:batchId/claim",
+    Page: ClaimJob,
+  },
+  {
+    role: "transporter",
+    path: "/transporter/active/:batchId/deliver",
+    Page: DeliverJob,
+  },
+];
 
 function page(path, title) {
   const Page = PAGES[path];
@@ -62,6 +82,17 @@ export default function AppRoutes() {
             />
           )),
         )}
+        {ROLE_PAGES.map(({ role, path, Page }) => (
+          <Route
+            key={path}
+            path={path}
+            element={
+              <RequireRole role={role}>
+                <Page />
+              </RequireRole>
+            }
+          />
+        ))}
         {SHARED_NAV.map((link) => (
           <Route
             key={link.path}

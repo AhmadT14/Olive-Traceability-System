@@ -1,0 +1,56 @@
+.job-board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.job-board__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+.job-board__title {
+  margin: 0;
+  font-size: var(--text-xl);
+}
+.job-board__intro,
+.job-board__count {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+.job-board__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: var(--space-4);
+}
+.job-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+.job-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+.job-card__id {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.job-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-start: auto;
+}
+.job-card__actions .button {
+  text-decoration: none;
+}

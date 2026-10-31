@@ -20,6 +20,11 @@ const IDLE = {
   result: null,
 };
 
+// The save kept for retry under `key`, or null. Lets other pages point to it.
+export function readPendingSave(key) {
+  return readPending(key);
+}
+
 function readPending(key) {
   try {
     const raw = localStorage.getItem(PENDING_PREFIX + key);

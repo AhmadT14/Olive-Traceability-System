@@ -4,6 +4,7 @@ export * from "./batches";
 export * from "./destinations";
 export * from "./participants";
 export * from "./me";
+export * from "./transporter";
 export { readableError } from "./errors";
 export {
   ApiError,
