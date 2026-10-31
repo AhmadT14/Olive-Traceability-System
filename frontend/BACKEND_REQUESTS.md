@@ -11,6 +11,12 @@ Priority:
 Every item below has a mock or workaround in the frontend, so none of them
 stops current work.
 
+Who owns what:
+- **Database and API:** records, batch and job lists, profiles, statistics.
+- **Smart contract and chain:** the contract and events, plus everything
+  about the wallet, MetaMask, JWT, login and signup (participant
+  registration).
+
 ## Database and API
 
 ### Medium: completed jobs for the transporter
@@ -99,9 +105,14 @@ stops current work.
 
 ## Done
 
-Closed and already used by the frontend:
+Closed and already used by the frontend.
+
+Smart contract and chain:
 
 - `isAdmin` and `expiresAt` in login and `/auth/me`
+
+Database and API:
+
 - `GET /me/batches`, `GET /me/profile`, `PATCH /me/profile`,
   `PATCH /me/availability`
 - `GET /transporter-jobs?mine=true`
