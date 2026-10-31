@@ -1,4 +1,4 @@
-.list-oil__qr {
+.qr-preview {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -8,13 +8,13 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
 }
-.list-oil__qr svg {
+.qr-preview svg {
   flex: none;
   background: #fff;
 }
-.list-oil__qr p {
+.qr-preview p {
   margin: 0 0 var(--space-2);
 }
-.list-oil__qr-title {
+.qr-preview__title {
   font-weight: 700;
 }

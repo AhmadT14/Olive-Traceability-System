@@ -6,6 +6,7 @@ export * from "./participants";
 export * from "./me";
 export * from "./transporter";
 export * from "./mill";
+export * from "./facility";
 export { readableError } from "./errors";
 export {
   ApiError,

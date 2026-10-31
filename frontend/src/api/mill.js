@@ -2,7 +2,7 @@ import { request } from "./client";
 import { USE_MOCKS } from "./config";
 import {
   saveMillIntakeMock,
-  prepareMillListingMock,
+  prepareStageListingMock,
   saveMillOutgoingMock,
 } from "../mocks/batches";
 
@@ -21,7 +21,7 @@ export async function saveMillIntake(batchId, body) {
 // Body: batchId, destinationAddress (a storage facility) and the mill
 // outgoing fields.
 export async function prepareMillListing(body) {
-  if (USE_MOCKS) return prepareMillListingMock(body);
+  if (USE_MOCKS) return prepareStageListingMock("mill", body);
   return request("/batches/prepare-listing", {
     method: "POST",
     body,

@@ -17,40 +17,67 @@ import JobBoard from "../features/transporter/JobBoard";
 import ClaimJob from "../features/transporter/ClaimJob";
 import MyJobs from "../features/transporter/MyJobs";
 import DeliverJob from "../features/transporter/DeliverJob";
-import MillInbox from "../features/mill/Inbox";
-import MillIntake from "../features/mill/Intake";
-import ListOil from "../features/mill/ListOil";
-import Label from "../features/mill/Label";
+import FacilityInbox from "../features/facility/Inbox";
+import Intake from "../features/facility/Intake";
+import ListForPickup from "../features/facility/ListForPickup";
+import Label from "../features/facility/Label";
+import Inventory from "../features/facility/Inventory";
+import { FACILITIES } from "../features/facility/config";
+
+const facilityRoles = Object.keys(FACILITIES);
 
 // Nav paths that have a real page. The rest show a placeholder.
 const PAGES = {
-  "/batches": FindBatch,
-  "/farmer": FarmerOverview,
-  "/farmer/batches/new": CreateBatch,
-  "/transporter/jobs": JobBoard,
-  "/transporter/active": MyJobs,
-  "/mill/inbox": MillInbox,
+  "/batches": <FindBatch />,
+  "/farmer": <FarmerOverview />,
+  "/farmer/batches/new": <CreateBatch />,
+  "/transporter/jobs": <JobBoard />,
+  "/transporter/active": <MyJobs />,
+  "/retailer/inventory": <Inventory />,
+  ...Object.fromEntries(
+    facilityRoles.map((role) => [
+      `/${role}/inbox`,
+      <FacilityInbox key={role} role={role} />,
+    ]),
+  ),
 };
 
-// Role pages that are not in the sidebar.
+// Role pages that are not in the sidebar. The facility pages take the role,
+// so each role keeps its own form state.
 const ROLE_PAGES = [
   {
     role: "transporter",
     path: "/transporter/jobs/:batchId/claim",
-    Page: ClaimJob,
+    element: <ClaimJob />,
   },
   {
     role: "transporter",
     path: "/transporter/active/:batchId/deliver",
-    Page: DeliverJob,
+    element: <DeliverJob />,
   },
-  { role: "mill", path: "/mill/batches/:batchId/intake", Page: MillIntake },
-  { role: "mill", path: "/mill/batches/:batchId/list", Page: ListOil },
+  ...facilityRoles.flatMap((role) => [
+    {
+      role,
+      path: `/${role}/batches/:batchId/intake`,
+      element: <Intake key={role} role={role} />,
+    },
+    ...(FACILITIES[role].listing
+      ? [
+          {
+            role,
+            path: `/${role}/batches/:batchId/list`,
+            element: <ListForPickup key={role} role={role} />,
+          },
+        ]
+      : []),
+  ]),
 ];
 
+// Print views, so they have no app shell around them.
+const LABEL_ROLES = facilityRoles.filter((role) => FACILITIES[role].qr);
+
 function page(path, title) {
-  const Page = PAGES[path];
-  return Page ? <Page /> : <RolePlaceholder title={title} />;
+  return PAGES[path] || <RolePlaceholder title={title} />;
 }
 
 function AppHome() {
@@ -69,15 +96,17 @@ export default function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/no-role" element={<NoRole />} />
       <Route path="/app" element={<AppHome />} />
-      {/* A print view, so it has no app shell around it. */}
-      <Route
-        path="/mill/batches/:batchId/label"
-        element={
-          <RequireRole role="mill">
-            <Label />
-          </RequireRole>
-        }
-      />
+      {LABEL_ROLES.map((role) => (
+        <Route
+          key={role}
+          path={`/${role}/batches/:batchId/label`}
+          element={
+            <RequireRole role={role}>
+              <Label role={role} />
+            </RequireRole>
+          }
+        />
+      ))}
       <Route
         element={
           <RequireRole>
@@ -98,15 +127,11 @@ export default function AppRoutes() {
             />
           )),
         )}
-        {ROLE_PAGES.map(({ role, path, Page }) => (
+        {ROLE_PAGES.map(({ role, path, element }) => (
           <Route
             key={path}
             path={path}
-            element={
-              <RequireRole role={role}>
-                <Page />
-              </RequireRole>
-            }
+            element={<RequireRole role={role}>{element}</RequireRole>}
           />
         ))}
         {SHARED_NAV.map((link) => (

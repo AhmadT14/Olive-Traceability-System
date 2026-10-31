@@ -100,7 +100,6 @@ function persist() {
   }
 }
 
-
 function findBatch(batchId, message) {
   const batch = batches.get(batchId);
   if (!batch) throw new ApiError(404, message);
@@ -736,13 +735,40 @@ export async function batchDestinationsMock(batchId) {
   };
 }
 
-// Shape of POST /batches/prepare-listing (the mill lists its oil).
-export async function prepareMillListingMock(body) {
+// The listing rules per role, like backend services/prepare.service.js
+// LISTINGS. Storage, exporter and importer must have saved their intake
+// record before they can list.
+const LISTINGS = {
+  mill: { role: "MILL", stage: "Mill", what: "a mill", intake: null },
+  storage: {
+    role: "STORAGE",
+    stage: "Storage",
+    what: "a storage facility",
+    intake: "storage_intake",
+  },
+  exporter: {
+    role: "EXPORTER",
+    stage: "Exporter",
+    what: "an exporter",
+    intake: "exporter_intake",
+  },
+  importer: {
+    role: "IMPORTER",
+    stage: "Importer",
+    what: "an importer",
+    intake: "importer_intake",
+  },
+};
+
+// Shape of POST /batches/prepare-listing and the storage, exporter and
+// importer listing routes.
+export async function prepareStageListingMock(kind, body) {
   await wait();
   refresh();
+  const spec = LISTINGS[kind];
   const caller = mockCaller();
-  if (!mockRoles(caller).includes("MILL")) {
-    throw new ApiError(403, "caller is not a mill");
+  if (!mockRoles(caller).includes(spec.role)) {
+    throw new ApiError(403, `caller is not ${spec.what}`);
   }
   const { batchId, destinationAddress, ...record } = body;
   if (!destinationAddress) {
@@ -752,14 +778,30 @@ export async function prepareMillListingMock(body) {
     });
   }
   const batch = findBatch(batchId, "batch not found");
-  if (batch.chain.stage !== "Mill") {
-    throw new ApiError(409, "batch is not at the mill stage");
+  if (batch.chain.stage !== spec.stage) {
+    throw new ApiError(
+      409,
+      `batch is not at the ${spec.stage.toLowerCase()} stage`,
+    );
   }
-  if (batch.chain.status !== "Created" || !same(batch.chain.custodian, caller)) {
+  if (
+    batch.chain.status !== "Created" ||
+    !same(batch.chain.custodian, caller)
+  ) {
     throw new ApiError(409, "caller is not current custodian");
   }
-  if (!mockRoles(destinationAddress).includes("STORAGE")) {
-    throw new ApiError(400, "destination must have STORAGE role");
+  if (
+    spec.intake &&
+    !batch.events.some((e) => e.details && e.details.type === spec.intake)
+  ) {
+    throw new ApiError(
+      409,
+      `no ${kind} intake recorded off-chain for this batch yet`,
+    );
+  }
+  const nextRole = NEXT_ROLE[spec.stage];
+  if (!mockRoles(destinationAddress).includes(nextRole)) {
+    throw new ApiError(400, `destination must have ${nextRole} role`);
   }
   const destination = destinationAddress.toLowerCase();
   return preparedTx(
@@ -770,19 +812,65 @@ export async function prepareMillListingMock(body) {
       destination,
       canonical: canonical(record),
     },
-    { destinationAddress: destination, destinationRole: "STORAGE" },
+    { destinationAddress: destination, destinationRole: nextRole },
   );
 }
 
 // POST /batches/:id/mill-intake and /mill-outgoing return { batchId, txHash }.
 export async function saveMillIntakeMock(batchId, body) {
   await wait();
-  const event = saveEventRecord(batchId, body, "ReceiptConfirmed", "mill_intake");
+  const event = saveEventRecord(
+    batchId,
+    body,
+    "ReceiptConfirmed",
+    "mill_intake",
+  );
   return { batchId, txHash: event.txHash };
 }
 
 export async function saveMillOutgoingMock(batchId, body) {
   await wait();
   const event = saveEventRecord(batchId, body, "BatchListed", "mill_outgoing");
+  return { batchId, txHash: event.txHash };
+}
+
+// POST /batches/:id/receipt. The stage the batch is in now (the receiver's)
+// picks the record type, like backend receiptSchemas.
+const RECEIPTS = {
+  Storage: { type: "storage_intake", stage: "storage" },
+  Exporter: { type: "exporter_intake", stage: "exporter_intake" },
+  Importer: { type: "importer_intake", stage: "import" },
+  Retailer: { type: "retailer_intake", stage: "retail" },
+};
+
+export async function saveReceiptMock(batchId, body) {
+  await wait();
+  refresh();
+  const batch = findBatch(batchId, "batch not found");
+  const receipt = RECEIPTS[batch.chain.stage];
+  if (!receipt) {
+    throw new ApiError(
+      409,
+      `receipt persistence is not defined for stage ${batch.chain.stage}`,
+    );
+  }
+  const event = saveEventRecord(
+    batchId,
+    body,
+    "ReceiptConfirmed",
+    receipt.type,
+  );
+  return { batchId, txHash: event.txHash, stage: receipt.stage };
+}
+
+// POST /batches/:id/storage-outgoing, /exporter-outgoing, /importer-outgoing.
+export async function saveOutgoingMock(kind, batchId, body) {
+  await wait();
+  const event = saveEventRecord(
+    batchId,
+    body,
+    "BatchListed",
+    `${kind}_outgoing`,
+  );
   return { batchId, txHash: event.txHash };
 }

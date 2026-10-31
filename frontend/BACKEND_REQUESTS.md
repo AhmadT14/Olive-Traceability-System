@@ -47,6 +47,19 @@ stops current work.
   frontend needs one `/history` call per batch.
 - **Needed by:** Phase 9 or 10.
 
+### Low: the mill can list before its intake record is saved
+
+- **Now:** `POST /batches/prepare-listing` does not check for a saved
+  `mill_intake` record. Storage, exporter and importer listings do
+  (`intakeType` in the `LISTINGS` table in `services/prepare.service.js`
+  and `services/batch.service.js`, which is `null` for the mill).
+- **Ask:** set `intakeType: "mill_intake"` for the mill, with an error like
+  the others ("no mill intake recorded off-chain for this batch yet").
+- **Why:** if the mill's intake save fails and it lists anyway, the batch
+  history has a gap that can never be filled. The frontend now blocks this
+  in the app, but the API should refuse it too.
+- **Needed by:** no phase. The frontend works around it.
+
 ### Low: CORS
 
 - **Now:** the backend sends no CORS headers. In development the Vite proxy
