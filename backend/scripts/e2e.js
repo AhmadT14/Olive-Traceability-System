@@ -569,6 +569,50 @@ async function availabilityRules(batchId) {
   }
 }
 
+async function createdBatches(batchId) {
+  console.log("\n# farmer's created batches");
+  const list = await call("FARMER", "GET", "/me/batches/created");
+  const batches = list.body.batches ?? [];
+  const main = batches.find((b) => b.batchId === batchId);
+  const newer = batches.find((b) => b.batchId === `${batchId}-AV`);
+
+  check("the list answers 200", list.status === 200, JSON.stringify(list.body));
+  check(
+    "a batch that has travelled to the retailer is still in the farmer's list",
+    main?.stage === "Retailer",
+    JSON.stringify(main),
+  );
+  check(
+    "each entry has its harvest date, creation block and ISO creation time",
+    main?.harvestDate === "2026-10-01" &&
+      Number.isInteger(main.createdBlock) &&
+      !Number.isNaN(Date.parse(main.createdAt)),
+    JSON.stringify(main),
+  );
+  check(
+    "newest first: the later batch is listed before the earlier one",
+    newer && batches.indexOf(newer) < batches.indexOf(main),
+    batches.map((b) => `${b.batchId}@${b.createdBlock}`).join(", "),
+  );
+  check(
+    "the list is sorted by creation block, newest first",
+    batches.every(
+      (b, i) => i === 0 || batches[i - 1].createdBlock >= b.createdBlock,
+    ),
+  );
+  check(
+    "a batch the transporter has claimed shows its live state, held by the transporter",
+    newer?.stage === "Farm" &&
+      newer.custodian.toLowerCase() === address("TRANSPORTER").toLowerCase(),
+    JSON.stringify(newer),
+  );
+  check(
+    "only farmers can ask (mill 403), and a token is required (401)",
+    (await call("MILL", "GET", "/me/batches/created")).status === 403 &&
+      (await api("GET", "/me/batches/created")).status === 401,
+  );
+}
+
 async function profilesAndAdmin() {
   console.log("\n# profiles and admin directory");
   const original = (await call("MILL", "GET", "/me/profile")).body.profile;
@@ -658,6 +702,7 @@ async function main() {
   await sessionAndPublicProfile();
   await supplyChain(batchId);
   await availabilityRules(batchId);
+  await createdBatches(batchId);
   await profilesAndAdmin();
 
   console.log(

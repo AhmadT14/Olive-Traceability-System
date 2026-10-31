@@ -93,3 +93,27 @@ export async function getBatchHistory(batchId) {
       ),
     }));
 }
+
+// Every BatchCreated event for one farmer, with the time of its block. Only
+// events from the farmer's own address are returned (the event indexes it), so
+// the cost follows the farmer's batch count, not the size of the whole chain.
+export async function getBatchCreatedEvents(farmerAddress) {
+  const logs = await batchCustody.queryFilter(
+    batchCustody.filters.BatchCreated(null, farmerAddress),
+    config.DEPLOY_BLOCK,
+  );
+
+  const blockNumbers = [...new Set(logs.map((log) => log.blockNumber))];
+  const blocks = await Promise.all(
+    blockNumbers.map((n) => provider.getBlock(n)),
+  );
+  const timestamps = new Map(
+    blocks.map((block, index) => [blockNumbers[index], block.timestamp]),
+  );
+
+  return logs.map((log) => ({
+    txHash: log.transactionHash,
+    blockNumber: log.blockNumber,
+    timestamp: timestamps.get(log.blockNumber),
+  }));
+}

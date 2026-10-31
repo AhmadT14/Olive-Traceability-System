@@ -1,5 +1,6 @@
 import { classifyBatchForParticipant } from "../chain/checks.js";
-import { getBatch } from "../chain/reader.js";
+import { matchCreatedBatches } from "../chain/createdBatches.js";
+import { getBatch, getBatchCreatedEvents, hasRole } from "../chain/reader.js";
 import {
   AppError,
   forbidden,
@@ -7,6 +8,7 @@ import {
   notFound,
   unprocessable,
 } from "../errors.js";
+import * as batchEventRepository from "../repositories/batchEvent.repository.js";
 import * as batchRepository from "../repositories/batch.repository.js";
 import * as participantRepository from "../repositories/participant.repository.js";
 import {
@@ -135,5 +137,39 @@ export async function listMyBatches(user) {
   } catch (err) {
     if (err instanceof AppError) throw err;
     throw internalError("batch lookup failed", err);
+  }
+}
+
+// Every batch the caller created as a farmer, newest first, with its current
+// chain state, so a batch stays in the list after a transporter has taken it.
+// Created batches come from the chain's BatchCreated events for the caller;
+// the readable batch id and harvest date come from the saved farm record.
+export async function listCreatedBatches(user) {
+  try {
+    if (!(await hasRole("FARMER", user.address))) {
+      throw forbidden("caller is not a farmer");
+    }
+
+    const events = await getBatchCreatedEvents(user.address);
+    const rows = await batchEventRepository.findFarmEventsByTxHashes(
+      events.map((event) => event.txHash),
+    );
+    const created = matchCreatedBatches(events, rows);
+
+    const batches = [];
+    for (let i = 0; i < created.length; i += CHAIN_READ_BATCH_SIZE) {
+      const chunk = created.slice(i, i + CHAIN_READ_BATCH_SIZE);
+      const states = await Promise.all(
+        chunk.map(({ batchId }) => getBatch(batchId)),
+      );
+      chunk.forEach((item, index) =>
+        batches.push({ ...states[index], ...item }),
+      );
+    }
+
+    return { batches };
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    throw internalError("created batch lookup failed", err);
   }
 }

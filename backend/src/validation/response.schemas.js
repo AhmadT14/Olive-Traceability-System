@@ -276,3 +276,13 @@ export const adminParticipantsResponseSchema = z.object({
     }),
   ),
 });
+
+export const createdBatchesResponseSchema = z.object({
+  batches: z.array(
+    chainBatchSchema.extend({
+      harvestDate: z.string().nullable(),
+      createdBlock: z.number(),
+      createdAt: z.string(),
+    }),
+  ),
+});

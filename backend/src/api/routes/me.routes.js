@@ -2,12 +2,14 @@ import { Router } from "express";
 import { requireAuth } from "../../auth/middleware.js";
 import {
   getMyProfile,
+  listCreatedBatches,
   listMyBatches,
   updateMyAvailability,
   updateMyProfile,
 } from "../../services/me.service.js";
 import {
   availabilityResponseSchema,
+  createdBatchesResponseSchema,
   myBatchesResponseSchema,
   myProfileResponseSchema,
 } from "../../validation/response.schemas.js";
@@ -54,6 +56,15 @@ router.get(
   handle(
     async (req) => ({ status: 200, body: await listMyBatches(req.user) }),
     myBatchesResponseSchema,
+  ),
+);
+
+router.get(
+  "/me/batches/created",
+  requireAuth,
+  handle(
+    async (req) => ({ status: 200, body: await listCreatedBatches(req.user) }),
+    createdBatchesResponseSchema,
   ),
 );
 
