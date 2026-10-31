@@ -1,0 +1,844 @@
+{
+  "version": "8",
+  "dialect": "postgres",
+  "id": "db4f447f-9b48-4a5d-a41c-0c66a2b224fd",
+  "prevIds": [
+    "33bcd336-e14f-4d67-a8aa-16fd654406bd"
+  ],
+  "ddl": [
+    {
+      "isRlsEnabled": false,
+      "name": "batch_events",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "batches",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "participant_profiles",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "participants",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "transporter_jobs",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "event_tx_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "batch_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "type": "varchar(32)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contract_event",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "type": "varchar(40)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "details_type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "1",
+      "generated": null,
+      "identity": null,
+      "name": "payload_version",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "details",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "recorded_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "batch_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batches"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batches"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "wallet_address",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contact_phone",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "email",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "address",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "location",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "varchar(32)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "availability",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "details",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "wallet_address",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participants"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": {
+        "type": "always",
+        "name": "transporter_jobs_id_seq",
+        "increment": "1",
+        "startWith": "1",
+        "minValue": "1",
+        "maxValue": "2147483647",
+        "cache": 1,
+        "cycle": false
+      },
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "batch_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "source_party",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "destination_party",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "transporter",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(32)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "listing_tx_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "claim_tx_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "handover_tx_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "receipt_tx_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "batch_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "batch_events_batch_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "details_type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "batch_events_details_type_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "batch_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "transporter_jobs_batch_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "transporter_jobs_status_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "transporter",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "transporter_jobs_transporter_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "batch_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "batches",
+      "columnsTo": [
+        "batch_id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "batch_events_batch_id_batches_batch_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "wallet_address"
+      ],
+      "schemaTo": "public",
+      "tableTo": "participants",
+      "columnsTo": [
+        "wallet_address"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "participant_profiles_Ksw8g5D1Q0jl_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "batch_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "batches",
+      "columnsTo": [
+        "batch_id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_batch_id_batches_batch_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "source_party"
+      ],
+      "schemaTo": "public",
+      "tableTo": "participants",
+      "columnsTo": [
+        "wallet_address"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_source_party_participants_wallet_address_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "destination_party"
+      ],
+      "schemaTo": "public",
+      "tableTo": "participants",
+      "columnsTo": [
+        "wallet_address"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_SBT76rscwi4R_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "transporter"
+      ],
+      "schemaTo": "public",
+      "tableTo": "participants",
+      "columnsTo": [
+        "wallet_address"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_transporter_participants_wallet_address_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "batch_id",
+        "listing_tx_hash"
+      ],
+      "schemaTo": "public",
+      "tableTo": "batch_events",
+      "columnsTo": [
+        "batch_id",
+        "event_tx_hash"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_listing_event_fk",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "batch_id",
+        "claim_tx_hash"
+      ],
+      "schemaTo": "public",
+      "tableTo": "batch_events",
+      "columnsTo": [
+        "batch_id",
+        "event_tx_hash"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_claim_event_fk",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "batch_id",
+        "handover_tx_hash"
+      ],
+      "schemaTo": "public",
+      "tableTo": "batch_events",
+      "columnsTo": [
+        "batch_id",
+        "event_tx_hash"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_handover_event_fk",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "batch_id",
+        "receipt_tx_hash"
+      ],
+      "schemaTo": "public",
+      "tableTo": "batch_events",
+      "columnsTo": [
+        "batch_id",
+        "event_tx_hash"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_receipt_event_fk",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "columns": [
+        "event_tx_hash"
+      ],
+      "nameExplicit": false,
+      "name": "batch_events_pkey",
+      "schema": "public",
+      "table": "batch_events",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "batch_id"
+      ],
+      "nameExplicit": false,
+      "name": "batches_pkey",
+      "schema": "public",
+      "table": "batches",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "wallet_address"
+      ],
+      "nameExplicit": false,
+      "name": "participant_profiles_pkey",
+      "schema": "public",
+      "table": "participant_profiles",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "wallet_address"
+      ],
+      "nameExplicit": false,
+      "name": "participants_pkey",
+      "schema": "public",
+      "table": "participants",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "transporter_jobs_pkey",
+      "schema": "public",
+      "table": "transporter_jobs",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "batch_id",
+        "event_tx_hash"
+      ],
+      "nullsNotDistinct": false,
+      "name": "batch_events_batch_tx_unique",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "listing_tx_hash"
+      ],
+      "nullsNotDistinct": false,
+      "name": "transporter_jobs_listing_tx_hash_unique",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "claim_tx_hash"
+      ],
+      "nullsNotDistinct": false,
+      "name": "transporter_jobs_claim_tx_hash_unique",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "handover_tx_hash"
+      ],
+      "nullsNotDistinct": false,
+      "name": "transporter_jobs_handover_tx_hash_unique",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "receipt_tx_hash"
+      ],
+      "nullsNotDistinct": false,
+      "name": "transporter_jobs_receipt_tx_hash_unique",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "value": "\"contract_event\" IN ('BatchCreated', 'BatchListed', 'BatchClaimed', 'HandoverInitiated', 'ReceiptConfirmed')",
+      "name": "batch_events_contract_event_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "value": "\"details_type\" IN ('farm', 'transporter_olive_pickup', 'transporter_oil_pickup', 'transporter_olive_delivery', 'transporter_oil_delivery', 'mill_intake', 'mill_outgoing', 'storage_intake', 'storage_outgoing', 'exporter_intake', 'exporter_outgoing', 'importer_intake', 'importer_outgoing', 'retailer_intake')",
+      "name": "batch_events_details_type_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "value": "\"payload_version\" > 0",
+      "name": "batch_events_payload_version_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "value": "jsonb_typeof(\"details\") = 'object'",
+      "name": "batch_events_details_object_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "batch_events"
+    }
+  ],
+  "renames": []
+}

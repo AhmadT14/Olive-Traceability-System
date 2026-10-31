@@ -196,6 +196,23 @@ Run it after `docker compose up --build` has settled. It reads `API_URL`
 `http://127.0.0.1:8545`) if you need to point it elsewhere. Run it only against
 the demo stack, never a real network.
 
+### Changing the database schema
+
+Edit `backend/src/db/schema.js`, then from `backend/`:
+
+```sh
+npm run db:generate -- --name describe_the_change   # writes a new folder in migrations/
+npm run db:migrate                                   # applies it
+```
+
+Read the generated `migration.sql` before committing it. Commit the whole new
+folder, including its `snapshot.json`: `generate` compares `schema.js` against the
+newest snapshot, so a migration committed without one makes the next
+`generate` produce wrong SQL. If you write a migration by hand (for example a
+`CHECK` constraint), run `npm run db:generate` afterwards; it should report
+"No schema changes". If it does not, the hand-written migration and `schema.js`
+have drifted apart.
+
 ### Looking at transactions
 
 ```sh

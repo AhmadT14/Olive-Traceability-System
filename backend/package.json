@@ -12,7 +12,8 @@
     "lint": "npm run format:check",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "node scripts/seed-db.js",
-    "test:e2e": "node scripts/e2e.js"
+    "test:e2e": "node scripts/e2e.js",
+    "db:generate": "drizzle-kit generate"
   },
   "keywords": [],
   "author": "",
