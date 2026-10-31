@@ -8,8 +8,6 @@ export const TEXT = {
     refresh: "Refresh",
     total: "Batches",
     waiting: "Waiting for pickup at your farm",
-    partial:
-      "This list shows only batches that are still waiting for pickup. Batches already on their way will appear here once the system supports it.",
     empty: "You have not created any batches yet.",
     loading: "Loading your batches",
     columns: {

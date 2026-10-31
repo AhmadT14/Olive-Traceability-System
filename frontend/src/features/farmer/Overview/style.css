@@ -38,14 +38,6 @@
   font-size: var(--text-xl);
   font-weight: 700;
 }
-.farmer-overview__note {
-  margin-block: 0 var(--space-4);
-  padding: var(--space-3);
-  background: var(--color-warning-bg);
-  border-radius: var(--radius-sm);
-  color: var(--color-warning);
-  font-size: var(--text-sm);
-}
 .farmer-overview__actions {
   display: flex;
   justify-content: flex-end;

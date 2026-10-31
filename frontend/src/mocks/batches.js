@@ -191,19 +191,31 @@ export async function myBatchesMock() {
   return result;
 }
 
-// Needs from backend: a list of the batches the caller created as farmer.
-// Proposed shape { batches: [chain state] }, newest first.
-export async function farmerBatchesMock() {
+// Shape of GET /me/batches/created. Like the backend, only batches whose farm
+// record was saved are listed, newest first. Demo batches have no block time,
+// so their createdAt is the time the farm record was saved.
+export async function createdBatchesMock() {
   await wait();
   refresh();
   const caller = mockCaller();
-  const list = [];
-  for (const [batchId, { chain, events }] of batches) {
-    const created = events.find((e) => e.name === "BatchCreated");
-    if (created && same(created.args.farmer, caller))
-      list.push({ batchId, ...chain });
+  if (!mockRoles(caller).includes("FARMER")) {
+    throw new ApiError(403, "caller is not a farmer");
   }
-  return { batches: list.reverse() };
+  const list = [];
+  for (const [batchId, { chain, events, createdAt }] of batches) {
+    const created = events.find((e) => e.name === "BatchCreated");
+    if (!created || !created.details || !same(created.args.farmer, caller))
+      continue;
+    list.push({
+      batchId,
+      ...chain,
+      harvestDate: created.details.values.harvest_date || null,
+      createdBlock: created.blockNumber,
+      createdAt: createdAt || created.details.recordedAt,
+    });
+  }
+  list.sort((a, b) => b.createdBlock - a.createdBlock);
+  return { batches: list };
 }
 
 export async function prepareBatchMock(body) {
@@ -257,6 +269,7 @@ export function mineMockTx(transaction) {
   const txHash = randomHash();
   block += 1;
   batches.set(action.batchId, {
+    createdAt: new Date().toISOString(),
     chain: {
       status: "Listed",
       stage: "Farm",

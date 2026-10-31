@@ -80,9 +80,6 @@ export default function FarmerOverview() {
         <ErrorMessage error={list.error} onRetry={list.reload} />
         {list.data && (
           <>
-            {!list.data.complete && (
-              <p className="farmer-overview__note">{T.partial}</p>
-            )}
             <Table
               columns={COLUMNS}
               rows={batches.map((b) => ({ ...b, id: b.batchId }))}
