@@ -1,5 +1,5 @@
 import { getBatch, hasRole } from "../chain/reader.js";
-import { getNextStageRole } from "../chain/checks.js";
+import { getNextStageRole, isAvailable } from "../chain/checks.js";
 import {
   AppError,
   conflict,
@@ -10,6 +10,7 @@ import {
 import * as participantRepository from "../repositories/participant.repository.js";
 import { parseBatchId, parseDestinationRole } from "../validation/parse.js";
 
+// Both lists leave out participants who have set themselves to "unavailable".
 // Used on the farmer's create-batch form before a batch exists on chain.
 export async function listDestinationsForRole(rawRole) {
   const role = parseDestinationRole(rawRole);
@@ -20,7 +21,7 @@ export async function listDestinationsForRole(rawRole) {
       candidates.map(({ address }) => hasRole(role, address)),
     );
     const destinations = candidates
-      .filter((_, index) => roleChecks[index])
+      .filter((c, index) => roleChecks[index] && isAvailable(c.availability))
       .map(({ address, name }) => ({ address, name, role }));
 
     return { role, destinations };
@@ -50,7 +51,7 @@ export async function listBatchDestinations(user, rawBatchId) {
       candidates.map(({ address }) => hasRole(role, address)),
     );
     const destinations = candidates
-      .filter((_, index) => roleChecks[index])
+      .filter((c, index) => roleChecks[index] && isAvailable(c.availability))
       .map(({ address, name }) => ({ address, name, role }));
 
     return { batchId, stage: batch.stage, role, destinations };

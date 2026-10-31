@@ -11,7 +11,8 @@
     "format:check": "prettier --check \"src/**/*.js\" \"test/**/*.js\"",
     "lint": "npm run format:check",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "node scripts/seed-db.js"
+    "db:seed": "node scripts/seed-db.js",
+    "test:e2e": "node scripts/e2e.js"
   },
   "keywords": [],
   "author": "",

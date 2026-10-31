@@ -176,6 +176,26 @@ Then:
 - Compare the deploy addresses with `backend/.env` and update the file if they differ.
 - Clear old test rows from PostgreSQL. Their transaction hashes no longer exist on the fresh chain. With Docker, `docker compose down -v` followed by `docker compose up --build` resets the chain and the database together.
 
+### Checking that everything still works
+
+Two checks, both run from `backend/`:
+
+```sh
+npm test          # fast unit tests, no services needed
+npm run test:e2e  # end-to-end, needs the Docker stack running
+```
+
+`npm run test:e2e` signs real transactions with Anvil's dev wallets and takes one
+batch through all seven stages, checking after each step what every role sees,
+then confirms every event verifies against the chain. It also exercises login,
+the public profile, profile editing, availability, the transporter job board,
+and the admin directory. It finishes in under a minute, creates its own batch on
+every run so it can be repeated, and puts back any profile field it changes.
+Run it after `docker compose up --build` has settled. It reads `API_URL`
+(default `http://localhost:3000`) and `RPC_URL` (default
+`http://127.0.0.1:8545`) if you need to point it elsewhere. Run it only against
+the demo stack, never a real network.
+
 ### Looking at transactions
 
 ```sh

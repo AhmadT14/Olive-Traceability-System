@@ -15,11 +15,27 @@ export async function exists(walletAddress, exec = db) {
   return rows.length > 0;
 }
 
+// Undefined when the wallet is not a stored participant; otherwise its
+// availability (null when the profile never set one).
+export async function findAvailability(walletAddress, exec = db) {
+  const rows = await exec
+    .select({ availability: participantProfiles.availability })
+    .from(participants)
+    .leftJoin(
+      participantProfiles,
+      eq(participantProfiles.walletAddress, participants.walletAddress),
+    )
+    .where(eq(participants.walletAddress, walletAddress))
+    .limit(1);
+  return rows[0];
+}
+
 export function listWithNames(exec = db) {
   return exec
     .select({
       address: participants.walletAddress,
       name: participantProfiles.name,
+      availability: participantProfiles.availability,
     })
     .from(participants)
     .leftJoin(

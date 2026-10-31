@@ -54,7 +54,16 @@ These change the caller's own record and need a bearer token. They do not involv
 | Method and path | Body | Purpose |
 | --- | --- | --- |
 | `PATCH /me/profile` | Any of `name`, `contactPhone`, `email`, `address`, `location`, `details` (at least one) | Updates the sent fields and leaves the rest. `details` is merged into the stored details key by key, then validated for the participant's role (the first role, for a wallet that holds several). Returns the same shape as `GET /me/profile`. `422` for an invalid field. `availability` is not accepted here. |
-| `PATCH /me/availability` | `{ "availability": "available" \| "unavailable" }` | Sets availability. Returns `{ address, availability }`. `422` for any other value. |
+| `PATCH /me/availability` | `{ "availability": "available" \| "unavailable" }` | Sets availability. Returns `{ address, availability }`. `422` for any other value. See below for what it affects. |
+
+### What availability does
+
+A participant counts as available unless they set `unavailable`; a profile that never set a value is available.
+
+- `GET /destinations` and `GET /batches/:id/destinations` leave out unavailable participants.
+- `POST /batches/prepare`, `/batches/prepare-listing`, `/batches/prepare-storage-listing`, `/batches/prepare-exporter-listing` and `/batches/prepare-importer-listing` return `409` (`destination is marked unavailable`) if the chosen destination is unavailable.
+- `POST /batches/prepare-claim` returns `409` (`transporter is marked unavailable`) for an unavailable transporter. They can still see the job board.
+- Delivering a batch that is already in transit is never blocked: `prepare-handover` and the facility's receipt work whatever the availability, because the delivery has already happened.
 
 ## Wallet transaction workflow
 

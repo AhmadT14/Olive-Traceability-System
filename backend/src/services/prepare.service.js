@@ -7,6 +7,7 @@ import {
   checkCanPostForPickup,
   getNextStageRole,
   getStageAfter,
+  isAvailable,
 } from "../chain/checks.js";
 import { getBatch, hasRole } from "../chain/reader.js";
 import { config } from "../config.js";
@@ -106,15 +107,18 @@ export async function prepareBatch(user, body) {
       throw new AppError(farmer ? 409 : 403, check.reason);
     }
 
-    const [destinationExists, destinationHasRole] = await Promise.all([
-      participantRepository.exists(destinationAddress),
+    const [destination, destinationHasRole] = await Promise.all([
+      participantRepository.findAvailability(destinationAddress),
       hasRole("MILL", destinationAddress),
     ]);
-    if (!destinationExists) {
+    if (!destination) {
       throw badRequest("destination must be a registered participant");
     }
     if (!destinationHasRole) {
       throw badRequest("destination must have MILL role");
+    }
+    if (!isAvailable(destination.availability)) {
+      throw conflict("destination is marked unavailable");
     }
 
     const dataHash = computeRecordHash("farm", record);
@@ -186,15 +190,18 @@ async function prepareStageListing(user, body, spec) {
     }
 
     const nextRole = getNextStageRole(batch.stage);
-    const [destinationExists, destinationHasRole] = await Promise.all([
-      participantRepository.exists(destinationAddress),
+    const [destination, destinationHasRole] = await Promise.all([
+      participantRepository.findAvailability(destinationAddress),
       hasRole(nextRole, destinationAddress),
     ]);
-    if (!destinationExists) {
+    if (!destination) {
       throw badRequest("destination must be a registered participant");
     }
     if (!destinationHasRole) {
       throw badRequest(`destination must have ${nextRole} role`);
+    }
+    if (!isAvailable(destination.availability)) {
+      throw conflict("destination is marked unavailable");
     }
 
     const dataHash = computeRecordHash(spec.hashStage, record);
@@ -234,6 +241,14 @@ export async function prepareClaim(user, body) {
 
     const check = checkCanClaimBatch({ batch, role: "TRANSPORTER" });
     if (!check.allowed) throw conflict(check.reason);
+
+    // Only available transporters are in the pool that may claim jobs.
+    const self = await participantRepository.findAvailability(
+      user.address.toLowerCase(),
+    );
+    if (self && !isAvailable(self.availability)) {
+      throw conflict("transporter is marked unavailable");
+    }
 
     const availableJob =
       await transporterJobRepository.findAvailableByBatch(batchId);

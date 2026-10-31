@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { classifyBatchForParticipant } from "../src/chain/checks.js";
+import {
+  classifyBatchForParticipant,
+  isAvailable,
+} from "../src/chain/checks.js";
 import {
   updateAvailabilitySchema,
   updateProfileSchema,
@@ -195,4 +198,11 @@ test("the new response schemas accept what the services return", () => {
       ],
     }).success,
   );
+});
+
+test("a participant is available unless they chose unavailable", () => {
+  assert.equal(isAvailable("available"), true);
+  assert.equal(isAvailable(null), true);
+  assert.equal(isAvailable(undefined), true);
+  assert.equal(isAvailable("unavailable"), false);
 });

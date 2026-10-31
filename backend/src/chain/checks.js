@@ -26,6 +26,10 @@ export function getStageAfter(stage) {
   return index >= 0 && index < Stage.length - 1 ? Stage[index + 1] : null;
 }
 
+// A participant counts as available unless they have switched themselves to
+// "unavailable". A profile that never set a value is therefore available.
+export const isAvailable = (availability) => availability !== "unavailable";
+
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 // The zero address is how the chain says "nobody" (no pending target, no
