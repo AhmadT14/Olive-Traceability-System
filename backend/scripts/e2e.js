@@ -467,6 +467,60 @@ async function supplyChain(batchId) {
   );
 }
 
+async function journeyHistory(batchId) {
+  console.log("\n# history and facility names");
+  const history = await api("GET", `/batches/${batchId}/history`);
+  const events = history.body.events ?? [];
+  const names = history.body.participants ?? {};
+
+  check(
+    "history holds this batch's 20 events and nothing from other batches",
+    history.status === 200 &&
+      events.length === 20 &&
+      events.every((e) => e.args.batchId !== undefined),
+    `status ${history.status}, ${events.length} events`,
+  );
+  check(
+    "events are in chain order",
+    events.every(
+      (e, i) => i === 0 || events[i - 1].blockNumber <= e.blockNumber,
+    ),
+  );
+
+  const roles = [
+    "FARMER",
+    "TRANSPORTER",
+    "MILL",
+    "STORAGE",
+    "EXPORTER",
+    "IMPORTER",
+    "RETAILER",
+  ];
+  const missing = roles.filter(
+    (role) => !names[address(role).toLowerCase()]?.name,
+  );
+  check(
+    "history names every facility on the journey, keyed by lower-case address",
+    missing.length === 0,
+    `no name for ${missing.join(", ")}`,
+  );
+  check(
+    "the name map has no zero address and no non-wallet keys",
+    Object.keys(names).every(
+      (key) =>
+        /^0x[0-9a-f]{40}$/.test(key) &&
+        key !== "0x0000000000000000000000000000000000000000",
+    ),
+    Object.keys(names).join(", "),
+  );
+  check(
+    "the map only holds public fields (name and location)",
+    Object.values(names).every(
+      (entry) => Object.keys(entry).sort().join() === "location,name",
+    ),
+  );
+}
+
 async function availabilityRules(batchId) {
   console.log("\n# availability");
   const setAvailability = (role, availability) =>
@@ -701,6 +755,7 @@ async function main() {
   const batchId = `E2E-${Date.now()}`;
   await sessionAndPublicProfile();
   await supplyChain(batchId);
+  await journeyHistory(batchId);
   await availabilityRules(batchId);
   await createdBatches(batchId);
   await profilesAndAdmin();

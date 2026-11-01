@@ -16,7 +16,7 @@ The API returns JSON. Errors always use the same envelope: `{ "error": "<message
 
 ## Authentication
 
-Login uses a wallet signature. Request a one time nonce, sign the returned `message` with the wallet, then exchange the signature for a JWT. Nonces expire and are consumed by the login attempt.
+Login uses a wallet signature. Request a one time nonce, sign the returned `message` with the wallet, then exchange the signature for a JWT. Nonces expire after five minutes and are consumed by the login attempt. They are kept in the backend's memory, so a restart invalidates logins in progress, and the store is capped (10,000 pending nonces, oldest dropped first) so unauthenticated requests cannot grow it without limit. Put rate limiting in front of `/auth/nonce` in any shared deployment.
 
 | Method and path | Auth | Purpose |
 | --- | --- | --- |
@@ -34,7 +34,7 @@ Tokens expire after one hour. `expiresAt` is the token's expiry as an ISO 8601 t
 | `GET /participants/:address/roles` | No | Reads the participant's active registry roles. |
 | `GET /participants/:address/profile` | No | Public profile for the consumer page: `{ address, name, location, roles }`. Contact details (phone, email, postal address) are never included. `404` if the backend has no profile for the wallet. |
 | `GET /batches/:id/chain` | No | Reads current batch state from the custody contract. |
-| `GET /batches/:id/history` | No | Combines on chain events with matching off chain record details. An event without stored details has `details: null`. |
+| `GET /batches/:id/history` | No | Combines on chain events with matching off chain record details. An event without stored details has `details: null`. Also returns `participants`, a map from lower-case wallet address to `{ name, location }` for every wallet in the batch's events (farmer, custodians, transporters, targets), so the consumer page needs no request per facility. A wallet with no profile is absent from the map. Only the events of this batch are read from the chain. |
 | `GET /batches/:id/verify` | No | Recomputes hashes for stored records and compares them to their on chain events. See [Integrity results](#integrity-results). |
 | `GET /tx/:hash` | No | Decodes a mined transaction and its recognized contract events. |
 | `GET /destinations?role=MILL` | Bearer | Lists registered participants that currently have the MILL role. Used when creating a batch. Other roles are not accepted by this route. |
@@ -46,7 +46,7 @@ Tokens expire after one hour. `expiresAt` is the token's expiry as an ISO 8601 t
 | `GET /me/profile` | Bearer | The caller's own profile: `{ address, roles, profile: { name, contactPhone, email, address, location, availability, details } }`. `profile.address` is the postal address. `404` if the wallet has no profile (ask the admin to register it). |
 | `GET /admin/participants` | Bearer (admin) | The participant directory: `{ participants: [{ address, name, location, availability, roles }] }`. A participant whose roles were all revoked stays in the list with `roles: []`. `403` for a non-admin. |
 
-`/batches/:id/chain` returns `batchId` with the contract state, including stage, status, custodian, active destination, and pending target as applicable. `/history` returns `{ batchId, events }`. `/tx/:hash` returns `{ hash, success, blockNumber, events }`. Chain state is authoritative; database rows are only off-chain details and workflow indexes.
+`/batches/:id/chain` returns `batchId` with the contract state, including stage, status, custodian, active destination, and pending target as applicable. `/history` returns `{ batchId, events, participants }`. `/tx/:hash` returns `{ hash, success, blockNumber, events }`. Chain state is authoritative; database rows are only off-chain details and workflow indexes.
 
 ## Profile routes
 

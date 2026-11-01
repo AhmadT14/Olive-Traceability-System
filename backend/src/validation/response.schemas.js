@@ -52,6 +52,11 @@ export const chainBatchResponseSchema = chainBatchSchema;
 
 export const historyResponseSchema = z.object({
   batchId: z.string(),
+  // Lower-case wallet address -> public name and location.
+  participants: z.record(
+    z.string(),
+    z.object({ name: z.string().nullable(), location: z.string().nullable() }),
+  ),
   events: z.array(
     z.object({
       name: z.string(),

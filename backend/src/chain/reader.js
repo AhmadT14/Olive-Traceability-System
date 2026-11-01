@@ -75,23 +75,32 @@ export async function decodeRegistryTx(txHash) {
   };
 }
 
+// Every event for one batch, oldest first. batchId is the first indexed value
+// on every BatchCustody event, so the node is asked for just the logs whose
+// second topic is the batch id's hash instead of every event ever emitted.
 export async function getBatchHistory(batchId) {
-  const logs = await batchCustody.queryFilter("*", config.DEPLOY_BLOCK);
+  const logs = await provider.getLogs({
+    address: batchCustody.target,
+    fromBlock: config.DEPLOY_BLOCK,
+    topics: [null, id(batchId)],
+  });
 
-  const topic = id(batchId);
-
-  return logs
-    .filter((log) => log.topics[1] === topic)
-    .map((log) => ({
-      name: log.fragment.name,
-      txHash: log.transactionHash,
-      blockNumber: log.blockNumber,
-      args: Object.fromEntries(
-        log.args
-          .toArray()
-          .map((value, i) => [log.fragment.inputs[i].name, String(value)]),
-      ),
-    }));
+  return logs.flatMap((log) => {
+    const parsed = batchCustody.interface.parseLog(log);
+    if (!parsed) return [];
+    return [
+      {
+        name: parsed.name,
+        txHash: log.transactionHash,
+        blockNumber: log.blockNumber,
+        args: Object.fromEntries(
+          parsed.args
+            .toArray()
+            .map((value, i) => [parsed.fragment.inputs[i].name, String(value)]),
+        ),
+      },
+    ];
+  });
 }
 
 // Every BatchCreated event for one farmer, with the time of its block. Only

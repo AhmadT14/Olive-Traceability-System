@@ -2,8 +2,10 @@ import {
   getBatch,
   getBatchHistory as readBatchHistory,
 } from "../chain/reader.js";
+import { collectAddresses } from "../chain/addresses.js";
 import { internalError, notFound } from "../errors.js";
 import * as batchEventRepository from "../repositories/batchEvent.repository.js";
+import * as participantRepository from "../repositories/participant.repository.js";
 import { parseBatchId } from "../validation/parse.js";
 
 export async function getChainBatch(rawBatchId) {
@@ -39,6 +41,23 @@ export async function getBatchHistoryView(rawBatchId) {
     throw notFound("no events found for this batch");
   }
 
+  // Names for every wallet in the journey, so a viewer needs no further
+  // request per facility. Wallets with no profile are left out of the map.
+  let profiles;
+  try {
+    profiles = await participantRepository.findPublicProfiles(
+      collectAddresses(chainEvents),
+    );
+  } catch (err) {
+    throw internalError("history lookup failed", err);
+  }
+  const participants = Object.fromEntries(
+    profiles.map((p) => [
+      p.address,
+      { name: p.name ?? null, location: p.location ?? null },
+    ]),
+  );
+
   const detailsByTxHash = new Map(
     detailsRows.map((row) => [row.eventTxHash.toLowerCase(), row]),
   );
@@ -58,5 +77,5 @@ export async function getBatchHistoryView(rawBatchId) {
     };
   });
 
-  return { batchId, events };
+  return { batchId, events, participants };
 }

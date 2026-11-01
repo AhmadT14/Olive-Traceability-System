@@ -106,3 +106,17 @@ export function upsertProfile(values, updates, exec = db) {
     set: updates,
   });
 }
+
+// Name and location only, the fields safe to show publicly, for many wallets
+// at once. Wallets without a profile are simply absent from the result.
+export function findPublicProfiles(walletAddresses, exec = db) {
+  if (walletAddresses.length === 0) return Promise.resolve([]);
+  return exec
+    .select({
+      address: participantProfiles.walletAddress,
+      name: participantProfiles.name,
+      location: participantProfiles.location,
+    })
+    .from(participantProfiles)
+    .where(inArray(participantProfiles.walletAddress, walletAddresses));
+}
