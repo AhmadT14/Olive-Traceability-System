@@ -77,6 +77,24 @@ Who owns what:
   domain (reverse proxy).
 - **Needed by:** deployment, not a phase.
 
+### Medium: batches a facility has received
+
+- **Now:** `GET /me/batches` only shows the current state. Once a facility
+  lists a batch and it moves on, no route tells the facility it ever
+  received it.
+- **Ask:** a list of every batch whose receipt the caller confirmed
+  (`ReceiptConfirmed` with `newCustodian` = caller), newest first. Proposed
+  `GET /me/batches/received` returning
+  `{ batches: [{ batchId, receivedBlock, receivedAt, quantityReceived }] }`,
+  where `quantityReceived` comes from the saved receipt record (`null` if
+  missing). Any route name or shape is fine; tell us and we adapt.
+- **Why:** the Overview pages of the mill, storage, exporter, importer and
+  retailer show "Batches received in total". The plan asks for at least
+  three live numbers per role, and the retailer has only two without it.
+  The same list will feed the charts (received per month).
+- **Needed by:** Phase 9 (built on a mock; the real API shows "Not
+  available yet").
+
 ### Low (optional): statistics endpoints
 
 - **Now:** none.

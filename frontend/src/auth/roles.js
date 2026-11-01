@@ -38,14 +38,28 @@ export const ROLE_NAV = {
     { path: "/farmer/batches/new", label: "Create batch" },
   ],
   transporter: [
+    { path: "/transporter", label: "Overview" },
     { path: "/transporter/jobs", label: "Job board" },
     { path: "/transporter/active", label: "My active jobs" },
   ],
-  mill: [{ path: "/mill/inbox", label: "Inbox" }],
-  storage: [{ path: "/storage/inbox", label: "Inbox" }],
-  exporter: [{ path: "/exporter/inbox", label: "Inbox" }],
-  importer: [{ path: "/importer/inbox", label: "Inbox" }],
+  mill: [
+    { path: "/mill", label: "Overview" },
+    { path: "/mill/inbox", label: "Inbox" },
+  ],
+  storage: [
+    { path: "/storage", label: "Overview" },
+    { path: "/storage/inbox", label: "Inbox" },
+  ],
+  exporter: [
+    { path: "/exporter", label: "Overview" },
+    { path: "/exporter/inbox", label: "Inbox" },
+  ],
+  importer: [
+    { path: "/importer", label: "Overview" },
+    { path: "/importer/inbox", label: "Inbox" },
+  ],
   retailer: [
+    { path: "/retailer", label: "Overview" },
     { path: "/retailer/inbox", label: "Inbox" },
     { path: "/retailer/inventory", label: "Inventory" },
   ],

@@ -1,0 +1,35 @@
+.stat-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.stat-tiles__tile {
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  box-sizing: border-box;
+}
+a.stat-tiles__tile:hover,
+a.stat-tiles__tile:focus-visible {
+  border-color: var(--color-primary);
+}
+.stat-tiles__number {
+  color: var(--color-text);
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+.stat-tiles__number--missing {
+  color: var(--color-text-muted);
+  font-size: var(--text-md);
+  font-weight: 600;
+}

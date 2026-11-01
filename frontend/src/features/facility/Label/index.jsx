@@ -1,7 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import Button from "../../../components/Button";
-import { ROLE_HOME } from "../../../auth/roles";
 import { traceUrl } from "../flow";
 import { TEXT } from "../strings";
 import "./style.css";
@@ -26,7 +25,7 @@ export default function Label({ role }) {
       </div>
       <div className="label-page__actions">
         <Button onClick={() => window.print()}>{T.print}</Button>
-        <Link to={ROLE_HOME[role]} className="button button--secondary">
+        <Link to={`/${role}/inbox`} className="button button--secondary">
           {T.back}
         </Link>
       </div>

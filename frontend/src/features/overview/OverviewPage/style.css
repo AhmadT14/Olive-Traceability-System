@@ -1,0 +1,29 @@
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.overview__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+.overview__title {
+  margin: 0;
+  font-size: var(--text-xl);
+}
+.overview__note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+.overview__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

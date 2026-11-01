@@ -6,8 +6,10 @@ export const TEXT = {
     title: "My batches",
     create: "Create batch",
     refresh: "Refresh",
-    total: "Batches",
+    total: "Batches created",
     waiting: "Waiting for pickup at your farm",
+    onTheWay: "On the way to the mill",
+    atMill: "Delivered to the mill",
     empty: "You have not created any batches yet.",
     loading: "Loading your batches",
     columns: {

@@ -209,6 +209,32 @@ export async function myBatchesMock() {
   return result;
 }
 
+// Needs from backend: no route lists the batches a facility has received.
+// Proposed GET /me/batches/received: every batch whose receipt the caller
+// confirmed, newest first, with the saved quantity_received (null if the
+// receipt has no details).
+export async function receivedBatchesMock() {
+  await wait();
+  refresh();
+  const caller = mockCaller();
+  const list = [];
+  for (const [batchId, { events }] of batches) {
+    for (const e of events) {
+      if (e.name !== "ReceiptConfirmed" || !same(e.args.newCustodian, caller))
+        continue;
+      const values = (e.details && e.details.values) || {};
+      list.push({
+        batchId,
+        receivedBlock: e.blockNumber,
+        receivedAt: (e.details && e.details.recordedAt) || null,
+        quantityReceived: values.quantity_received ?? null,
+      });
+    }
+  }
+  list.sort((a, b) => b.receivedBlock - a.receivedBlock);
+  return { batches: list };
+}
+
 // Shape of GET /me/batches/created. Like the backend, only batches whose farm
 // record was saved are listed, newest first. Demo batches have no block time,
 // so their createdAt is the time the farm record was saved.

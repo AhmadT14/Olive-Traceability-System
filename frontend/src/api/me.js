@@ -6,7 +6,11 @@ import {
   updateMyAvailabilityMock,
 } from "../mocks/me";
 import { forgetParticipant } from "./participants";
-import { myBatchesMock, createdBatchesMock } from "../mocks/batches";
+import {
+  myBatchesMock,
+  createdBatchesMock,
+  receivedBatchesMock,
+} from "../mocks/batches";
 
 // { address, roles, profile: { name, contactPhone, email, address, location,
 // availability, details } }. 404 when the wallet has no profile.
@@ -47,4 +51,13 @@ export async function getMyBatches() {
 export async function getFarmerBatches() {
   if (USE_MOCKS) return createdBatchesMock();
   return request("/me/batches/created", { auth: true });
+}
+
+// Every batch the caller confirmed receipt of, newest first:
+// { batches: [{ batchId, receivedBlock, receivedAt, quantityReceived }] }.
+// Needs from backend: no route lists these yet, so only the mock has them.
+// `available` is false on the real API and the page says so.
+export async function getReceivedBatches() {
+  if (USE_MOCKS) return { ...(await receivedBatchesMock()), available: true };
+  return { batches: [], available: false };
 }

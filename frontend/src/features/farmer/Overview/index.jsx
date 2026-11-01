@@ -7,6 +7,7 @@ import Table from "../../../components/Table";
 import StageBadge from "../../../components/StageBadge";
 import StatusBadge from "../../../components/StatusBadge";
 import ParticipantName from "../../../components/ParticipantName";
+import StatTiles from "../../../components/StatTiles";
 import { Loading, ErrorMessage } from "../../../components/State";
 import { formatDay } from "../../../utils/format";
 import { TEXT } from "../strings";
@@ -48,10 +49,15 @@ const COLUMNS = [
 export default function FarmerOverview() {
   const list = useAsync(getFarmerBatches, "farmer-batches");
   const batches = list.data ? list.data.batches : [];
-  // Only batches still at the farm: the ones the farmer is waiting on.
-  const waiting = batches.filter(
-    (b) => b.stage === "Farm" && b.status === "Listed",
-  ).length;
+  // A farm batch keeps stage "Farm" until the mill confirms receipt.
+  const atFarm = batches.filter((b) => b.stage === "Farm");
+  const waiting = atFarm.filter((b) => b.status === "Listed").length;
+  const stats = [
+    { label: T.total, value: batches.length },
+    { label: T.waiting, value: waiting },
+    { label: T.onTheWay, value: atFarm.length - waiting },
+    { label: T.atMill, value: batches.length - atFarm.length },
+  ];
 
   return (
     <div className="farmer-overview">
@@ -62,18 +68,7 @@ export default function FarmerOverview() {
         </Link>
       </div>
 
-      {list.data && (
-        <div className="farmer-overview__stats">
-          <div className="farmer-overview__stat">
-            <span className="farmer-overview__number">{batches.length}</span>
-            <span>{T.total}</span>
-          </div>
-          <div className="farmer-overview__stat">
-            <span className="farmer-overview__number">{waiting}</span>
-            <span>{T.waiting}</span>
-          </div>
-        </div>
-      )}
+      {list.data && <StatTiles items={stats} />}
 
       <Card>
         {list.loading && !list.data && <Loading text={T.loading} />}
