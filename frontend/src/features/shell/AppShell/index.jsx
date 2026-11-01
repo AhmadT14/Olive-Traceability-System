@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../auth/useAuth";
 import { useWallet } from "../../../wallet/useWallet";
@@ -11,6 +12,7 @@ import {
   CHAIN_ID,
   USE_MOCKS,
   getParticipantProfile,
+  onParticipantChange,
   resetMockData,
 } from "../../../api";
 import { useAsync } from "../../../hooks/useAsync";
@@ -28,9 +30,17 @@ export default function AppShell() {
   const wallet = useWallet();
   const navigate = useNavigate();
   const role = session.activeRole;
-  const { data: profile } = useAsync(
+  const { data: profile, reload: reloadProfile } = useAsync(
     () => getParticipantProfile(session.address),
     session.address,
+  );
+  // The header name follows an edit on the Settings page.
+  useEffect(
+    () =>
+      onParticipantChange((address) => {
+        if (address === session.address.toLowerCase()) reloadProfile();
+      }),
+    [session.address, reloadProfile],
   );
   const walletUnavailable =
     wallet.hasProvider && wallet.ready && !wallet.account;

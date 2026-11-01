@@ -95,9 +95,27 @@ Who owns what:
   `backend/src/validation/participant.schemas.js` (for example `farmName`,
   `vehicleDetails`, `storageCapacity`).
 - **Ask:** add the keys per role to API.md.
-- **Why:** the frontend only uses fields from API.md, so the register form
-  (Phase 8) leaves `details` out. The profile page needs them.
-- **Needed by:** Phase 9.
+- **Why:** API.md is the frontend's source of truth. The Settings page
+  (Phase 9) already uses the camelCase keys from the backend schema, and the
+  reference document lists the same fields in snake_case (`farm_name`).
+  Please confirm camelCase is final.
+- **Needed by:** Phase 9 (works today, only the documentation is missing).
+
+### Low (question): do we need the name keys in profile `details`?
+
+- **Now:** each role's `details` has its own name key: `farmName`,
+  `facilityName` (mill, storage), `companyName` (transporter, exporter),
+  `businessName` (importer, retailer). The seed sets each one to the same
+  text as `profile.name`. No route returns `details` except
+  `GET /me/profile`, so nobody else ever sees them. The reference document
+  says `name` is already the business or facility name.
+- **Ask:** is there a planned use for these keys (a legal name that differs
+  from the display name, a report, an admin view)? If not, can they be
+  dropped from `profileDetailsSchemas`?
+- **Why:** Settings shows both "Name" and "Facility name", which confuses
+  users. The frontend keeps both fields for now and will hide the name keys
+  if they are not needed.
+- **Needed by:** no phase.
 
 ## Smart contract and chain
 

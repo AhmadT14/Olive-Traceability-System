@@ -1,6 +1,7 @@
 import { ApiError } from "../api/client";
 import { mockCaller, mockRoles } from "./auth";
 import {
+  isMockAvailable,
   participantsWithRole,
   profileMock,
   resetMockParticipants,
@@ -626,6 +627,9 @@ export async function prepareClaimMock(body) {
   const batch = findBatch(batchId, "batch not found");
   if (batch.chain.status !== "Listed") {
     throw new ApiError(409, "batch not listed for pickup");
+  }
+  if (!isMockAvailable(caller)) {
+    throw new ApiError(409, "transporter is marked unavailable");
   }
   return preparedTx(
     { kind: "claim", batchId, caller, canonical: canonical(record) },

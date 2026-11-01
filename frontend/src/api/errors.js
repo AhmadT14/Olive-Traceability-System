@@ -21,11 +21,16 @@ function plain(message) {
   return { message, fieldErrors: {} };
 }
 
-// 409s from the admin role routes, which are not about a batch.
-const ROLE_CONFLICTS = {
+// 409s that are not about the batch state: admin role changes and
+// availability.
+const CONFLICTS = {
   "participant already has this role": "This wallet already has this role.",
   "participant does not have this role":
     "This wallet does not have this role, so there is nothing to revoke.",
+  "transporter is marked unavailable":
+    "You are marked as unavailable. Mark yourself available in Settings to claim jobs.",
+  "destination is marked unavailable":
+    "That destination is marked as unavailable. Reload the page and pick another one.",
 };
 
 // Turns API and wallet errors into { message, fieldErrors } for the UI.
@@ -53,8 +58,8 @@ export function readableError(err) {
       case 404:
         return plain(`Not found. ${text}`);
       case 409:
-        if (ROLE_CONFLICTS[err.message]) {
-          return plain(ROLE_CONFLICTS[err.message]);
+        if (CONFLICTS[err.message]) {
+          return plain(CONFLICTS[err.message]);
         }
         return plain(
           `This does not match the current state of the batch. ${text}`,

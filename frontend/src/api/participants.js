@@ -26,9 +26,20 @@ export async function getParticipantProfile(address) {
   return cache.get(key);
 }
 
-// Drops a cached profile after the admin changes it.
+const listeners = new Set();
+
+// Runs listener(address) whenever a profile was changed in this tab. Returns
+// the unsubscribe function.
+export function onParticipantChange(listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+// Drops a cached profile after it was changed (by the admin or the owner).
 export function forgetParticipant(address) {
-  cache.delete(String(address).toLowerCase());
+  const key = String(address).toLowerCase();
+  cache.delete(key);
+  listeners.forEach((listener) => listener(key));
 }
 
 // Active registry roles read from the chain: { address, roles }. Not cached,

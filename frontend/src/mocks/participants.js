@@ -139,10 +139,18 @@ export async function participantRolesMock(address) {
   return { address, roles: mockRoles(address) };
 }
 
-// Registered participants holding `role`, as destination entries.
+// A profile that never set availability counts as available.
+export function isMockAvailable(address) {
+  const profile = storedProfile(address);
+  return !profile || profile.availability !== "unavailable";
+}
+
+// Registered participants holding `role`, as destination entries. Like
+// GET /destinations, unavailable participants are left out.
 export function participantsWithRole(role) {
   return profileAddresses()
     .filter((address) => mockRoles(address).includes(role))
+    .filter(isMockAvailable)
     .map((address) => ({
       address,
       name: storedProfile(address).name,

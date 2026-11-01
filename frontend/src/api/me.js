@@ -1,6 +1,11 @@
 import { request } from "./client";
 import { USE_MOCKS } from "./config";
-import { myProfileMock } from "../mocks/me";
+import {
+  myProfileMock,
+  updateMyProfileMock,
+  updateMyAvailabilityMock,
+} from "../mocks/me";
+import { forgetParticipant } from "./participants";
 import { myBatchesMock, createdBatchesMock } from "../mocks/batches";
 
 // { address, roles, profile: { name, contactPhone, email, address, location,
@@ -8,6 +13,26 @@ import { myBatchesMock, createdBatchesMock } from "../mocks/batches";
 export async function getMyProfile() {
   if (USE_MOCKS) return myProfileMock();
   return request("/me/profile", { auth: true });
+}
+
+// Body: any of name, contactPhone, email, address, location, details (at
+// least one). details is merged key by key. Returns the GET /me/profile shape.
+export async function updateMyProfile(body) {
+  const result = USE_MOCKS
+    ? await updateMyProfileMock(body)
+    : await request("/me/profile", { method: "PATCH", body, auth: true });
+  forgetParticipant(result.address);
+  return result;
+}
+
+// "available" or "unavailable". Returns { address, availability }.
+export async function updateMyAvailability(availability) {
+  const body = { availability };
+  const result = USE_MOCKS
+    ? await updateMyAvailabilityMock(body)
+    : await request("/me/availability", { method: "PATCH", body, auth: true });
+  forgetParticipant(result.address);
+  return result;
 }
 
 // { holding, listedByMe, awaitingMyConfirmation }, each a list of chain states.

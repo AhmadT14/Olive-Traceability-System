@@ -25,12 +25,14 @@ import Inventory from "../features/facility/Inventory";
 import { FACILITIES } from "../features/facility/config";
 import Participants from "../features/admin/Participants";
 import RoleChange from "../features/admin/RoleChange";
+import Settings from "../features/settings/Settings";
 
 const facilityRoles = Object.keys(FACILITIES);
 
 // Nav paths that have a real page. The rest show a placeholder.
 const PAGES = {
   "/batches": <FindBatch />,
+  "/settings": <Settings />,
   "/farmer": <FarmerOverview />,
   "/farmer/batches/new": <CreateBatch />,
   "/transporter/jobs": <JobBoard />,
