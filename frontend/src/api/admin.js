@@ -2,6 +2,7 @@ import { request } from "./client";
 import { USE_MOCKS } from "./config";
 import {
   adminParticipantsMock,
+  batchStatsMock,
   prepareRoleChangeMock,
   confirmRoleChangeMock,
 } from "../mocks/admin";
@@ -16,6 +17,14 @@ function post(path, body) {
 export async function getAdminParticipants() {
   if (USE_MOCKS) return adminParticipantsMock();
   return request("/admin/participants", { auth: true });
+}
+
+// Batches per chain stage: { stages: [{ stage, count }] }.
+// Needs from backend: no route counts these yet, so only the mock has them.
+// `available` is false on the real API and the page says so.
+export async function getBatchStats() {
+  if (USE_MOCKS) return { ...(await batchStatsMock()), available: true };
+  return { stages: [], available: false };
 }
 
 // Takes the role change payload and sends only address, role and action.

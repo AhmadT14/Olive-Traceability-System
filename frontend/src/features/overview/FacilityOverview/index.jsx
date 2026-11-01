@@ -1,6 +1,8 @@
 import { getMyBatches, getReceivedBatches } from "../../../api";
 import { useAsync } from "../../../hooks/useAsync";
+import { perMonth } from "../../../utils/stats";
 import { FACILITIES } from "../../facility/config";
+import { TEXT as FACILITY_TEXT } from "../../facility/strings";
 import OverviewPage from "../OverviewPage";
 import { TEXT } from "../strings";
 
@@ -34,6 +36,24 @@ export default function FacilityOverview({ role }) {
       value: data.received.available ? data.received.batches.length : null,
     },
   ];
+  const received = data && data.received;
+  const unit = FACILITY_TEXT.roles[role].unit;
+  const charts = received && [
+    {
+      title: T.receivedPerMonth,
+      data: perMonth(received.batches, (b) => b.receivedAt),
+      unit: TEXT.batchUnit,
+      available: received.available,
+    },
+    {
+      title: T.quantityPerMonth(unit),
+      data: perMonth(received.batches, (b) => b.receivedAt, {
+        amountOf: (b) => b.quantityReceived,
+      }),
+      unit,
+      available: received.available,
+    },
+  ];
   const links = [
     { to: inbox, label: T.inbox },
     ...(isRetailer ? [{ to: "/retailer/inventory", label: T.inventory }] : []),
@@ -44,6 +64,7 @@ export default function FacilityOverview({ role }) {
       title={T.title}
       load={load}
       stats={stats}
+      charts={charts}
       note={data && !data.received.available ? T.receivedNote : null}
       links={links}
     />

@@ -235,6 +235,12 @@ export async function receivedBatchesMock() {
   return { batches: list };
 }
 
+// Current chain stage of every batch, for the admin batches per stage chart.
+export function mockBatchStages() {
+  refresh();
+  return [...batches.values()].map(({ chain }) => chain.stage);
+}
+
 // Shape of GET /me/batches/created. Like the backend, only batches whose farm
 // record was saved are listed, newest first. Demo batches have no block time,
 // so their createdAt is the time the farm record was saved.

@@ -3,15 +3,17 @@ import Card from "../../../components/Card";
 import Button from "../../../components/Button";
 import StatTiles from "../../../components/StatTiles";
 import { Loading, ErrorMessage } from "../../../components/State";
+import ChartGrid from "../ChartGrid";
 import { TEXT } from "../strings";
 import "./style.css";
 
-// Shared layout of the role Overview pages: title, key numbers, links.
-// `stats` is null until the data is loaded.
+// Shared layout of the role Overview pages: title, key numbers, charts,
+// links. `stats` and `charts` are null until the data is loaded.
 export default function OverviewPage({
   title,
   load,
   stats,
+  charts,
   note,
   links,
   children,
@@ -30,6 +32,7 @@ export default function OverviewPage({
       {stats && <StatTiles items={stats} missing={TEXT.missing} />}
       {stats && note && <p className="overview__note">{note}</p>}
       {children}
+      {charts && <ChartGrid charts={charts} />}
 
       {links && (
         <Card title={TEXT.linksTitle}>

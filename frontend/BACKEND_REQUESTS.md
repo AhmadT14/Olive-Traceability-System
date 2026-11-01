@@ -95,16 +95,28 @@ Who owns what:
 - **Needed by:** Phase 9 (built on a mock; the real API shows "Not
   available yet").
 
-### Low (optional): statistics endpoints
+### Medium: batches per stage for the admin
 
-- **Now:** none.
-- **Ask:** counts and volumes per role for the dashboards, for example
-  batches handled per stage and total kilograms or litres per month. Exact
-  shape to be agreed before Phase 9.
-- **Why:** the role dashboards in the reference document show these. Until
-  then the frontend computes simple counts from `/me/batches` and
-  `/me/batches/created`.
-- **Needed by:** Phase 9. Optional.
+- **Now:** no route counts batches across the system. `/me/batches` only
+  covers the caller's own batches.
+- **Ask:** a count of all batches by their current chain stage, in chain
+  order with zeros included. Proposed `GET /admin/stats/batches` (admin
+  only) returning
+  `{ stages: [{ stage: "Farm", count: 3 }, { stage: "Mill", count: 1 }, ...] }`.
+  Any route name or shape is fine; tell us and we adapt.
+- **Why:** the plan lists "batches per stage" under admin metrics. The
+  admin Overview has this chart on a mock; the real API shows "This chart
+  will appear once the system can provide the data".
+- **Needed by:** Phase 9 (built on a mock).
+
+### Low (optional): more statistics
+
+- **Now:** the frontend computes every other chart on the client from
+  `/me/batches/created`, `/transporter-jobs`, `/admin/participants` and the
+  mocks above.
+- **Ask:** nothing for now. If the lists grow large, server side totals per
+  month (batches and kilograms or litres) would replace the client counting.
+- **Needed by:** no phase.
 
 ### Low: list the profile `details` keys in API.md
 

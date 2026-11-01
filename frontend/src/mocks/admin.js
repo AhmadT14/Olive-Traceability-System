@@ -1,7 +1,12 @@
 import { ApiError } from "../api/client";
 import { PARTICIPANT_ROLES } from "../auth/roles";
 import { mockCaller } from "./auth";
-import { maybeFailOnce, minedMockTx, prepareMockTx } from "./batches";
+import {
+  maybeFailOnce,
+  minedMockTx,
+  mockBatchStages,
+  prepareMockTx,
+} from "./batches";
 import {
   MOCK_ACCOUNTS,
   directoryMock,
@@ -40,6 +45,23 @@ function checkIdentity({ address, role, action }) {
 
 const changeText = ({ address, role, action }) =>
   `${action}:${role}:${address.toLowerCase()}`;
+
+const STAGES = ["Farm", "Mill", "Storage", "Exporter", "Importer", "Retailer"];
+
+// Needs from backend: no route counts batches by stage. Proposed
+// GET /admin/stats/batches: { stages: [{ stage, count }] } in chain order,
+// from live chain state, zeros included.
+export async function batchStatsMock() {
+  await wait();
+  requireAdmin();
+  const stages = mockBatchStages();
+  return {
+    stages: STAGES.map((stage) => ({
+      stage,
+      count: stages.filter((s) => s === stage).length,
+    })),
+  };
+}
 
 // Shape of GET /admin/participants.
 export async function adminParticipantsMock() {

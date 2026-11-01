@@ -6,6 +6,24 @@ export const TEXT = {
   refresh: "Refresh",
   missing: "Not available yet",
   linksTitle: "Go to",
+  table: "Show as a table",
+  noData: "Nothing to show yet.",
+  chartMissing: "This chart will appear once the system can provide the data.",
+  batchUnit: "batches",
+  jobUnit: "jobs",
+  stages: {
+    Farm: "Farm",
+    Mill: "Olive mill",
+    Storage: "Storage",
+    Exporter: "Exporter",
+    Importer: "Importer",
+    Retailer: "Retailer",
+  },
+
+  farmer: {
+    perMonth: "Batches created per month",
+    perStage: "Where your batches are now",
+  },
 
   transporter: {
     title: "Overview",
@@ -13,6 +31,15 @@ export const TEXT = {
     carrying: "Batches you are carrying",
     handedOver: "Handed over, waiting for receipt",
     completed: "Completed jobs",
+    openByLeg: "Open jobs by route",
+    completedByLeg: "Completed jobs by route",
+    legs: {
+      Farm: "Farm to mill",
+      Mill: "Mill to storage",
+      Storage: "Storage to exporter",
+      Exporter: "Exporter to importer",
+      Importer: "Importer to retailer",
+    },
     completedNote:
       "Completed jobs will be counted once the system can list them.",
     links: [
@@ -35,6 +62,8 @@ export const TEXT = {
     received: "Batches received in total",
     receivedNote:
       "Batches received in total will be counted once the system can list them.",
+    receivedPerMonth: "Batches received per month",
+    quantityPerMonth: (unit) => `Quantity received per month (${unit})`,
     inbox: "Inbox",
     inventory: "Inventory",
   },
@@ -45,6 +74,9 @@ export const TEXT = {
     available: "Available",
     unavailable: "Marked unavailable",
     noRole: "Without a role",
+    perRole: "Participants per role",
+    perStage: "Batches per stage",
+    participantUnit: "participants",
     links: [
       { to: "/admin/participants", label: "Participants" },
       { to: "/admin/participants/new", label: "Register participant" },

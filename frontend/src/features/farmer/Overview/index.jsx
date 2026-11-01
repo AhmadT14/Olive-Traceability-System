@@ -8,6 +8,9 @@ import StageBadge from "../../../components/StageBadge";
 import StatusBadge from "../../../components/StatusBadge";
 import ParticipantName from "../../../components/ParticipantName";
 import StatTiles from "../../../components/StatTiles";
+import ChartGrid from "../../overview/ChartGrid";
+import { TEXT as OVERVIEW } from "../../overview/strings";
+import { perKey, perMonth } from "../../../utils/stats";
 import { Loading, ErrorMessage } from "../../../components/State";
 import { formatDay } from "../../../utils/format";
 import { TEXT } from "../strings";
@@ -58,6 +61,24 @@ export default function FarmerOverview() {
     { label: T.onTheWay, value: atFarm.length - waiting },
     { label: T.atMill, value: batches.length - atFarm.length },
   ];
+  const charts = [
+    {
+      title: OVERVIEW.farmer.perMonth,
+      data: perMonth(batches, (b) => b.createdAt),
+      unit: OVERVIEW.batchUnit,
+    },
+    {
+      title: OVERVIEW.farmer.perStage,
+      data: perKey(
+        batches,
+        (b) => b.stage,
+        Object.keys(OVERVIEW.stages),
+        (s) => OVERVIEW.stages[s],
+      ),
+      unit: OVERVIEW.batchUnit,
+      horizontal: true,
+    },
+  ];
 
   return (
     <div className="farmer-overview">
@@ -69,6 +90,7 @@ export default function FarmerOverview() {
       </div>
 
       {list.data && <StatTiles items={stats} />}
+      {list.data && <ChartGrid charts={charts} />}
 
       <Card>
         {list.loading && !list.data && <Loading text={T.loading} />}

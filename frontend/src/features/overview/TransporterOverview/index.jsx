@@ -4,10 +4,19 @@ import {
   getTransporterJobs,
 } from "../../../api";
 import { useAsync } from "../../../hooks/useAsync";
+import { perKey } from "../../../utils/stats";
 import OverviewPage from "../OverviewPage";
 import { TEXT } from "../strings";
 
 const T = TEXT.transporter;
+const LEGS = Object.keys(T.legs);
+const byLeg = (jobs) =>
+  perKey(
+    jobs,
+    (j) => j.stage,
+    LEGS,
+    (s) => T.legs[s],
+  );
 
 async function loadJobs() {
   const [open, mine, completed] = await Promise.all([
@@ -37,11 +46,28 @@ export default function TransporterOverview() {
     },
   ];
 
+  const charts = data && [
+    {
+      title: T.openByLeg,
+      data: byLeg(data.open),
+      unit: TEXT.jobUnit,
+      horizontal: true,
+    },
+    {
+      title: T.completedByLeg,
+      data: byLeg(data.completed.jobs),
+      unit: TEXT.jobUnit,
+      horizontal: true,
+      available: data.completed.available,
+    },
+  ];
+
   return (
     <OverviewPage
       title={T.title}
       load={load}
       stats={stats}
+      charts={charts}
       note={data && !data.completed.available ? T.completedNote : null}
       links={T.links}
     />
