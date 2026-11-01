@@ -94,7 +94,9 @@ Who owns what:
 
 - **Now:** the `batchId` argument of each event comes back as the text
   `"[object Object]"`. It is an indexed string, so the log only holds its
-  hash, and the reader turns that object into a string.
+  hash, and the reader turns that object into a string. Still there after
+  e1b5e33, which rewrote `getBatchHistory` in `backend/src/chain/reader.js`
+  (checked 2026-11-01).
 - **Ask:** return the topic hash as a `0x...` string (it cannot be decoded
   back to the readable ID), or leave the field out. The readable ID is
   already at the top level of the response.

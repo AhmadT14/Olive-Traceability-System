@@ -117,7 +117,30 @@ export async function historyMock(batchId) {
   await wait();
   refresh();
   const batch = findBatch(batchId, "no events found for this batch");
-  return { batchId, events: batch.events };
+  return {
+    batchId,
+    events: batch.events,
+    participants: participantsOf(batch.events),
+  };
+}
+
+// `participants` of GET /batches/:id/history: name and location for every
+// wallet in the events. Wallets without a profile are left out.
+function participantsOf(events) {
+  const map = {};
+  for (const event of events) {
+    for (const value of Object.values(event.args || {})) {
+      if (!/^0x[0-9a-fA-F]{40}$/.test(value)) continue;
+      const profile = profileMock(value);
+      if (profile) {
+        map[profile.address] = {
+          name: profile.name,
+          location: profile.location,
+        };
+      }
+    }
+  }
+  return map;
 }
 
 function integrityOf(event) {

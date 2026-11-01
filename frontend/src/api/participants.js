@@ -25,3 +25,14 @@ export async function getParticipantProfile(address) {
   }
   return cache.get(key);
 }
+
+// Fills the cache from the `participants` map of GET /batches/:id/history, so
+// the journey needs no profile request per facility. These entries carry only
+// name and location (no roles). Wallets missing from the map are still loaded.
+export function rememberParticipants(participants) {
+  for (const [address, p] of Object.entries(participants || {})) {
+    const key = address.toLowerCase();
+    if (!cache.has(key))
+      cache.set(key, Promise.resolve({ address: key, ...p }));
+  }
+}

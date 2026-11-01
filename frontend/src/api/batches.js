@@ -8,6 +8,7 @@ import {
   saveBatchMock,
   prepareReceiptMock,
 } from "../mocks/batches";
+import { rememberParticipants } from "./participants";
 
 const enc = encodeURIComponent;
 
@@ -17,8 +18,11 @@ export async function getBatchChain(batchId) {
 }
 
 export async function getBatchHistory(batchId) {
-  if (USE_MOCKS) return historyMock(batchId);
-  return request(`/batches/${enc(batchId)}/history`);
+  const history = USE_MOCKS
+    ? await historyMock(batchId)
+    : await request(`/batches/${enc(batchId)}/history`);
+  rememberParticipants(history.participants);
+  return history;
 }
 
 export async function verifyBatch(batchId) {
