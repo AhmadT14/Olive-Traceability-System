@@ -1,6 +1,6 @@
 import { request } from "./client";
 import { USE_MOCKS } from "./config";
-import { profileMock } from "../mocks/participants";
+import { profileMock, participantRolesMock } from "../mocks/participants";
 
 const cache = new Map();
 
@@ -24,6 +24,18 @@ export async function getParticipantProfile(address) {
     cache.set(key, pending);
   }
   return cache.get(key);
+}
+
+// Drops a cached profile after the admin changes it.
+export function forgetParticipant(address) {
+  cache.delete(String(address).toLowerCase());
+}
+
+// Active registry roles read from the chain: { address, roles }. Not cached,
+// because the admin pages change them.
+export async function getParticipantRoles(address) {
+  if (USE_MOCKS) return participantRolesMock(address);
+  return request(`/participants/${address}/roles`);
 }
 
 // Fills the cache from the `participants` map of GET /batches/:id/history, so

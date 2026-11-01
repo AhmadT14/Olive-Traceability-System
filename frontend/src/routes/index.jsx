@@ -23,6 +23,8 @@ import ListForPickup from "../features/facility/ListForPickup";
 import Label from "../features/facility/Label";
 import Inventory from "../features/facility/Inventory";
 import { FACILITIES } from "../features/facility/config";
+import Participants from "../features/admin/Participants";
+import RoleChange from "../features/admin/RoleChange";
 
 const facilityRoles = Object.keys(FACILITIES);
 
@@ -34,6 +36,9 @@ const PAGES = {
   "/transporter/jobs": <JobBoard />,
   "/transporter/active": <MyJobs />,
   "/retailer/inventory": <Inventory />,
+  "/admin/participants": <Participants />,
+  "/admin/participants/new": <RoleChange key="register" mode="register" />,
+  "/admin/participants/revoke": <RoleChange key="revoke" mode="revoke" />,
   ...Object.fromEntries(
     facilityRoles.map((role) => [
       `/${role}/inbox`,

@@ -9,6 +9,21 @@ export const ROLE_LABELS = {
   retailer: "Retailer",
 };
 
+// Registry role names as the API takes them (admin role routes, roles lookup).
+export const PARTICIPANT_ROLES = [
+  "FARMER",
+  "TRANSPORTER",
+  "MILL",
+  "STORAGE",
+  "EXPORTER",
+  "IMPORTER",
+  "RETAILER",
+];
+
+// "MILL" -> "Olive mill".
+export const roleLabel = (role) =>
+  ROLE_LABELS[String(role).toLowerCase()] || role;
+
 // Sidebar links per role, taken from the route map in docs/frontend-plan.md.
 // The first link is the role's home.
 export const ROLE_NAV = {

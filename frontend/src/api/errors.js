@@ -21,6 +21,13 @@ function plain(message) {
   return { message, fieldErrors: {} };
 }
 
+// 409s from the admin role routes, which are not about a batch.
+const ROLE_CONFLICTS = {
+  "participant already has this role": "This wallet already has this role.",
+  "participant does not have this role":
+    "This wallet does not have this role, so there is nothing to revoke.",
+};
+
 // Turns API and wallet errors into { message, fieldErrors } for the UI.
 export function readableError(err) {
   if (err && (err.code === 4001 || err.code === "ACTION_REJECTED")) {
@@ -46,6 +53,9 @@ export function readableError(err) {
       case 404:
         return plain(`Not found. ${text}`);
       case 409:
+        if (ROLE_CONFLICTS[err.message]) {
+          return plain(ROLE_CONFLICTS[err.message]);
+        }
         return plain(
           `This does not match the current state of the batch. ${text}`,
         );

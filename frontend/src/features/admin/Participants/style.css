@@ -1,0 +1,42 @@
+.participants__intro {
+  margin-block: 0 var(--space-4);
+  color: var(--color-text-muted);
+}
+.participants__bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-4);
+  margin-block-end: var(--space-4);
+}
+.participants__bar .field {
+  flex: 1 1 16rem;
+  max-inline-size: 28rem;
+}
+.participants__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
+}
+.participants__buttons .button {
+  text-decoration: none;
+}
+.participants__who {
+  display: flex;
+  flex-direction: column;
+}
+.participants__name {
+  font-weight: 600;
+}
+.participants__wallet {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+.participants__roles,
+.participants__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+}

@@ -1,0 +1,28 @@
+.role-change__profile {
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.role-change__profile legend {
+  padding-inline: var(--space-2);
+  font-weight: 600;
+}
+.role-change__note {
+  margin-block: var(--space-4);
+  color: var(--color-text-muted);
+}
+.role-change__confirm {
+  margin-block: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+}
+.role-change__confirm p {
+  margin: 0;
+}
+.role-change__confirm-title {
+  margin-block-end: var(--space-2) !important;
+  font-weight: 700;
+}

@@ -1,7 +1,7 @@
 # Requests from the frontend
 
 What the frontend still needs from the backend, sorted by priority.
-Last updated: 2026-10-31.
+Last updated: 2026-11-01.
 
 Priority:
 - **High**: blocks a frontend phase. Nothing is blocked right now.
@@ -88,6 +88,17 @@ Who owns what:
   `/me/batches/created`.
 - **Needed by:** Phase 9. Optional.
 
+### Low: list the profile `details` keys in API.md
+
+- **Now:** API.md says profiles take "role-specific validated `details`" but
+  does not name the keys. They are only in `profileDetailsSchemas` in
+  `backend/src/validation/participant.schemas.js` (for example `farmName`,
+  `vehicleDetails`, `storageCapacity`).
+- **Ask:** add the keys per role to API.md.
+- **Why:** the frontend only uses fields from API.md, so the register form
+  (Phase 8) leaves `details` out. The profile page needs them.
+- **Needed by:** Phase 9.
+
 ## Smart contract and chain
 
 ### Low: `args.batchId` in `GET /batches/:id/history` shows `"[object Object]"`
@@ -104,6 +115,18 @@ Who owns what:
   field, so nothing breaks today.
 - **Where:** the event reader in `backend/src/chain/`.
 - **Needed by:** no phase. Fix when convenient.
+
+### Low: registering a second role wipes the profile `details`
+
+- **Now:** `confirmRoleChange` in `backend/src/services/admin.service.js`
+  always writes `details` (`{}` when none are sent) in the profile upsert.
+  When the admin gives an existing participant another role, their saved
+  details are replaced.
+- **Ask:** only update `details` when the request sends them, like the other
+  profile fields.
+- **Why:** the admin page offers "Add a role" for existing participants, and
+  the form does not send `details` (see the API.md item above).
+- **Needed by:** no phase. Rare in the demo.
 
 ## Done
 

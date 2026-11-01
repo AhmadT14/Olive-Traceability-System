@@ -1,6 +1,11 @@
 import { ApiError } from "../api/client";
 import { mockCaller, mockRoles } from "./auth";
-import { participantsWithRole, profileMock } from "./participants";
+import {
+  participantsWithRole,
+  profileMock,
+  resetMockParticipants,
+  setMockRoles,
+} from "./participants";
 import { SEED_BATCHES, TAMPERED_TX } from "./seedBatches";
 
 // A small in-memory chain plus database. Responses use the shapes from the
@@ -80,6 +85,7 @@ export function resetMockChain() {
   } catch {
     /* storage unavailable */
   }
+  resetMockParticipants();
   refresh();
 }
 
@@ -348,6 +354,13 @@ const APPLY = {
     );
     return true;
   },
+  // Registry grantRole and revokeRole. No batch is involved.
+  role(action) {
+    const roles = mockRoles(action.address).filter((r) => r !== action.role);
+    if (action.action === "register") roles.push(action.role);
+    setMockRoles(action.address, roles);
+    return true;
+  },
   listing(action, event, batch) {
     if (
       batch.chain.status !== "Created" ||
@@ -369,6 +382,22 @@ const APPLY = {
     return true;
   },
 };
+
+// Keeps an action until the mock wallet mines it. Returns the transaction
+// data the mock wallet sends back. `canonical` is what minedMockTx returns.
+export function prepareMockTx(action) {
+  refresh();
+  const data = randomHash();
+  prepared.set(data, action);
+  persist();
+  return data;
+}
+
+// The `canonical` text of a mined mock transaction, or undefined.
+export function minedMockTx(txHash) {
+  refresh();
+  return canonicalByTx.get(txHash);
+}
 
 // Called by the mock wallet in place of MetaMask. Applies the chain change.
 export function mineMockTx(transaction) {
@@ -403,7 +432,7 @@ export function mineMockTx(transaction) {
 }
 
 // Fails the first save of a record whose notes ask for it (tests retry).
-function maybeFailOnce(record, txHash) {
+export function maybeFailOnce(record, txHash) {
   const text = record.farm_notes || record.notes;
   if (text === FAIL_SAVE_ONCE && !failedOnce.has(txHash)) {
     failedOnce.add(txHash);

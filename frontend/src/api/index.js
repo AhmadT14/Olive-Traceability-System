@@ -7,6 +7,7 @@ export * from "./me";
 export * from "./transporter";
 export * from "./mill";
 export * from "./facility";
+export * from "./admin";
 export { readableError } from "./errors";
 export {
   ApiError,
