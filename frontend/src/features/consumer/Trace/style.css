@@ -3,16 +3,6 @@
   min-height: 100vh;
   background: var(--color-bg);
 }
-.trace__bar {
-  padding-block: var(--space-3);
-  padding-inline: var(--space-4);
-  background: var(--color-primary-dark);
-}
-.trace__brand {
-  color: #fff;
-  font-weight: 700;
-  text-decoration: none;
-}
 .trace__main {
   display: flex;
   flex-direction: column;

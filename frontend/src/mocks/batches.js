@@ -243,7 +243,8 @@ export function mockBatchStages() {
 
 // Shape of GET /me/batches/created. Like the backend, only batches whose farm
 // record was saved are listed, newest first. Demo batches have no block time,
-// so their createdAt is the time the farm record was saved.
+// so their createdAt is the time the farm record was saved. quantity and
+// olive_type are not in the real route yet (BACKEND_REQUESTS.md).
 export async function createdBatchesMock() {
   await wait();
   refresh();
@@ -260,6 +261,8 @@ export async function createdBatchesMock() {
       batchId,
       ...chain,
       harvestDate: created.details.values.harvest_date || null,
+      quantity: created.details.values.quantity ?? null,
+      olive_type: created.details.values.olive_type || null,
       createdBlock: created.blockNumber,
       createdAt: createdAt || created.details.recordedAt,
     });

@@ -53,7 +53,9 @@ Who owns what:
   frontend needs one `/history` call per batch. The farmer's Overview also
   leaves out "total quantity" (kilograms harvested) until `quantity` is
   here.
-- **Needed by:** Phase 9 or 10.
+- **Needed by:** Phase 10 (built on a mock). Status and harvest date already
+  work on the real API. The olive type filter, quantity sort and both columns
+  appear by themselves once these fields are in the response.
 
 ### Medium: batches a facility has received
 

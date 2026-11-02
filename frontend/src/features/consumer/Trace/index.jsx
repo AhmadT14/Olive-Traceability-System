@@ -1,10 +1,11 @@
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { getBatchChain, getBatchHistory, verifyBatch } from "../../../api";
 import { useAsync } from "../../../hooks/useAsync";
 import BatchLookup from "../../../components/BatchLookup";
 import Button from "../../../components/Button";
 import { Loading } from "../../../components/State";
 import { isZeroAddress } from "../../../utils/format";
+import PublicBar from "../../public/PublicBar";
 import Facility from "../Facility";
 import IntegrityBanner from "../IntegrityBanner";
 import Journey from "../Journey";
@@ -58,11 +59,7 @@ export default function Trace() {
 
   return (
     <div className="trace">
-      <header className="trace__bar">
-        <Link to="/" className="trace__brand">
-          {TEXT.brand}
-        </Link>
-      </header>
+      <PublicBar />
 
       <main className="trace__main">
         {chain.loading && !batch && <Loading text={TEXT.trace.loading} />}

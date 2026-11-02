@@ -1,23 +1,6 @@
 .home {
   min-height: 100vh;
 }
-.home__bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-  padding-block: var(--space-3);
-  padding-inline: var(--space-4);
-  background: var(--color-primary-dark);
-}
-.home__brand {
-  color: #fff;
-  font-weight: 700;
-  text-decoration: none;
-}
-.home__sign-in {
-  color: #fff;
-}
 .home__main {
   max-width: 640px;
   margin-inline: auto;

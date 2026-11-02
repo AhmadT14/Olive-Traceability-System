@@ -17,6 +17,27 @@
 .farmer-overview__head .button {
   text-decoration: none;
 }
+.farmer-overview__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+}
+.farmer-overview__filters .field {
+  margin-bottom: 0;
+}
+.farmer-overview__count-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  margin-block: var(--space-3);
+}
+.farmer-overview__count {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
 .farmer-overview__actions {
   display: flex;
   justify-content: flex-end;
