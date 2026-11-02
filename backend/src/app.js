@@ -1,4 +1,5 @@
 import express from "express";
+import helmet from "helmet";
 import { config } from "./config.js";
 import { provider } from "./chain/contracts.js";
 import { checkChain } from "./chain/startup.js";
@@ -21,8 +22,13 @@ import verificationRoutes from "./api/routes/verification.routes.js";
 import adminRoutes from "./api/routes/admin.routes.js";
 import meRoutes from "./api/routes/me.routes.js";
 import { errorHandler, notFoundHandler } from "./api/errorHandler.js";
+import { authRateLimit, requestId } from "./api/security.js";
 
 const app = express();
+app.use(requestId);
+app.use(helmet());
+app.use("/auth/nonce", authRateLimit());
+app.use("/auth/login", authRateLimit());
 app.use(express.json());
 
 app.get("/health", (req, res) => {

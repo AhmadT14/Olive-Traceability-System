@@ -3,14 +3,16 @@ import { AppError } from "../errors.js";
 export function sendError(res, err) {
   if (res.headersSent) return;
 
+  const label = `request ${res.req?.id ?? "-"}:`;
+
   if (err instanceof AppError) {
-    if (err.status >= 500) console.error(err.cause ?? err);
+    if (err.status >= 500) console.error(label, err.cause ?? err);
     const body = { error: err.message };
     if (err.details !== undefined) body.details = err.details;
     return res.status(err.status).json(body);
   }
 
-  console.error(err);
+  console.error(label, err);
   return res.status(500).json({ error: "internal server error" });
 }
 
