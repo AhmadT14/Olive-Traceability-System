@@ -64,6 +64,14 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  frontend:
+    build: ./frontend
+    ports:
+      # 5173 matches the default AUTH_DOMAIN and AUTH_URI of the sign-in message.
+      - "5173:80"
+    depends_on:
+      - backend
+
   anvil:
     image: ghcr.io/foundry-rs/foundry:v1.8.5
     user: "0:0"

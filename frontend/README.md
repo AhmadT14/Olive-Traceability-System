@@ -6,7 +6,11 @@ Stack: React 19, Vite, react-router-dom 7, ethers 6, plain JavaScript and plain 
 
 ## Run it
 
-1. Start the backend stack from the repo root (Postgres, Anvil, API on port 3000). Skip this in mock mode.
+To only use the app, run `docker compose up --build` from the repo root and open http://localhost:5173. Docker builds and serves the frontend with the rest of the stack.
+
+To work on the code:
+
+1. Start the backend stack from the repo root (Postgres, Anvil, API on port 3000), then run `docker compose stop frontend` to free the port. Skip this in mock mode.
 2. Copy `.env.example` to `.env` and fill in the values.
 3. `npm install`, then `npm run dev`, and open http://localhost:5173.
 

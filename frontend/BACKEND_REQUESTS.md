@@ -142,7 +142,19 @@ Who owns what:
 
 ## Smart contract and chain
 
-Nothing open right now.
+### Low: sign-in rate limit counts everyone behind nginx as one user
+
+- **Now:** `authRateLimit` in `backend/src/api/security.js` allows 20 requests
+  per minute per IP, and the app has no `trust proxy` setting. The Docker
+  frontend (`frontend/nginx.conf`) forwards `/api` to the backend, so the
+  backend sees nginx's IP for every user, and they all share one limit.
+- **Ask:** when this goes to a real deployment, set `trust proxy` for the one
+  proxy in front of the API, and tell us so we can send `X-Forwarded-For` from
+  nginx. Without `trust proxy` the rate limiter treats that header as a
+  misconfiguration, so nginx leaves it out for now.
+- **Why:** in a real deployment, a few busy users could block sign-in for
+  everyone with a `429`.
+- **Needed by:** deployment, not a phase. It does not affect the demo.
 
 ## Done
 

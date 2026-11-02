@@ -25,14 +25,23 @@ Run every command from the repo root unless a step says otherwise.
 
 ### 1. Start the services
 
+On a fresh clone, create the settings file first. The backend needs the
+`JWT_SECRET` in it (see step 2):
+
+```sh
+cp .env.example .env
+```
+
 ```sh
 docker compose up --build
 ```
 
 This starts PostgreSQL and Anvil, deploys the contracts, registers the demo
 participants on chain, creates their database tables (migrations) and stores
-their names, and then starts the backend. Run it with `--build` after pulling
-changes to `backend/`. Foundry (`forge`, `cast`, and `anvil`) runs inside
+their names, and then starts the backend and the frontend. Open the app at
+http://localhost:5173. Docker installs the packages itself, so you do not need
+`npm install` for this. Run it with `--build` after pulling changes to `backend/`
+or `frontend/`. Foundry (`forge`, `cast`, and `anvil`) runs inside
 Docker; it does not need to be installed on the host.
 
 Startup order is `anvil` → `deploy` → `seed` (chain roles and batch `B1`) →
@@ -257,9 +266,11 @@ npm run db:migrate   # create or update the tables
 npm run db:seed      # store the demo participants (needs the chain seeded first)
 ```
 
-Frontend, in another terminal:
+Frontend, in another terminal. The Docker frontend uses the same port and does
+not reload when code changes, so stop it first:
 
 ```sh
+docker compose stop frontend
 cd frontend
 npm install
 npm run dev
