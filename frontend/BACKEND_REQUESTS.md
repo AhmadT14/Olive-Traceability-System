@@ -1,7 +1,7 @@
 # Requests from the frontend
 
 What the frontend still needs from the backend, sorted by priority.
-Last updated: 2026-11-01.
+Last updated: 2026-11-02.
 
 Priority:
 - **High**: blocks a frontend phase. Nothing is blocked right now.
@@ -50,32 +50,10 @@ Who owns what:
   (`null` if missing), like `harvestDate`.
 - **Why:** the farmer's "My batches" page will get sorting and filtering
   (by status, harvest date, olive type, quantity). Without these fields the
-  frontend needs one `/history` call per batch.
+  frontend needs one `/history` call per batch. The farmer's Overview also
+  leaves out "total quantity" (kilograms harvested) until `quantity` is
+  here.
 - **Needed by:** Phase 9 or 10.
-
-### Low: the mill can list before its intake record is saved
-
-- **Now:** `POST /batches/prepare-listing` does not check for a saved
-  `mill_intake` record. Storage, exporter and importer listings do
-  (`intakeType` in the `LISTINGS` table in `services/prepare.service.js`
-  and `services/batch.service.js`, which is `null` for the mill).
-- **Ask:** set `intakeType: "mill_intake"` for the mill, with an error like
-  the others ("no mill intake recorded off-chain for this batch yet").
-- **Why:** if the mill's intake save fails and it lists anyway, the batch
-  history has a gap that can never be filled. The frontend now blocks this
-  in the app, but the API should refuse it too.
-- **Needed by:** no phase. The frontend works around it.
-
-### Low: CORS
-
-- **Now:** the backend sends no CORS headers. In development the Vite proxy
-  forwards `/api` to `localhost:3000`, so it works.
-- **Ask:** add the `cors` middleware, allowing the frontend origin from an
-  env variable.
-- **Why:** needed only if the frontend is served from a different origin
-  than the API in a real deployment. Not needed if both sit behind one
-  domain (reverse proxy).
-- **Needed by:** deployment, not a phase.
 
 ### Medium: batches a facility has received
 
@@ -108,6 +86,30 @@ Who owns what:
   admin Overview has this chart on a mock; the real API shows "This chart
   will appear once the system can provide the data".
 - **Needed by:** Phase 9 (built on a mock).
+
+### Low: the mill can list before its intake record is saved
+
+- **Now:** `POST /batches/prepare-listing` does not check for a saved
+  `mill_intake` record. Storage, exporter and importer listings do
+  (`intakeType` in the `LISTINGS` table in `services/prepare.service.js`
+  and `services/batch.service.js`, which is `null` for the mill).
+- **Ask:** set `intakeType: "mill_intake"` for the mill, with an error like
+  the others ("no mill intake recorded off-chain for this batch yet").
+- **Why:** if the mill's intake save fails and it lists anyway, the batch
+  history has a gap that can never be filled. The frontend now blocks this
+  in the app, but the API should refuse it too.
+- **Needed by:** no phase. The frontend works around it.
+
+### Low: CORS
+
+- **Now:** the backend sends no CORS headers. In development the Vite proxy
+  forwards `/api` to `localhost:3000`, so it works.
+- **Ask:** add the `cors` middleware, allowing the frontend origin from an
+  env variable.
+- **Why:** needed only if the frontend is served from a different origin
+  than the API in a real deployment. Not needed if both sit behind one
+  domain (reverse proxy).
+- **Needed by:** deployment, not a phase.
 
 ### Low (optional): more statistics
 
