@@ -80,6 +80,7 @@ A participant counts as available unless they set `unavailable`; a profile that 
 - `GET /destinations` and `GET /batches/:id/destinations` leave out unavailable participants.
 - `POST /batches/prepare`, `/batches/prepare-listing`, `/batches/prepare-storage-listing`, `/batches/prepare-exporter-listing` and `/batches/prepare-importer-listing` return `409` (`destination is marked unavailable`) if the chosen destination is unavailable.
 - `POST /batches/prepare-claim` returns `409` (`transporter is marked unavailable`) for an unavailable transporter. They can still see the job board.
+- `POST /batches/prepare-listing` returns `409` (`no mill intake recorded off-chain for this batch yet`) until the mill's intake record is saved, like the storage, exporter and importer listings.
 - Delivering a batch that is already in transit is never blocked: `prepare-handover` and the facility's receipt work whatever the availability, because the delivery has already happened.
 
 ## Wallet transaction workflow
@@ -136,7 +137,9 @@ These routes require a bearer token. The `txHash` must refer to a successful on 
 | `POST /batches/:id/importer-outgoing` | Save importer outgoing details after listing. Body: `txHash` and importer outgoing fields. |
 | `POST /admin/participants/confirm-role-change` | Confirm a submitted role transaction. Body for registration includes `address`, `role`, `action: "register"`, `txHash`, and `profile`; revocation omits `profile`. Registration profile requires `name`, with optional shared fields `contactPhone`, `email`, `address`, `location`, `availability`, and role-specific validated `details`. |
 
-Record saving can return `409` if the chain event, caller, current batch state, destination, record hash, or corresponding off chain workflow state does not match. Record details are not saved until validation succeeds.
+Record saving can return `409` if the chain event, caller, current batch state, destination, record hash, or corresponding off chain workflow state does not match, or if the record was already saved. Record details are not saved until validation succeeds.
+
+Transaction hashes are accepted in any letter case and are stored and returned in lower case.
 
 ## Integrity results
 

@@ -48,8 +48,8 @@ const LISTINGS = {
     stage: "Mill",
     stageError: "batch is not at the mill stage",
     hashStage: "mill_oil",
-    intakeType: null,
-    intakeError: null,
+    intakeType: "mill_intake",
+    intakeError: "no mill intake recorded off-chain for this batch yet",
     failureMessage: "chain read failed",
   },
   storage: {

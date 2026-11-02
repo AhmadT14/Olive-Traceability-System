@@ -4,6 +4,7 @@ import {
   conflict,
   forbidden,
   internalError,
+  isUniqueViolation,
   notFound,
 } from "../errors.js";
 import {
@@ -108,6 +109,9 @@ export async function claimBatch(user, rawBatchId, body) {
     });
   } catch (err) {
     if (err instanceof AppError) throw err;
+    if (isUniqueViolation(err)) {
+      throw conflict("record already recorded off-chain");
+    }
     throw internalError("db write failed", err);
   }
 
@@ -209,6 +213,9 @@ export async function handoverBatch(user, rawBatchId, body) {
     });
   } catch (err) {
     if (err instanceof AppError) throw err;
+    if (isUniqueViolation(err)) {
+      throw conflict("record already recorded off-chain");
+    }
     throw internalError("db write failed", err);
   }
 

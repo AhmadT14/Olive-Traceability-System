@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "../db/db.js";
 import { batchEvents } from "../db/schema.js";
 
@@ -73,8 +73,7 @@ export function findByTxHashes(txHashes, exec = db) {
     .where(inArray(batchEvents.eventTxHash, txHashes));
 }
 
-// The saved farm records among the given transaction hashes. Matched without
-// regard to case, since the hash is stored as the client sent it.
+// The saved farm records among the given transaction hashes.
 export function findFarmEventsByTxHashes(txHashes, exec = db) {
   if (txHashes.length === 0) return Promise.resolve([]);
   return exec
@@ -88,7 +87,7 @@ export function findFarmEventsByTxHashes(txHashes, exec = db) {
       and(
         eq(batchEvents.detailsType, "farm"),
         inArray(
-          sql`lower(${batchEvents.eventTxHash})`,
+          batchEvents.eventTxHash,
           txHashes.map((hash) => hash.toLowerCase()),
         ),
       ),

@@ -5,6 +5,7 @@ import {
   conflict,
   forbidden,
   internalError,
+  isUniqueViolation,
   notFound,
 } from "../errors.js";
 import {
@@ -156,6 +157,9 @@ export async function recordFarmBatch(user, body) {
     });
   } catch (err) {
     if (err instanceof AppError) throw err;
+    if (isUniqueViolation(err)) {
+      throw conflict("batch already recorded off-chain");
+    }
     throw internalError("db write failed", err);
   }
 
@@ -249,6 +253,9 @@ export async function recordMillIntake(user, rawBatchId, body) {
     });
   } catch (err) {
     if (err instanceof AppError) throw err;
+    if (isUniqueViolation(err)) {
+      throw conflict("record already recorded off-chain");
+    }
     throw internalError("db write failed", err);
   }
 
@@ -347,7 +354,7 @@ export async function recordMillOutgoing(user, rawBatchId, body) {
     });
   } catch (err) {
     if (err instanceof AppError) throw err;
-    if (err.code === "23505") {
+    if (isUniqueViolation(err)) {
       throw conflict("record already recorded off-chain");
     }
     throw internalError("db write failed", err);
@@ -463,7 +470,7 @@ async function recordStageListing(user, rawBatchId, body, spec) {
     });
   } catch (err) {
     if (err instanceof AppError) throw err;
-    if (err.code === "23505") {
+    if (isUniqueViolation(err)) {
       throw conflict("record already recorded off-chain");
     }
     throw internalError("db write failed", err);

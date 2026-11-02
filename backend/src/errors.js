@@ -29,3 +29,6 @@ export const internalError = (message, cause) =>
 
 export const serviceUnavailable = (message, cause) =>
   new AppError(503, message, { cause });
+
+export const isUniqueViolation = (err) =>
+  err?.code === "23505" || err?.cause?.code === "23505";

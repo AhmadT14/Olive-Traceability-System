@@ -4,6 +4,7 @@ import {
   conflict,
   forbidden,
   internalError,
+  isUniqueViolation,
   notFound,
 } from "../errors.js";
 import {
@@ -110,7 +111,7 @@ export async function recordReceipt(user, rawBatchId, body) {
     });
   } catch (err) {
     if (err instanceof AppError) throw err;
-    if (err.code === "23505") {
+    if (isUniqueViolation(err)) {
       throw conflict("event details already recorded");
     }
     throw internalError("db write failed", err);
