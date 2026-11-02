@@ -78,7 +78,9 @@ Who owns what:
 ### Medium: batches per stage for the admin
 
 - **Now:** no route counts batches across the system. `/me/batches` only
-  covers the caller's own batches.
+  covers the caller's own batches. `countBatchesByStage` in
+  `backend/src/chain/reader.js` already does the counting, but no route uses
+  it yet.
 - **Ask:** a count of all batches by their current chain stage, in chain
   order with zeros included. Proposed `GET /admin/stats/batches` (admin
   only) returning
@@ -88,19 +90,6 @@ Who owns what:
   admin Overview has this chart on a mock; the real API shows "This chart
   will appear once the system can provide the data".
 - **Needed by:** Phase 9 (built on a mock).
-
-### Low: the mill can list before its intake record is saved
-
-- **Now:** `POST /batches/prepare-listing` does not check for a saved
-  `mill_intake` record. Storage, exporter and importer listings do
-  (`intakeType` in the `LISTINGS` table in `services/prepare.service.js`
-  and `services/batch.service.js`, which is `null` for the mill).
-- **Ask:** set `intakeType: "mill_intake"` for the mill, with an error like
-  the others ("no mill intake recorded off-chain for this batch yet").
-- **Why:** if the mill's intake save fails and it lists anyway, the batch
-  history has a gap that can never be filled. The frontend now blocks this
-  in the app, but the API should refuse it too.
-- **Needed by:** no phase. The frontend works around it.
 
 ### Low: CORS
 
@@ -153,32 +142,7 @@ Who owns what:
 
 ## Smart contract and chain
 
-### Low: `args.batchId` in `GET /batches/:id/history` shows `"[object Object]"`
-
-- **Now:** the `batchId` argument of each event comes back as the text
-  `"[object Object]"`. It is an indexed string, so the log only holds its
-  hash, and the reader turns that object into a string. Still there after
-  e1b5e33, which rewrote `getBatchHistory` in `backend/src/chain/reader.js`
-  (checked 2026-11-01).
-- **Ask:** return the topic hash as a `0x...` string (it cannot be decoded
-  back to the readable ID), or leave the field out. The readable ID is
-  already at the top level of the response.
-- **Why:** wrong data in the response. The frontend does not read this
-  field, so nothing breaks today.
-- **Where:** the event reader in `backend/src/chain/`.
-- **Needed by:** no phase. Fix when convenient.
-
-### Low: registering a second role wipes the profile `details`
-
-- **Now:** `confirmRoleChange` in `backend/src/services/admin.service.js`
-  always writes `details` (`{}` when none are sent) in the profile upsert.
-  When the admin gives an existing participant another role, their saved
-  details are replaced.
-- **Ask:** only update `details` when the request sends them, like the other
-  profile fields.
-- **Why:** the admin page offers "Add a role" for existing participants, and
-  the form does not send `details` (see the API.md item above).
-- **Needed by:** no phase. Rare in the demo.
+Nothing open right now.
 
 ## Done
 
@@ -187,9 +151,13 @@ Closed and already used by the frontend.
 Smart contract and chain:
 
 - `isAdmin` and `expiresAt` in login and `/auth/me`
+- `args.batchId` in `/history` is now the `0x...` topic hash (commit 7c965b3)
+- registering a second role keeps the saved profile `details`
 
 Database and API:
 
+- `POST /batches/prepare-listing` refuses a mill listing until its intake
+  record is saved
 - `GET /me/batches`, `GET /me/profile`, `PATCH /me/profile`,
   `PATCH /me/availability`
 - `GET /transporter-jobs?mine=true`
