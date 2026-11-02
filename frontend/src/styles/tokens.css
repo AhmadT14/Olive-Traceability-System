@@ -6,9 +6,11 @@
   --color-surface: #ffffff;
   --color-surface-2: #eceadf;
   --color-border: #d9d5c4;
+  /* Form fields: 3:1 against white, so the field's edge can be seen. */
+  --color-border-strong: #8a8877;
   --color-text: #22251c;
-  --color-text-muted: #6a6e5e;
-  --color-success: #2e7d32;
+  --color-text-muted: #5f6354;
+  --color-success: #276c2b;
   --color-success-bg: #e3f1e4;
   --color-warning: #8a6100;
   --color-warning-bg: #fbf0d3;

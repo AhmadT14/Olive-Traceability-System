@@ -6,7 +6,8 @@ export default function Table({
   emptyText = "Nothing to show yet.",
 }) {
   return (
-    <div className="table">
+    // Focusable so a wide table can be scrolled with the arrow keys.
+    <div className="table" tabIndex={0}>
       <table className="table__grid">
         <thead>
           <tr>

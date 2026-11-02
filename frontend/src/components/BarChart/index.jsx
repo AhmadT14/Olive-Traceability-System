@@ -9,15 +9,18 @@ import {
 } from "recharts";
 import "./style.css";
 
+// `unit` is { one, other }: "1 batch", "4 batches".
+function amount(value, unit) {
+  return `${value.toLocaleString()} ${value === 1 ? unit.one : unit.other}`;
+}
+
 function ChartTooltip({ active, payload, unit }) {
   if (!active || !payload || !payload.length) return null;
   const { label, value } = payload[0].payload;
   return (
     <div className="bar-chart__tooltip">
       <span>{label}</span>
-      <strong>
-        {value.toLocaleString()} {unit}
-      </strong>
+      <strong>{amount(value, unit)}</strong>
     </div>
   );
 }
@@ -38,6 +41,7 @@ export default function BarChart({
     return <p className="bar-chart__empty">{emptyText}</p>;
   }
   const height = horizontal ? Math.max(data.length * 36 + 40, 160) : 220;
+  const axisLabels = new Map(data.map((d) => [d.label, d.short ?? d.label]));
   const valueAxis = {
     type: "number",
     allowDecimals: false,
@@ -76,7 +80,10 @@ export default function BarChart({
               </>
             ) : (
               <>
-                <XAxis {...labelAxis} />
+                <XAxis
+                  {...labelAxis}
+                  tickFormatter={(label) => axisLabels.get(label)}
+                />
                 <YAxis {...valueAxis} width={40} />
               </>
             )}
@@ -101,9 +108,7 @@ export default function BarChart({
             {data.map((d) => (
               <tr key={d.label}>
                 <th scope="row">{d.label}</th>
-                <td>
-                  {d.value.toLocaleString()} {unit}
-                </td>
+                <td>{amount(d.value, unit)}</td>
               </tr>
             ))}
           </tbody>

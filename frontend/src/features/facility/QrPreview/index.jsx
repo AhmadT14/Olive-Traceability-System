@@ -9,7 +9,12 @@ const T = TEXT.list;
 export default function QrPreview({ role, batchId, hint = T.qrHint }) {
   return (
     <div className="qr-preview">
-      <QRCodeSVG value={traceUrl(batchId)} size={128} marginSize={2} />
+      <QRCodeSVG
+        value={traceUrl(batchId)}
+        size={128}
+        marginSize={2}
+        title={T.qrTitle}
+      />
       <div>
         <p className="qr-preview__title">{T.qrTitle}</p>
         <p className="form-page__hint">{hint}</p>

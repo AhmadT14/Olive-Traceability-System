@@ -40,7 +40,7 @@ function keptValues(payload) {
 function Claimed({ batchId, destination }) {
   const D = TEXT.claimed;
   return (
-    <Card title={D.title}>
+    <Card page title={D.title}>
       <p>{D.intro(batchId)}</p>
       <dl className="form-page__facts">
         <dt>{D.deliverTo}</dt>
@@ -85,7 +85,7 @@ export default function ClaimJob() {
   // Another claim still needs its details saved; that comes first.
   if (pending && !pendingHere) {
     return (
-      <Card title={T.title(batchId)}>
+      <Card page title={T.title(batchId)}>
         <PendingNotice kinds={PENDING_KINDS} only={CLAIM_KEY} blocked />
       </Card>
     );
@@ -108,7 +108,7 @@ export default function ClaimJob() {
 
   if (!job && !pendingHere && !flow.busy) {
     return (
-      <Card title={T.title(batchId)}>
+      <Card page title={T.title(batchId)}>
         <p>{T.gone}</p>
         <div className="form-page__links">
           <Link to="/transporter/jobs">{T.backToBoard}</Link>
@@ -142,7 +142,7 @@ export default function ClaimJob() {
   }
 
   return (
-    <Card title={T.title(batchId)}>
+    <Card page title={T.title(batchId)}>
       {job && <JobSummary job={job} />}
       <p className="form-page__intro">{T.intro}</p>
       <form onSubmit={submit} noValidate>

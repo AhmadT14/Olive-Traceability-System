@@ -2,7 +2,8 @@
 // [{ label, value }] in display order.
 
 // One entry per month for the last `months` months, oldest first, including
-// empty months. `amountOf` defaults to counting items.
+// empty months. `amountOf` defaults to counting items. `short` is the month
+// without the year, for the chart axis.
 export function perMonth(
   items,
   dateOf,
@@ -18,6 +19,7 @@ export function perMonth(
         month: "short",
         year: "numeric",
       }),
+      short: d.toLocaleDateString(undefined, { month: "short" }),
       value: 0,
     });
   }
@@ -28,7 +30,7 @@ export function perMonth(
     const bucket = byKey.get(`${date.getFullYear()}-${date.getMonth()}`);
     if (bucket) bucket.value += Number(amountOf(item)) || 0;
   }
-  return buckets.map(({ label, value }) => ({ label, value }));
+  return buckets.map(({ label, short, value }) => ({ label, short, value }));
 }
 
 // One entry per key in `keys` (fixed order, zeros kept). `keysOf` returns the

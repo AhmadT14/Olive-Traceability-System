@@ -14,7 +14,7 @@ export default function NoRole() {
     <>
       <PublicBar />
       <main className="no-role">
-        <Card title="No role for this wallet">
+        <Card page title="No role for this wallet">
           <p>
             This wallet is not registered yet. Contact the ministry to be added,
             then sign in again.

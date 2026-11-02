@@ -19,7 +19,7 @@ export default function Login() {
     <>
       <PublicBar />
       <main className="login">
-        <Card title="Sign in">
+        <Card page title="Sign in">
           <p>
             Connect your MetaMask wallet and sign a message to prove you own it.
             No transaction is sent and no fee is charged.

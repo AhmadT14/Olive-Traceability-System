@@ -72,6 +72,9 @@ export default function AppShell() {
 
   return (
     <div className="app-shell">
+      <a href="#main-content" className="app-shell__skip">
+        Skip to content
+      </a>
       <aside className="app-shell__sidebar">
         <Link to={ROLE_HOME[role]} className="app-shell__brand">
           Olive Traceability
@@ -144,12 +147,12 @@ export default function AppShell() {
         {wallet.error && (wallet.wrongChain || walletUnavailable) && (
           <p className="app-shell__notice-error">{wallet.error}</p>
         )}
-        <div className="app-shell__content">
+        <main id="main-content" className="app-shell__content" tabIndex={-1}>
           {/* The key clears a failed load when the user moves to another page. */}
           <LoadBoundary key={pathname}>
             <Outlet />
           </LoadBoundary>
-        </div>
+        </main>
       </div>
     </div>
   );

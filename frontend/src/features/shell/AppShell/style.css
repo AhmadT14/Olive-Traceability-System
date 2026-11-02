@@ -3,10 +3,26 @@
   flex-direction: column;
   min-height: 100vh;
 }
+.app-shell__skip {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-2);
+  z-index: 1;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  transform: translateY(-200%);
+}
+.app-shell__skip:focus {
+  transform: none;
+}
 .app-shell__sidebar {
   padding: var(--space-4);
   background: var(--color-primary-dark);
   color: #fff;
+}
+.app-shell__sidebar :focus-visible {
+  outline-color: #fff;
 }
 .app-shell__brand {
   display: block;
@@ -17,7 +33,7 @@
 }
 .app-shell__nav {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: var(--space-1);
 }
 .app-shell__link {
@@ -35,6 +51,7 @@
 }
 .app-shell__header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-3);
@@ -42,9 +59,12 @@
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
 }
+.app-shell__header .button {
+  white-space: nowrap;
+}
 .app-shell__role-select {
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
   font: inherit;
 }
@@ -72,13 +92,20 @@
 .app-shell__content {
   padding: var(--space-6) var(--space-4);
 }
+.app-shell__content:focus {
+  outline: none;
+}
 
-@media (min-width: 768px) {
+/* Below this, tables need the sidebar's width, so the links go on top. */
+@media (min-width: 1024px) {
   .app-shell {
     flex-direction: row;
   }
   .app-shell__sidebar {
     width: 220px;
     flex-shrink: 0;
+  }
+  .app-shell__nav {
+    flex-direction: column;
   }
 }

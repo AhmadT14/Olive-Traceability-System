@@ -96,7 +96,7 @@ export default function Participants() {
     .map((p) => ({ ...p, id: p.address }));
 
   return (
-    <Card title={T.title}>
+    <Card page title={T.title}>
       <p className="participants__intro">{T.intro}</p>
       <div className="participants__bar">
         <Field label={T.search} name="participant-search" hint={T.searchHint}>

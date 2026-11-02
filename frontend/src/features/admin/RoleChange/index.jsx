@@ -48,7 +48,7 @@ function buildProfile(values) {
 function Done({ mode, name, role, onAnother }) {
   const T = TEXT[mode];
   return (
-    <Card title={T.doneTitle}>
+    <Card page title={T.doneTitle}>
       <p>{T.done(name, roleLabel(role))}</p>
       {mode === "register" && <p>{R.signIn}</p>}
       <div className="form-page__links">
@@ -170,7 +170,7 @@ export default function RoleChange({ mode }) {
   }
 
   return (
-    <Card title={T.title}>
+    <Card page title={T.title}>
       <p className="form-page__intro">{T.intro}</p>
       <form onSubmit={submit} noValidate>
         <Field

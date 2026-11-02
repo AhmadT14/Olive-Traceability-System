@@ -13,6 +13,7 @@ export const TEXT = {
       holdingEmpty: "No batches in your mill.",
       product: "olives",
       unit: "kilograms",
+      unitOne: "kilogram",
       next: "a storage facility",
       destination: "Storage facility *",
       list: "Record pressing and list",
@@ -26,6 +27,7 @@ export const TEXT = {
       holdingEmpty: "No batches in your storage.",
       product: "oil",
       unit: "litres",
+      unitOne: "litre",
       next: "an exporter",
       destination: "Exporter *",
       list: "Release and list",
@@ -39,6 +41,7 @@ export const TEXT = {
       holdingEmpty: "No batches with you.",
       product: "oil",
       unit: "litres",
+      unitOne: "litre",
       next: "an importer",
       destination: "Importer *",
       list: "Ship and list",
@@ -52,6 +55,7 @@ export const TEXT = {
       holdingEmpty: "No batches with you.",
       product: "oil",
       unit: "litres",
+      unitOne: "litre",
       next: "a retailer",
       destination: "Retailer *",
       list: "Ship and list",
@@ -65,6 +69,7 @@ export const TEXT = {
       holdingEmpty: "No batches in your shop yet.",
       product: "oil",
       unit: "litres",
+      unitOne: "litre",
     },
   },
 
@@ -94,7 +99,7 @@ export const TEXT = {
       stage: "Stage",
       goingTo: "Going to",
       status: "Status",
-      action: "",
+      action: "Action",
     },
   },
 
@@ -104,7 +109,7 @@ export const TEXT = {
       "Oil you received and that reached the end of its journey. Customers scan the QR code to see where it comes from.",
     publicPage: "Public page",
     label: "Print label",
-    columns: { batchId: "Batch ID", page: "", label: "" },
+    columns: { batchId: "Batch ID", page: "Public page", label: "Label" },
   },
 
   records: {

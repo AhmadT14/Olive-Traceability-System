@@ -54,7 +54,7 @@ function Listed({ role, batchId }) {
     `chain-listed:${batchId}`,
   );
   return (
-    <Card title={D.title}>
+    <Card page title={D.title}>
       <p>{D.intro(batchId)}</p>
       <dl className="form-page__facts">
         <dt>{D.goingTo}</dt>
@@ -122,7 +122,7 @@ export default function ListForPickup({ role }) {
   const intakePending = readPendingSave(intakeKey(role));
   if (intakePending && intakePending.payload.batchId === batchId) {
     return (
-      <Card title={R.listTitle(batchId)}>
+      <Card page title={R.listTitle(batchId)}>
         <p>{T.intakeFirst}</p>
         <PendingNotice kinds={pendingKinds(role)} only={intakeKey(role)} />
       </Card>
@@ -132,7 +132,7 @@ export default function ListForPickup({ role }) {
   // Another listing still needs its details saved; that comes first.
   if (pending && !pendingHere) {
     return (
-      <Card title={R.listTitle(batchId)}>
+      <Card page title={R.listTitle(batchId)}>
         <PendingNotice kinds={pendingKinds(role)} only={key} blocked />
       </Card>
     );
@@ -149,7 +149,7 @@ export default function ListForPickup({ role }) {
       batch.status === "Listed" &&
       same(batch.custodian, session.address);
     return (
-      <Card title={R.listTitle(batchId)}>
+      <Card page title={R.listTitle(batchId)}>
         <p>{listed ? T.alreadyListed : T.notReady}</p>
         {listed && (
           <dl className="form-page__facts">
@@ -199,7 +199,7 @@ export default function ListForPickup({ role }) {
   }
 
   return (
-    <Card title={R.listTitle(batchId)}>
+    <Card page title={R.listTitle(batchId)}>
       <p className="form-page__intro">{R.listIntro}</p>
       {config.qr && <QrPreview role={role} batchId={batchId} />}
       <form onSubmit={submit} noValidate>

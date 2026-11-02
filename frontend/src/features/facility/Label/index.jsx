@@ -13,10 +13,10 @@ export default function Label({ role }) {
   const url = traceUrl(batchId);
 
   return (
-    <div className="label-page">
+    <main className="label-page">
       <div className="label">
-        <p className="label__brand">{T.brand}</p>
-        <QRCodeSVG value={url} size={220} marginSize={2} />
+        <h1 className="label__brand">{T.brand}</h1>
+        <QRCodeSVG value={url} size={220} marginSize={2} title={T.scan} />
         <p className="label__scan">{T.scan}</p>
         <p className="label__batch">
           {T.batch} <strong>{batchId}</strong>
@@ -29,6 +29,6 @@ export default function Label({ role }) {
           {T.back}
         </Link>
       </div>
-    </div>
+    </main>
   );
 }

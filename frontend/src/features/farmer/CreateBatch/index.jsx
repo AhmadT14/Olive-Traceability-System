@@ -39,7 +39,7 @@ function Created({ batchId, onAnother }) {
   const path = `/trace/${encodeURIComponent(batchId)}`;
   const publicUrl = `${window.location.origin}${path}`;
   return (
-    <Card title={D.title}>
+    <Card page title={D.title}>
       <p>{D.intro}</p>
       <dl className="create-batch__done">
         <dt>{D.batchId}</dt>
@@ -172,7 +172,7 @@ export default function CreateBatch() {
   const locked = checking || flow.busy || Boolean(flow.pending);
 
   return (
-    <Card title={T.title}>
+    <Card page title={T.title}>
       <p>{T.intro}</p>
       <form onSubmit={submit} noValidate>
         <Field label={T.batchId} name="batchId" hint={T.batchIdHint}>

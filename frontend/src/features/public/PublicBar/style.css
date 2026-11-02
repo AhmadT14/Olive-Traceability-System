@@ -7,6 +7,9 @@
   padding-inline: var(--space-4);
   background: var(--color-primary-dark);
 }
+.public-bar :focus-visible {
+  outline-color: #fff;
+}
 .public-bar__brand {
   color: #fff;
   font-weight: 700;

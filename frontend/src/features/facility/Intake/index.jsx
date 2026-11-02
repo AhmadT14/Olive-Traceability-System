@@ -37,7 +37,7 @@ function Received({ role, batchId }) {
   const D = TEXT.received;
   const R = TEXT.roles[role];
   return (
-    <Card title={D.title}>
+    <Card page title={D.title}>
       <p>{D.intro(batchId, R.next)}</p>
       <div className="form-page__links">
         <Link to={listPath(role, batchId)} className="button button--primary">
@@ -55,7 +55,7 @@ function JourneyEnd({ role, batchId }) {
   const D = TEXT.journeyEnd;
   const url = traceUrl(batchId);
   return (
-    <Card title={D.title}>
+    <Card page title={D.title}>
       <p>{D.intro(batchId)}</p>
       <dl className="form-page__facts">
         <dt>{D.link}</dt>
@@ -110,7 +110,7 @@ export default function Intake({ role }) {
   // Another receipt still needs its details saved; that comes first.
   if (pending && !pendingHere) {
     return (
-      <Card title={T.title(batchId)}>
+      <Card page title={T.title(batchId)}>
         <PendingNotice kinds={pendingKinds(role)} only={key} blocked />
       </Card>
     );
@@ -130,7 +130,7 @@ export default function Intake({ role }) {
     const here =
       batch.stage === config.stage && same(batch.custodian, session.address);
     return (
-      <Card title={T.title(batchId)}>
+      <Card page title={T.title(batchId)}>
         <p>{here ? T.alreadyHere : T.notForYou}</p>
         <div className="form-page__links">
           {here && config.listing && batch.status === "Created" && (
@@ -169,7 +169,7 @@ export default function Intake({ role }) {
   }
 
   return (
-    <Card title={T.title(batchId)}>
+    <Card page title={T.title(batchId)}>
       <dl className="form-page__facts">
         <dt>{T.broughtBy}</dt>
         <dd>

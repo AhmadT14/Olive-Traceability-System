@@ -9,8 +9,8 @@ export const TEXT = {
   table: "Show as a table",
   noData: "Nothing to show yet.",
   chartMissing: "This chart will appear once the system can provide the data.",
-  batchUnit: "batches",
-  jobUnit: "jobs",
+  batchUnit: { one: "batch", other: "batches" },
+  jobUnit: { one: "job", other: "jobs" },
   stages: {
     Farm: "Farm",
     Mill: "Olive mill",
@@ -76,7 +76,7 @@ export const TEXT = {
     noRole: "Without a role",
     perRole: "Participants per role",
     perStage: "Batches per stage",
-    participantUnit: "participants",
+    participantUnit: { one: "participant", other: "participants" },
     links: [
       { to: "/admin/participants", label: "Participants" },
       { to: "/admin/participants/new", label: "Register participant" },

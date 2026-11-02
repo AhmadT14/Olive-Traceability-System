@@ -44,7 +44,7 @@ function keptValues(payload) {
 function Delivered({ batchId, target }) {
   const D = TEXT.delivered;
   return (
-    <Card title={D.title}>
+    <Card page title={D.title}>
       <p>{D.intro(batchId)}</p>
       <dl className="form-page__facts">
         <dt>{D.receiver}</dt>
@@ -84,7 +84,7 @@ export default function DeliverJob() {
   // Another delivery still needs its details saved; that comes first.
   if (pending && !pendingHere) {
     return (
-      <Card title={T.title(batchId)}>
+      <Card page title={T.title(batchId)}>
         <PendingNotice kinds={PENDING_KINDS} only={DELIVER_KEY} blocked />
       </Card>
     );
@@ -113,7 +113,7 @@ export default function DeliverJob() {
   if (!pendingHere && !flow.busy) {
     if (!job) {
       return (
-        <Card title={T.title(batchId)}>
+        <Card page title={T.title(batchId)}>
           <p>{T.notMine}</p>
           {back}
         </Card>
@@ -121,7 +121,7 @@ export default function DeliverJob() {
     }
     if (job.status === "handover_pending") {
       return (
-        <Card title={T.title(batchId)}>
+        <Card page title={T.title(batchId)}>
           <p>{T.alreadyHanded(partyName(job.destination))}</p>
           {back}
         </Card>
@@ -155,7 +155,7 @@ export default function DeliverJob() {
   }
 
   return (
-    <Card title={T.title(batchId)}>
+    <Card page title={T.title(batchId)}>
       {job && <JobSummary job={job} />}
       <p className="form-page__intro">{T.intro}</p>
       <form onSubmit={submit} noValidate>

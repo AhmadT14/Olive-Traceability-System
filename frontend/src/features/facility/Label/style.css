@@ -23,6 +23,7 @@
   margin: 0;
 }
 .label__brand {
+  margin: 0;
   font-size: var(--text-lg);
   font-weight: 700;
 }

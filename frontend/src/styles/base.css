@@ -27,3 +27,15 @@ p {
 a {
   color: var(--color-primary);
 }
+
+summary {
+  padding-block: var(--space-1);
+  cursor: pointer;
+}
+
+/* A date input's focus is on its inner day, month and year parts. */
+:focus-visible,
+input[type="date"]:focus-within {
+  outline: 2px solid var(--color-primary-dark);
+  outline-offset: 2px;
+}

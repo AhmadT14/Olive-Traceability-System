@@ -8,7 +8,7 @@ import "./style.css";
 // Current chain state of a batch (GET /batches/:id/chain response).
 export default function BatchStatusCard({ batch, children }) {
   return (
-    <Card title={`Batch ${batch.batchId}`}>
+    <Card page title={`Batch ${batch.batchId}`}>
       <dl className="batch-status">
         <dt>Product</dt>
         <dd>{batch.stage === "Farm" ? "Olives" : "Olive oil"}</dd>

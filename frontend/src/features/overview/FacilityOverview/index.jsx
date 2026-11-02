@@ -37,7 +37,7 @@ export default function FacilityOverview({ role }) {
     },
   ];
   const received = data && data.received;
-  const unit = FACILITY_TEXT.roles[role].unit;
+  const { unit, unitOne } = FACILITY_TEXT.roles[role];
   const charts = received && [
     {
       title: T.receivedPerMonth,
@@ -50,7 +50,7 @@ export default function FacilityOverview({ role }) {
       data: perMonth(received.batches, (b) => b.receivedAt, {
         amountOf: (b) => b.quantityReceived,
       }),
-      unit,
+      unit: { one: unitOne, other: unit },
       available: received.available,
     },
   ];

@@ -106,7 +106,7 @@ export const TEXT = {
       to: "To",
       status: "Status",
       listed: "Listed on",
-      action: "",
+      action: "Action",
     },
   },
 };
