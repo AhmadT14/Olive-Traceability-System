@@ -1,13 +1,9 @@
 import { verifyMessage } from "ethers";
 import jwt from "jsonwebtoken";
 import { buildMessage, consumeNonce, createNonce } from "../auth/nonces.js";
+import { signToken } from "../auth/tokens.js";
 import { config } from "../config.js";
-import {
-  AppError,
-  internalError,
-  unauthorized,
-  unprocessable,
-} from "../errors.js";
+import { serviceUnavailable, unauthorized, unprocessable } from "../errors.js";
 import {
   loginBodySchema,
   nonceBodySchema,
@@ -15,10 +11,19 @@ import {
 import { hasAdminRole } from "../chain/reader.js";
 import { readRoles } from "./participant.service.js";
 
-const TOKEN_TTL = "1h";
-
 // JWT `exp` is in seconds since the epoch; the API reports ISO timestamps.
 const expiryOf = (exp) => new Date(exp * 1000).toISOString();
+
+const signInMessage = (address, { nonce, issuedAt, expiresAt }) =>
+  buildMessage({
+    domain: config.AUTH_DOMAIN,
+    uri: config.AUTH_URI,
+    address,
+    chainId: config.CHAIN_ID,
+    nonce,
+    issuedAt,
+    expiresAt,
+  });
 
 // Keeps the endpoint's original wording: a bad address is reported as such,
 // and a valid address without a signature reports the missing signature.
@@ -43,46 +48,51 @@ function parseNonceBody(body) {
 }
 
 export async function login(body) {
+  const { address, signature } = parseLoginBody(body);
+
+  const entry = consumeNonce(address);
+  if (!entry) throw unauthorized("nonce missing or expired");
+
+  let signer;
   try {
-    const { address, signature } = parseLoginBody(body);
+    signer = verifyMessage(signInMessage(address, entry), signature);
+  } catch {
+    throw unauthorized("invalid signature");
+  }
+  if (signer.toLowerCase() !== address.toLowerCase()) {
+    throw unauthorized("signature does not match address");
+  }
 
-    const nonce = consumeNonce(address);
-    if (!nonce) throw unauthorized("nonce missing or expired");
-
-    const signer = verifyMessage(buildMessage(nonce), signature);
-    if (signer.toLowerCase() !== address.toLowerCase()) {
-      throw unauthorized("signature does not match address");
-    }
-
-    const [roles, isAdmin] = await Promise.all([
+  let roles;
+  let isAdmin;
+  try {
+    [roles, isAdmin] = await Promise.all([
       readRoles(address),
       hasAdminRole(address),
     ]);
-    const token = jwt.sign({ address, roles }, config.JWT_SECRET, {
-      expiresIn: TOKEN_TTL,
-    });
-
-    return {
-      address,
-      roles,
-      isAdmin,
-      expiresAt: expiryOf(jwt.decode(token).exp),
-      token,
-    };
   } catch (err) {
-    // The original endpoint collapsed every unexpected failure (bad signature,
-    // expired nonce, chain read) into a 401. Keep that contract.
-    if (err instanceof AppError) throw err;
-    console.error(err);
-    throw unauthorized("login failed");
+    throw serviceUnavailable("chain unavailable", err);
   }
+
+  const token = signToken({ address, roles }, config.JWT_SECRET);
+  return {
+    address,
+    roles,
+    isAdmin,
+    expiresAt: expiryOf(jwt.decode(token).exp),
+    token,
+  };
 }
 
 export function createLoginNonce(body) {
   const { address } = parseNonceBody(body);
 
-  const nonce = createNonce(address);
-  return { address, nonce, message: buildMessage(nonce) };
+  const entry = createNonce(address);
+  return {
+    address,
+    nonce: entry.nonce,
+    message: signInMessage(address, entry),
+  };
 }
 
 // Who the bearer token belongs to. The admin flag is read from the registry
@@ -92,7 +102,7 @@ export async function getSession(user) {
   try {
     isAdmin = await hasAdminRole(user.address);
   } catch (err) {
-    throw internalError("registry read failed", err);
+    throw serviceUnavailable("chain unavailable", err);
   }
   return {
     address: user.address,

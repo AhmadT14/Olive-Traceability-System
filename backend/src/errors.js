@@ -26,3 +26,6 @@ export const conflict = (message) => new AppError(409, message);
 
 export const internalError = (message, cause) =>
   new AppError(500, message, { cause });
+
+export const serviceUnavailable = (message, cause) =>
+  new AppError(503, message, { cause });

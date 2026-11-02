@@ -1,5 +1,7 @@
 import express from "express";
 import { config } from "./config.js";
+import { provider } from "./chain/contracts.js";
+import { checkChain } from "./chain/startup.js";
 import participantsRoutes from "./api/routes/participants.routes.js";
 import chainRoutes from "./api/routes/chain.routes.js";
 import txRoutes from "./api/routes/tx.routes.js";
@@ -50,6 +52,18 @@ app.use(meRoutes);
 // same JSON shape: { error, details? }.
 app.use(notFoundHandler);
 app.use(errorHandler);
+
+const chainProblems = await checkChain(provider, {
+  chainId: config.CHAIN_ID,
+  contracts: {
+    REGISTRY_ADDRESS: config.REGISTRY_ADDRESS,
+    BATCH_CUSTODY_ADDRESS: config.BATCH_CUSTODY_ADDRESS,
+  },
+});
+if (chainProblems.length > 0) {
+  console.error(`Backend not started: ${chainProblems.join("; ")}`);
+  process.exit(1);
+}
 
 app.listen(config.PORT, () => {
   console.log(`Server is running on port ${config.PORT}`);

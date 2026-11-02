@@ -9,7 +9,6 @@ import {
 import { config } from "../config.js";
 import {
   AppError,
-  badRequest,
   conflict,
   forbidden,
   internalError,
@@ -23,8 +22,8 @@ import {
   roleNames,
 } from "../validation/admin.schemas.js";
 import { parseBody } from "../validation/parse.js";
-import { profileDetailsSchemas } from "../validation/participant.schemas.js";
 import { readRoles } from "./participant.service.js";
+import { buildRoleProfile } from "./roleProfile.js";
 
 export async function prepareRoleChange(user, body) {
   const parsed = parseBody(prepareRoleChangeSchema, body);
@@ -102,35 +101,8 @@ export async function confirmRoleChange(user, body) {
     }
 
     if (action === "register") {
-      const profile = parsed.profile;
-      const detailsResult = profileDetailsSchemas[role].safeParse(
-        profile.details ?? {},
-      );
-      if (!detailsResult.success) {
-        throw badRequest(
-          "invalid profile details",
-          detailsResult.error.flatten(),
-        );
-      }
-
-      const profileValues = {
-        walletAddress: address.toLowerCase(),
-        name: profile.name,
-        ...(profile.contactPhone === undefined
-          ? {}
-          : { contactPhone: profile.contactPhone }),
-        ...(profile.email === undefined ? {} : { email: profile.email }),
-        ...(profile.address === undefined ? {} : { address: profile.address }),
-        ...(profile.location === undefined
-          ? {}
-          : { location: profile.location }),
-        ...(profile.availability === undefined
-          ? {}
-          : { availability: profile.availability }),
-        details: detailsResult.data,
-      };
-      const { walletAddress: _walletAddress, ...profileUpdates } =
-        profileValues;
+      const { values: profileValues, updates: profileUpdates } =
+        buildRoleProfile(address, role, parsed.profile);
 
       await runInTransaction(async (exec) => {
         await participantRepository.insertIgnore(address.toLowerCase(), exec);

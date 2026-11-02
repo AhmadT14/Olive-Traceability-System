@@ -13,9 +13,9 @@ function clock(start = 1_000) {
 
 test("a nonce is accepted once, whatever the case of the address", () => {
   const store = createNonceStore();
-  const nonce = store.create(A);
-  assert.match(nonce, /^[0-9a-f]{32}$/);
-  assert.equal(store.consume(A.toLowerCase()), nonce);
+  const entry = store.create(A);
+  assert.match(entry.nonce, /^[0-9a-f]{32}$/);
+  assert.equal(store.consume(A.toLowerCase()), entry);
   assert.equal(store.consume(A), null, "a second use must fail");
 });
 
@@ -23,7 +23,7 @@ test("asking again replaces the earlier nonce", () => {
   const store = createNonceStore();
   const first = store.create(A);
   const second = store.create(A);
-  assert.notEqual(first, second);
+  assert.notEqual(first.nonce, second.nonce);
   assert.equal(store.size, 1);
   assert.equal(store.consume(A), second);
 });
@@ -31,9 +31,9 @@ test("asking again replaces the earlier nonce", () => {
 test("a nonce expires after its lifetime and is then discarded", () => {
   const time = clock();
   const store = createNonceStore({ ttlMs: 1_000, now: time.now });
-  const nonce = store.create(A);
+  const entry = store.create(A);
   time.advance(999);
-  assert.equal(store.consume(A), nonce);
+  assert.equal(store.consume(A), entry);
 
   store.create(B);
   time.advance(1_000);
@@ -74,9 +74,39 @@ test("when full of live entries the oldest is dropped, not the newest", () => {
   assert.equal(store.consume(addr(3)), newest);
 });
 
-test("the sign-in message carries the nonce", () => {
+test("a nonce entry records when it was issued and when it expires", () => {
+  const time = clock(5_000);
+  const store = createNonceStore({ ttlMs: 1_000, now: time.now });
+  const entry = store.create(A);
+  assert.equal(entry.issuedAt, 5_000);
+  assert.equal(entry.expiresAt, 6_000);
+});
+
+test("the sign-in message follows the Sign-In with Ethereum format", () => {
+  const message = buildMessage({
+    domain: "localhost:5173",
+    uri: "http://localhost:5173",
+    address: A.toLowerCase(),
+    chainId: 31337,
+    nonce: "abcdef0123456789",
+    issuedAt: Date.UTC(2026, 10, 2, 12, 0, 0),
+    expiresAt: Date.UTC(2026, 10, 2, 12, 5, 0),
+  });
+
   assert.equal(
-    buildMessage("abc"),
-    "Sign in to Olive Traceability.\nNonce: abc",
+    message,
+    [
+      "localhost:5173 wants you to sign in with your Ethereum account:",
+      A,
+      "",
+      "Sign in to Olive Traceability.",
+      "",
+      "URI: http://localhost:5173",
+      "Version: 1",
+      "Chain ID: 31337",
+      "Nonce: abcdef0123456789",
+      "Issued At: 2026-11-02T12:00:00.000Z",
+      "Expiration Time: 2026-11-02T12:05:00.000Z",
+    ].join("\n"),
   );
 });

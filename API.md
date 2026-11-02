@@ -12,11 +12,27 @@ Protected routes require a JWT in the header:
 Authorization: Bearer <token>
 ```
 
-The API returns JSON. Errors always use the same envelope: `{ "error": "<message>" }`, plus `details` (Zod's `flatten()` output) when a request field failed validation. Status codes are `400` for a malformed request (invalid JSON, unknown path, bad path/query parameter, or a missing body), `422` for a well-formed JSON body that fails its field schema, `401` for missing or invalid authentication, `403` for a role or caller permission failure, `404` for a missing chain record, `409` for a conflict with the current workflow state, and `500` for a chain or database failure. Responses are also validated against a schema before they are sent; a mismatch is a server bug and returns a generic `500`.
+The API returns JSON. Errors always use the same envelope: `{ "error": "<message>" }`, plus `details` (Zod's `flatten()` output) when a request field failed validation. Status codes are `400` for a malformed request (invalid JSON, unknown path, bad path/query parameter, or a missing body), `422` for a well-formed JSON body that fails its field schema, `401` for missing or invalid authentication, `403` for a role or caller permission failure, `404` for a missing chain record, `409` for a conflict with the current workflow state, `500` for a chain or database failure, and `503` (`chain unavailable`) when login or `/auth/me` cannot read the chain. Responses are also validated against a schema before they are sent; a mismatch is a server bug and returns a generic `500`.
 
 ## Authentication
 
-Login uses a wallet signature. Request a one time nonce, sign the returned `message` with the wallet, then exchange the signature for a JWT. Nonces expire after five minutes and are consumed by the login attempt. They are kept in the backend's memory, so a restart invalidates logins in progress, and the store is capped (10,000 pending nonces, oldest dropped first) so unauthenticated requests cannot grow it without limit. Put rate limiting in front of `/auth/nonce` in any shared deployment.
+Login uses a wallet signature. Request a one time nonce, sign the returned `message` exactly as received with the wallet, then exchange the signature for a JWT. The message follows the Sign-In with Ethereum format (EIP-4361):
+
+```text
+localhost:5173 wants you to sign in with your Ethereum account:
+0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
+
+Sign in to Olive Traceability.
+
+URI: http://localhost:5173
+Version: 1
+Chain ID: 31337
+Nonce: 52db72babcb5fb8895198386458a970b
+Issued At: 2026-11-02T14:46:57.146Z
+Expiration Time: 2026-11-02T14:51:57.146Z
+```
+
+The first line and `URI` come from the backend settings `AUTH_DOMAIN` (default `localhost:5173`) and `AUTH_URI` (default `http://localhost:5173`); set them to the frontend's address. `Chain ID` is the backend's `CHAIN_ID`. Login answers `401` with `nonce missing or expired`, `invalid signature` or `signature does not match address`, and `503` when the chain cannot be read. Nonces expire after five minutes and are consumed by the login attempt. They are kept in the backend's memory, so a restart invalidates logins in progress, and the store is capped (10,000 pending nonces, oldest dropped first) so unauthenticated requests cannot grow it without limit. Put rate limiting in front of `/auth/nonce` in any shared deployment.
 
 | Method and path | Auth | Purpose |
 | --- | --- | --- |
@@ -24,7 +40,7 @@ Login uses a wallet signature. Request a one time nonce, sign the returned `mess
 | `POST /auth/login` | No | Body: `{ "address": "0x…", "signature": "0x…" }`. Verifies the signature, reads active on chain roles, and returns `{ address, roles, isAdmin, expiresAt, token }`. |
 | `GET /auth/me` | Bearer | Returns `{ address, roles, isAdmin, expiresAt }`. |
 
-Tokens expire after one hour. `expiresAt` is the token's expiry as an ISO 8601 timestamp, returned by both `/auth/login` and `/auth/me`. `roles` are read from the registry at login time and stay as they were when the token was issued. `isAdmin` is true when the wallet holds the registry admin role; `/auth/me` reads it from the registry on every call, so it follows an admin handover without a new login.
+Tokens are HS256 JWTs with issuer `olive-traceability` and audience `olive-traceability-api`; tokens without them are rejected. Tokens expire after one hour. `expiresAt` is the token's expiry as an ISO 8601 timestamp, returned by both `/auth/login` and `/auth/me`. `roles` are read from the registry at login time and stay as they were when the token was issued. `isAdmin` is true when the wallet holds the registry admin role; `/auth/me` reads it from the registry on every call, so it follows an admin handover without a new login.
 
 ## Read routes
 
@@ -46,7 +62,7 @@ Tokens expire after one hour. `expiresAt` is the token's expiry as an ISO 8601 t
 | `GET /me/profile` | Bearer | The caller's own profile: `{ address, roles, profile: { name, contactPhone, email, address, location, availability, details } }`. `profile.address` is the postal address. `404` if the wallet has no profile (ask the admin to register it). |
 | `GET /admin/participants` | Bearer (admin) | The participant directory: `{ participants: [{ address, name, location, availability, roles }] }`. A participant whose roles were all revoked stays in the list with `roles: []`. `403` for a non-admin. |
 
-`/batches/:id/chain` returns `batchId` with the contract state, including stage, status, custodian, active destination, and pending target as applicable. `/history` returns `{ batchId, events, participants }`. `/tx/:hash` returns `{ hash, success, blockNumber, events }`. Chain state is authoritative; database rows are only off-chain details and workflow indexes.
+`/batches/:id/chain` returns `batchId` with the contract state, including stage, status, custodian, active destination, and pending target as applicable. `/history` returns `{ batchId, events, participants }`. `/tx/:hash` returns `{ hash, success, blockNumber, events }`. In both, each event's `args` maps argument names to strings. `args.batchId` is the batch id's keccak256 topic hash (`0x…`), because the contract indexes the id and the log keeps only its hash; the readable id is the top-level `batchId` in `/history`. Chain state is authoritative; database rows are only off-chain details and workflow indexes.
 
 ## Profile routes
 

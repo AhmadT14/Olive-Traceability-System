@@ -11,6 +11,8 @@ const schema = z.object({
   DEPLOY_BLOCK: z.coerce.number().int().default(0),
   PORT: z.coerce.number().int().default(3000),
   JWT_SECRET: z.string().min(32),
+  AUTH_DOMAIN: z.string().min(1).default("localhost:5173"),
+  AUTH_URI: z.string().url().default("http://localhost:5173"),
 });
 
 export const config = schema.parse(process.env);

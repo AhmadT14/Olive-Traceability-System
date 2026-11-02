@@ -15,10 +15,6 @@ services:
       timeout: 5s
       retries: 15
 
-  # One-shot job: creates the tables, then stores the demo participants.
-  # Safe to run again; migrations that already ran are skipped and existing
-  # demo rows are left alone. Re-run on its own with:
-  #   docker compose run --rm migrate
   migrate:
     build: ./backend
     environment:

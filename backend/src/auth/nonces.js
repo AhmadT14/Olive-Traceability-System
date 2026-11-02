@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { getAddress } from "ethers";
 
 const TTL_MS = 5 * 60 * 1000;
 // /auth/nonce is public, so the store must not grow with the number of
@@ -6,8 +7,30 @@ const TTL_MS = 5 * 60 * 1000;
 // more than this many in total.
 const MAX_ENTRIES = 10_000;
 
-export function buildMessage(nonce) {
-  return `Sign in to Olive Traceability.\nNonce: ${nonce}`;
+const STATEMENT = "Sign in to Olive Traceability.";
+
+export function buildMessage({
+  domain,
+  uri,
+  address,
+  chainId,
+  nonce,
+  issuedAt,
+  expiresAt,
+}) {
+  return [
+    `${domain} wants you to sign in with your Ethereum account:`,
+    getAddress(address),
+    "",
+    STATEMENT,
+    "",
+    `URI: ${uri}`,
+    "Version: 1",
+    `Chain ID: ${chainId}`,
+    `Nonce: ${nonce}`,
+    `Issued At: ${new Date(issuedAt).toISOString()}`,
+    `Expiration Time: ${new Date(expiresAt).toISOString()}`,
+  ].join("\n");
 }
 
 // The clock and limits can be replaced so the behaviour can be tested.
@@ -35,9 +58,14 @@ export function createNonceStore({
       while (store.size >= maxEntries) {
         store.delete(store.keys().next().value);
       }
-      const nonce = randomBytes(16).toString("hex");
-      store.set(key, { nonce, expiresAt: now() + ttlMs });
-      return nonce;
+      const issuedAt = now();
+      const entry = {
+        nonce: randomBytes(16).toString("hex"),
+        issuedAt,
+        expiresAt: issuedAt + ttlMs,
+      };
+      store.set(key, entry);
+      return entry;
     },
 
     // A nonce works once: it is removed whether or not it was still valid.
@@ -46,7 +74,7 @@ export function createNonceStore({
       const entry = store.get(key);
       store.delete(key);
       if (!entry || entry.expiresAt <= now()) return null;
-      return entry.nonce;
+      return entry;
     },
 
     get size() {

@@ -1,3 +1,4 @@
+import { eventArgsToObject } from "../chain/eventArgs.js";
 import { decodeTx } from "../chain/reader.js";
 import { internalError, notFound } from "../errors.js";
 import { parseTxHash } from "../validation/parse.js";
@@ -16,14 +17,7 @@ export async function decodeTransaction(rawHash) {
 
   const events = result.events.map((event) => ({
     name: event.name,
-    args: Object.fromEntries(
-      event.args
-        .toArray()
-        .map((value, index) => [
-          event.args.fragment.inputs[index].name,
-          String(value),
-        ]),
-    ),
+    args: eventArgsToObject(event),
   }));
 
   return {

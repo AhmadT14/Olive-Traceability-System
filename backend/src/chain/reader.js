@@ -2,6 +2,8 @@ import { id, ZeroHash } from "ethers";
 import { registry, batchCustody, provider } from "./contracts.js";
 import { RoleNames, Status, Stage } from "./enums.js";
 import { config } from "../config.js";
+import { eventArgsToObject } from "./eventArgs.js";
+import { countByStage } from "./stageCounts.js";
 
 export const ROLES = Object.fromEntries(
   RoleNames.map((name) => [name, id(`${name}_ROLE`)]),
@@ -42,7 +44,12 @@ export async function decodeTx(txHash) {
       // string from args, only the raw topic hash is usable (see how
       // getBatchHistory below matches batchId, same reasoning).
       return (
-        parsed && { name: parsed.name, args: parsed.args, topics: log.topics }
+        parsed && {
+          name: parsed.name,
+          fragment: parsed.fragment,
+          args: parsed.args,
+          topics: log.topics,
+        }
       );
     })
     .filter(Boolean);
@@ -93,11 +100,7 @@ export async function getBatchHistory(batchId) {
         name: parsed.name,
         txHash: log.transactionHash,
         blockNumber: log.blockNumber,
-        args: Object.fromEntries(
-          parsed.args
-            .toArray()
-            .map((value, i) => [parsed.fragment.inputs[i].name, String(value)]),
-        ),
+        args: eventArgsToObject(parsed),
       },
     ];
   });
@@ -111,18 +114,54 @@ export async function getBatchCreatedEvents(farmerAddress) {
     batchCustody.filters.BatchCreated(null, farmerAddress),
     config.DEPLOY_BLOCK,
   );
-
-  const blockNumbers = [...new Set(logs.map((log) => log.blockNumber))];
-  const blocks = await Promise.all(
-    blockNumbers.map((n) => provider.getBlock(n)),
-  );
-  const timestamps = new Map(
-    blocks.map((block, index) => [blockNumbers[index], block.timestamp]),
-  );
+  const timestamps = await getBlockTimestamps(logs);
 
   return logs.map((log) => ({
     txHash: log.transactionHash,
     blockNumber: log.blockNumber,
     timestamp: timestamps.get(log.blockNumber),
   }));
+}
+
+export async function getReceiptEvents(address) {
+  const logs = await batchCustody.queryFilter(
+    batchCustody.filters.ReceiptConfirmed(null, address),
+    config.DEPLOY_BLOCK,
+  );
+  const timestamps = await getBlockTimestamps(logs);
+
+  return logs.map((log) => ({
+    txHash: log.transactionHash,
+    blockNumber: log.blockNumber,
+    timestamp: timestamps.get(log.blockNumber),
+    batchTopic: log.topics[1],
+  }));
+}
+
+const STAGE_READ_BATCH_SIZE = 25;
+
+export async function countBatchesByStage(batchIds) {
+  const stages = [];
+  for (let i = 0; i < batchIds.length; i += STAGE_READ_BATCH_SIZE) {
+    const chunk = batchIds.slice(i, i + STAGE_READ_BATCH_SIZE);
+    const batches = await Promise.all(
+      chunk.map((batchId) => batchCustody.batches(batchId)),
+    );
+    for (const batch of batches) {
+      if (Status[Number(batch.status)] !== "None") {
+        stages.push(Stage[Number(batch.stage)]);
+      }
+    }
+  }
+  return countByStage(stages);
+}
+
+async function getBlockTimestamps(logs) {
+  const blockNumbers = [...new Set(logs.map((log) => log.blockNumber))];
+  const blocks = await Promise.all(
+    blockNumbers.map((n) => provider.getBlock(n)),
+  );
+  return new Map(
+    blocks.map((block, index) => [blockNumbers[index], block.timestamp]),
+  );
 }
