@@ -17,6 +17,9 @@ const transactionSchema = z.object({
   to: z.string(),
   data: z.string(),
   value: z.string(),
+  from: z.string(),
+  chainId: z.number(),
+  gas: z.string(),
 });
 
 export const chainBatchSchema = z.object({

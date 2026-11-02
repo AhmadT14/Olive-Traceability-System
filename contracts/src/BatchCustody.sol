@@ -48,6 +48,7 @@ contract BatchCustody {
         bytes32 outgoingDataHash
     );
     event ReceiptConfirmed(string indexed batchId, address indexed newCustodian, bytes32 intakeDataHash);
+    event RegistryChanged(address indexed previousRegistry, address indexed newRegistry);
 
     function createBatch(string memory batchId, address destinationAddress, bytes32 harvestDataHash) external {
         require(
@@ -74,6 +75,10 @@ contract BatchCustody {
         require(batches[batchId].stage != Stage.Retailer, "BatchCustody: batch already at final stage");
         require(batches[batchId].stage != Stage.Farm, "BatchCustody: farm pickup is set during batch creation");
         require(
+            participantRegistry.hasRole(_stageRole(batches[batchId].stage), msg.sender),
+            "BatchCustody: caller does not hold the current stage role"
+        );
+        require(
             participantRegistry.hasRole(_nextStageRole(batches[batchId].stage), destinationAddress),
             "BatchCustody: destination is not the next stage"
         );
@@ -93,6 +98,14 @@ contract BatchCustody {
         batches[batchId].custodian = msg.sender;
 
         emit BatchClaimed(batchId, msg.sender, intakeDataHash);
+    }
+
+    function _stageRole(Stage current) internal view returns (bytes32) {
+        if (current == Stage.Mill) return participantRegistry.MILL_ROLE();
+        if (current == Stage.Storage) return participantRegistry.STORAGE_ROLE();
+        if (current == Stage.Exporter) return participantRegistry.EXPORTER_ROLE();
+        if (current == Stage.Importer) return participantRegistry.IMPORTER_ROLE();
+        revert("BatchCustody: no listing role for this stage");
     }
 
     function _nextStageRole(Stage current) internal view returns (bytes32) {
@@ -122,10 +135,10 @@ contract BatchCustody {
             participantRegistry.hasRole(_nextStageRole(batches[batchId].stage), targetAddress),
             "BatchCustody: target is not the next stage"
         );
+        require(destinations[batchId] == targetAddress, "BatchCustody: target does not match active destination");
 
         batches[batchId].status = Status.PendingHandover;
         batches[batchId].pendingTarget = targetAddress;
-        require(destinations[batchId] == targetAddress, "BatchCustody: target does not match active destination");
 
         emit HandoverInitiated(batchId, msg.sender, targetAddress, outgoingDataHash);
     }
@@ -145,6 +158,8 @@ contract BatchCustody {
 
     function setRegistry(address newRegistry) external {
         require(participantRegistry.hasRole(0x00, msg.sender), "BatchCustody: caller is not admin");
+        require(newRegistry != address(0), "BatchCustody: registry is the zero address");
+        emit RegistryChanged(address(participantRegistry), newRegistry);
         participantRegistry = IParticipantRegistry(newRegistry);
     }
 

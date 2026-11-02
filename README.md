@@ -231,7 +231,7 @@ npm install
 npm run dev
 ```
 
-The backend config validates `RPC_URL`, `CHAIN_ID`, both contract addresses, `JWT_SECRET`, and optionally `DEPLOY_BLOCK`, `PORT`, `AUTH_DOMAIN` and `AUTH_URI` (the frontend address shown in the sign-in message). At startup the backend checks that the chain id matches `CHAIN_ID` and that both contracts are deployed, and exits with a message if not. The database tables come from the migrations, which are not run by `npm run dev`:
+The backend config validates `RPC_URL`, `CHAIN_ID`, both contract addresses, `JWT_SECRET`, and optionally `DEPLOY_BLOCK`, `PORT`, `AUTH_DOMAIN` and `AUTH_URI` (the frontend address shown in the sign-in message), and `LOG_BLOCK_RANGE` (blocks per event query, default 10,000; lower it for public RPCs that limit the range). At startup the backend checks that the chain id matches `CHAIN_ID` and that both contracts are deployed, and exits with a message if not. The database tables come from the migrations, which are not run by `npm run dev`:
 
 ```sh
 npm run db:migrate   # create or update the tables

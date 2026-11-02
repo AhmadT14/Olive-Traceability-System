@@ -15,6 +15,7 @@ export function requireAuth(req, res, next) {
       address: payload.address,
       roles: payload.roles,
       exp: payload.exp,
+      authTime: payload.auth_time,
     };
     next();
   } catch {

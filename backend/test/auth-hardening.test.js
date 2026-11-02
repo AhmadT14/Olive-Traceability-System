@@ -6,6 +6,7 @@ import { buildMessage, createNonceStore } from "../src/auth/nonces.js";
 import {
   TOKEN_AUDIENCE,
   TOKEN_ISSUER,
+  canRefresh,
   signToken,
   verifyToken,
 } from "../src/auth/tokens.js";
@@ -24,6 +25,29 @@ test("a signed token verifies and carries issuer and audience", () => {
   assert.equal(payload.iss, TOKEN_ISSUER);
   assert.equal(payload.aud, TOKEN_AUDIENCE);
   assert.equal(payload.exp - payload.iat, 3600);
+  assert.equal(payload.auth_time, payload.iat);
+});
+
+test("a refreshed token keeps the login time and never outlives 24 hours", () => {
+  const loggedIn = 1_000_000;
+  const late = loggedIn + 23 * 3600 + 30 * 60;
+  const token = signToken({ address: "0xabc", roles: [] }, SECRET, {
+    authTime: loggedIn,
+    now: late,
+  });
+  const payload = jwt.decode(token);
+
+  assert.equal(payload.auth_time, loggedIn);
+  assert.equal(payload.iat, late);
+  assert.equal(payload.exp, loggedIn + 24 * 3600);
+});
+
+test("canRefresh allows a session younger than 24 hours only", () => {
+  const loggedIn = 1_000_000;
+  assert.equal(canRefresh(loggedIn, loggedIn + 3600), true);
+  assert.equal(canRefresh(loggedIn, loggedIn + 24 * 3600 - 1), true);
+  assert.equal(canRefresh(loggedIn, loggedIn + 24 * 3600), false);
+  assert.equal(canRefresh(undefined, loggedIn), false);
 });
 
 test("a token with another algorithm is rejected", () => {

@@ -336,5 +336,24 @@
       }
     ],
     "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RegistryChanged",
+    "inputs": [
+      {
+        "name": "previousRegistry",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newRegistry",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
   }
 ]

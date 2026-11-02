@@ -10,6 +10,7 @@ const schema = z.object({
   REGISTRY_ADDRESS: address,
   BATCH_CUSTODY_ADDRESS: address,
   DEPLOY_BLOCK: z.coerce.number().int().default(0),
+  LOG_BLOCK_RANGE: z.coerce.number().int().positive().default(10_000),
   PORT: z.coerce.number().int().default(3000),
   JWT_SECRET: z.string().min(32),
   AUTH_DOMAIN: z.string().min(1).default("localhost:5173"),

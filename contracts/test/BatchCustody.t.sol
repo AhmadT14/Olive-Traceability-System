@@ -504,4 +504,113 @@ contract BatchCustodyTest is Test {
         assertEq(uint8(stageAfterExporter), uint8(BatchCustody.Stage.Exporter));
         assertEq(custodianAfterExporter, exporter);
     }
+
+    function test_PostForPickup_RevertsIfTransporterRelists() public {
+        bytes32 h = keccak256("data");
+        address otherStorage = address(0x52);
+        vm.startPrank(admin);
+        registry.registerParticipant(otherStorage, registry.STORAGE_ROLE());
+        vm.stopPrank();
+
+        _walkToMill("BATCH-001", h);
+        vm.prank(mill);
+        custody.postForPickup("BATCH-001", storageFacility, h);
+        vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+
+        vm.prank(transporter1);
+        vm.expectRevert("BatchCustody: caller does not hold the current stage role");
+        custody.postForPickup("BATCH-001", otherStorage, h);
+
+        assertEq(custody.destinations("BATCH-001"), storageFacility);
+    }
+
+    function test_PostForPickup_RevertsIfCustodianLostStageRole() public {
+        bytes32 h = keccak256("data");
+        _walkToMill("BATCH-001", h);
+
+        vm.startPrank(admin);
+        registry.revokeParticipant(mill, registry.MILL_ROLE());
+        vm.stopPrank();
+
+        vm.prank(mill);
+        vm.expectRevert("BatchCustody: caller does not hold the current stage role");
+        custody.postForPickup("BATCH-001", storageFacility, h);
+    }
+
+    function test_InitiateHandover_RevertsIfTargetIsNotDestination() public {
+        bytes32 h = keccak256("data");
+        address otherStorage = address(0x52);
+        vm.startPrank(admin);
+        registry.registerParticipant(otherStorage, registry.STORAGE_ROLE());
+        vm.stopPrank();
+
+        _walkToMill("BATCH-001", h);
+        vm.prank(mill);
+        custody.postForPickup("BATCH-001", storageFacility, h);
+        vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+
+        vm.prank(transporter1);
+        vm.expectRevert("BatchCustody: target does not match active destination");
+        custody.initiateHandover("BATCH-001", otherStorage, h);
+    }
+
+    function test_Destination_SetOnListingAndClearedOnReceipt() public {
+        bytes32 h = keccak256("data");
+
+        vm.prank(farmer);
+        custody.createBatch("BATCH-001", mill, h);
+        assertEq(custody.destinations("BATCH-001"), mill);
+
+        vm.prank(transporter1);
+        custody.claimBatch("BATCH-001", h);
+        vm.prank(transporter1);
+        custody.initiateHandover("BATCH-001", mill, h);
+        vm.prank(mill);
+        custody.confirmReceipt("BATCH-001", h);
+        assertEq(custody.destinations("BATCH-001"), address(0));
+
+        vm.prank(mill);
+        custody.postForPickup("BATCH-001", storageFacility, h);
+        assertEq(custody.destinations("BATCH-001"), storageFacility);
+    }
+
+    function test_FullRun_FarmToRetailer() public {
+        _walkToRetailer("BATCH-001", keccak256("data"));
+
+        (BatchCustody.Status status, BatchCustody.Stage stage, address custodianAddr, address pendingTarget) =
+            custody.batches("BATCH-001");
+
+        assertEq(uint8(status), uint8(BatchCustody.Status.Created));
+        assertEq(uint8(stage), uint8(BatchCustody.Stage.Retailer));
+        assertEq(custodianAddr, retailer);
+        assertEq(pendingTarget, address(0));
+        assertEq(custody.destinations("BATCH-001"), address(0));
+    }
+
+    function test_SetRegistry_AdminCanSwapRegistry() public {
+        vm.prank(admin);
+        ParticipantRegistry newRegistry = new ParticipantRegistry(admin);
+
+        vm.expectEmit(true, true, false, false);
+        emit BatchCustody.RegistryChanged(address(registry), address(newRegistry));
+
+        vm.prank(admin);
+        custody.setRegistry(address(newRegistry));
+
+        assertEq(address(custody.participantRegistry()), address(newRegistry));
+    }
+
+    function test_SetRegistry_RevertsIfNotAdmin() public {
+        vm.prank(mill);
+        vm.expectRevert("BatchCustody: caller is not admin");
+        custody.setRegistry(address(0xBEEF));
+    }
+
+    function test_SetRegistry_RevertsIfZeroAddress() public {
+        vm.prank(admin);
+        vm.expectRevert("BatchCustody: registry is the zero address");
+        custody.setRegistry(address(0));
+    }
 }

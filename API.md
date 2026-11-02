@@ -38,9 +38,10 @@ The first line and `URI` come from the backend settings `AUTH_DOMAIN` (default `
 | --- | --- | --- |
 | `POST /auth/nonce` | No | Body: `{ "address": "0x…" }`. Returns `{ address, nonce, message }`. |
 | `POST /auth/login` | No | Body: `{ "address": "0x…", "signature": "0x…" }`. Verifies the signature, reads active on chain roles, and returns `{ address, roles, isAdmin, expiresAt, token }`. |
-| `GET /auth/me` | Bearer | Returns `{ address, roles, isAdmin, expiresAt }`. |
+| `GET /auth/me` | Bearer | Returns `{ address, roles, isAdmin, expiresAt }`, with `roles` and `isAdmin` read live from the registry. |
+| `POST /auth/refresh` | Bearer | No body. Reads the current roles from the registry and returns a new token in the same shape as `/auth/login`. Use it after the admin grants or revokes a role, so the user needs no new login. |
 
-Tokens are HS256 JWTs with issuer `olive-traceability` and audience `olive-traceability-api`; tokens without them are rejected. Tokens expire after one hour. `expiresAt` is the token's expiry as an ISO 8601 timestamp, returned by both `/auth/login` and `/auth/me`. `roles` are read from the registry at login time and stay as they were when the token was issued. `isAdmin` is true when the wallet holds the registry admin role; `/auth/me` reads it from the registry on every call, so it follows an admin handover without a new login.
+Tokens are HS256 JWTs with issuer `olive-traceability` and audience `olive-traceability-api`; tokens without them are rejected. Tokens expire after one hour; `/auth/refresh` before expiry gives a new one-hour token. A session never lasts more than 24 hours from the MetaMask sign-in: a refreshed token expires at that limit at the latest, and after it `/auth/refresh` answers `401` (`session too old; sign in again`). `expiresAt` is the token's expiry as an ISO 8601 timestamp, returned by `/auth/login`, `/auth/refresh` and `/auth/me`. `/auth/me` reads `roles` and `isAdmin` from the registry on every call, so it shows a new role or an admin handover at once. The token itself keeps the roles from when it was issued until it is refreshed; every route that acts on chain checks the roles on chain again anyway.
 
 ## Read routes
 
@@ -85,7 +86,7 @@ A participant counts as available unless they set `unavailable`; a profile that 
 
 ## Wallet transaction workflow
 
-The API does not hold participant wallet keys and does not submit these workflow transactions on the user's behalf. A client first requests a prepared transaction, asks the connected wallet to sign and send it, then posts the resulting transaction hash to the matching record endpoint. Preparation responses include a `transaction` object with `to`, encoded `data`, and `value: "0x0"`; clients can pass these transaction fields to their wallet. The API validates caller permissions and workflow state during preparation and verifies the mined event and record hash when saving details.
+The API does not hold participant wallet keys and does not submit these workflow transactions on the user's behalf. A client first requests a prepared transaction, asks the connected wallet to sign and send it, then posts the resulting transaction hash to the matching record endpoint. Preparation responses include a `transaction` object with `to`, encoded `data`, `value: "0x0"`, `from` (the caller's wallet), `chainId` (a number) and `gas` (a hex gas estimate); clients can pass these fields to their wallet (ethers calls the gas field `gasLimit`). Before answering, every prepare route runs the transaction against the chain as the caller. If it would revert, the route returns `409` with `transaction would fail: <contract reason>` (for example `transaction would fail: BatchCustody: caller is not a farmer`), so the wallet never asks the user to sign a transaction that cannot succeed. The API validates caller permissions and workflow state during preparation and verifies the mined event and record hash when saving details.
 
 ### Prepare contract calls
 

@@ -1,4 +1,4 @@
-import { batchCustody } from "../chain/contracts.js";
+import { batchCustody, provider } from "../chain/contracts.js";
 import {
   checkCanClaimBatch,
   checkCanConfirmReceipt,
@@ -10,6 +10,7 @@ import {
   isAvailable,
 } from "../chain/checks.js";
 import { getBatch, hasRole } from "../chain/reader.js";
+import { simulateTransaction } from "../chain/simulate.js";
 import { config } from "../config.js";
 import {
   AppError,
@@ -39,6 +40,13 @@ import {
   prepareOliveDeliverySchema,
   prepareOlivePickupSchema,
 } from "../validation/transporter.schemas.js";
+
+const prepareTransaction = (user, to, data) =>
+  simulateTransaction(provider, config.CHAIN_ID, user.address, {
+    to,
+    data,
+    value: "0x0",
+  });
 
 const LISTINGS = {
   mill: {
@@ -133,11 +141,11 @@ export async function prepareBatch(user, body) {
       destinationAddress,
       destinationRole: "MILL",
       dataHash,
-      transaction: {
-        to: config.BATCH_CUSTODY_ADDRESS,
+      transaction: await prepareTransaction(
+        user,
+        config.BATCH_CUSTODY_ADDRESS,
         data,
-        value: "0x0",
-      },
+      ),
     };
   } catch (err) {
     if (err instanceof AppError) throw err;
@@ -216,11 +224,11 @@ async function prepareStageListing(user, body, spec) {
       destinationAddress,
       destinationRole: nextRole,
       dataHash,
-      transaction: {
-        to: config.BATCH_CUSTODY_ADDRESS,
+      transaction: await prepareTransaction(
+        user,
+        config.BATCH_CUSTODY_ADDRESS,
         data,
-        value: "0x0",
-      },
+      ),
     };
   } catch (err) {
     if (err instanceof AppError) throw err;
@@ -274,11 +282,11 @@ export async function prepareClaim(user, body) {
       batchId,
       productType,
       dataHash,
-      transaction: {
-        to: config.BATCH_CUSTODY_ADDRESS,
+      transaction: await prepareTransaction(
+        user,
+        config.BATCH_CUSTODY_ADDRESS,
         data,
-        value: "0x0",
-      },
+      ),
     };
   } catch (err) {
     if (err instanceof AppError) throw err;
@@ -348,11 +356,11 @@ export async function prepareHandover(user, body) {
       targetAddress,
       productType,
       dataHash,
-      transaction: {
-        to: config.BATCH_CUSTODY_ADDRESS,
+      transaction: await prepareTransaction(
+        user,
+        config.BATCH_CUSTODY_ADDRESS,
         data,
-        value: "0x0",
-      },
+      ),
     };
   } catch (err) {
     if (err instanceof AppError) throw err;
@@ -399,11 +407,11 @@ export async function prepareReceipt(user, body) {
     return {
       batchId,
       dataHash,
-      transaction: {
-        to: config.BATCH_CUSTODY_ADDRESS,
+      transaction: await prepareTransaction(
+        user,
+        config.BATCH_CUSTODY_ADDRESS,
         data,
-        value: "0x0",
-      },
+      ),
     };
   } catch (err) {
     if (err instanceof AppError) throw err;

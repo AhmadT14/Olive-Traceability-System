@@ -1,5 +1,5 @@
 import { getAddress } from "ethers";
-import { registry } from "../chain/contracts.js";
+import { provider, registry } from "../chain/contracts.js";
 import {
   decodeRegistryTx,
   hasAdminRole,
@@ -7,6 +7,7 @@ import {
   ROLES,
 } from "../chain/reader.js";
 import { config } from "../config.js";
+import { simulateTransaction } from "../chain/simulate.js";
 import {
   AppError,
   conflict,
@@ -24,6 +25,13 @@ import {
 import { parseBody } from "../validation/parse.js";
 import { readRoles } from "./participant.service.js";
 import { buildRoleProfile } from "./roleProfile.js";
+
+const prepareTransaction = (user, to, data) =>
+  simulateTransaction(provider, config.CHAIN_ID, user.address, {
+    to,
+    data,
+    value: "0x0",
+  });
 
 export async function prepareRoleChange(user, body) {
   const parsed = parseBody(prepareRoleChangeSchema, body);
@@ -54,11 +62,11 @@ export async function prepareRoleChange(user, body) {
       address,
       role,
       action,
-      transaction: {
-        to: config.REGISTRY_ADDRESS,
+      transaction: await prepareTransaction(
+        user,
+        config.REGISTRY_ADDRESS,
         data,
-        value: "0x0",
-      },
+      ),
     };
   } catch (err) {
     if (err instanceof AppError) throw err;

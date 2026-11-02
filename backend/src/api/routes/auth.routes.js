@@ -5,6 +5,7 @@ import {
   createLoginNonce,
   getSession,
   login,
+  refreshSession,
 } from "../../services/auth.service.js";
 import {
   loginResponseSchema,
@@ -34,6 +35,15 @@ router.post(
       body: createLoginNonce(req.body),
     }),
     nonceResponseSchema,
+  ),
+);
+
+router.post(
+  "/auth/refresh",
+  requireAuth,
+  handle(
+    async (req) => ({ status: 200, body: await refreshSession(req.user) }),
+    loginResponseSchema,
   ),
 );
 

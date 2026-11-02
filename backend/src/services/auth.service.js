@@ -1,7 +1,7 @@
 import { verifyMessage } from "ethers";
 import jwt from "jsonwebtoken";
 import { buildMessage, consumeNonce, createNonce } from "../auth/nonces.js";
-import { signToken } from "../auth/tokens.js";
+import { canRefresh, signToken } from "../auth/tokens.js";
 import { config } from "../config.js";
 import { serviceUnavailable, unauthorized, unprocessable } from "../errors.js";
 import {
@@ -63,18 +63,25 @@ export async function login(body) {
     throw unauthorized("signature does not match address");
   }
 
-  let roles;
-  let isAdmin;
+  return issueSession(address, await readChainAccess(address));
+}
+
+async function readChainAccess(address) {
   try {
-    [roles, isAdmin] = await Promise.all([
+    const [roles, isAdmin] = await Promise.all([
       readRoles(address),
       hasAdminRole(address),
     ]);
+    return { roles, isAdmin };
   } catch (err) {
     throw serviceUnavailable("chain unavailable", err);
   }
+}
 
-  const token = signToken({ address, roles }, config.JWT_SECRET);
+function issueSession(address, { roles, isAdmin }, authTime) {
+  const token = signToken({ address, roles }, config.JWT_SECRET, {
+    authTime,
+  });
   return {
     address,
     roles,
@@ -82,6 +89,17 @@ export async function login(body) {
     expiresAt: expiryOf(jwt.decode(token).exp),
     token,
   };
+}
+
+export async function refreshSession(user) {
+  if (!canRefresh(user.authTime)) {
+    throw unauthorized("session too old; sign in again");
+  }
+  return issueSession(
+    user.address,
+    await readChainAccess(user.address),
+    user.authTime,
+  );
 }
 
 export function createLoginNonce(body) {
@@ -98,15 +116,10 @@ export function createLoginNonce(body) {
 // Who the bearer token belongs to. The admin flag is read from the registry
 // each time, so it follows an admin handover without needing a new login.
 export async function getSession(user) {
-  let isAdmin;
-  try {
-    isAdmin = await hasAdminRole(user.address);
-  } catch (err) {
-    throw serviceUnavailable("chain unavailable", err);
-  }
+  const { roles, isAdmin } = await readChainAccess(user.address);
   return {
     address: user.address,
-    roles: user.roles,
+    roles,
     isAdmin,
     expiresAt: expiryOf(user.exp),
   };

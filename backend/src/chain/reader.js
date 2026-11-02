@@ -3,6 +3,7 @@ import { registry, batchCustody, provider } from "./contracts.js";
 import { RoleNames, Status, Stage } from "./enums.js";
 import { config } from "../config.js";
 import { eventArgsToObject } from "./eventArgs.js";
+import { readInPages } from "./logPages.js";
 import { countByStage } from "./stageCounts.js";
 
 export const ROLES = Object.fromEntries(
@@ -10,13 +11,16 @@ export const ROLES = Object.fromEntries(
 );
 
 export async function getBatch(batchId) {
-  const b = await batchCustody.batches(batchId);
+  const [b, destination] = await Promise.all([
+    batchCustody.batches(batchId),
+    batchCustody.destinations(batchId),
+  ]);
   return {
     status: Status[Number(b.status)],
     stage: Stage[Number(b.stage)],
     custodian: b.custodian,
     pendingTarget: b.pendingTarget,
-    destination: await batchCustody.destinations(batchId),
+    destination,
   };
 }
 
@@ -86,11 +90,14 @@ export async function decodeRegistryTx(txHash) {
 // on every BatchCustody event, so the node is asked for just the logs whose
 // second topic is the batch id's hash instead of every event ever emitted.
 export async function getBatchHistory(batchId) {
-  const logs = await provider.getLogs({
-    address: batchCustody.target,
-    fromBlock: config.DEPLOY_BLOCK,
-    topics: [null, id(batchId)],
-  });
+  const logs = await readLogs((fromBlock, toBlock) =>
+    provider.getLogs({
+      address: batchCustody.target,
+      fromBlock,
+      toBlock,
+      topics: [null, id(batchId)],
+    }),
+  );
 
   return logs.flatMap((log) => {
     const parsed = batchCustody.interface.parseLog(log);
@@ -110,9 +117,9 @@ export async function getBatchHistory(batchId) {
 // events from the farmer's own address are returned (the event indexes it), so
 // the cost follows the farmer's batch count, not the size of the whole chain.
 export async function getBatchCreatedEvents(farmerAddress) {
-  const logs = await batchCustody.queryFilter(
-    batchCustody.filters.BatchCreated(null, farmerAddress),
-    config.DEPLOY_BLOCK,
+  const filter = batchCustody.filters.BatchCreated(null, farmerAddress);
+  const logs = await readLogs((fromBlock, toBlock) =>
+    batchCustody.queryFilter(filter, fromBlock, toBlock),
   );
   const timestamps = await getBlockTimestamps(logs);
 
@@ -124,9 +131,9 @@ export async function getBatchCreatedEvents(farmerAddress) {
 }
 
 export async function getReceiptEvents(address) {
-  const logs = await batchCustody.queryFilter(
-    batchCustody.filters.ReceiptConfirmed(null, address),
-    config.DEPLOY_BLOCK,
+  const filter = batchCustody.filters.ReceiptConfirmed(null, address);
+  const logs = await readLogs((fromBlock, toBlock) =>
+    batchCustody.queryFilter(filter, fromBlock, toBlock),
   );
   const timestamps = await getBlockTimestamps(logs);
 
@@ -154,6 +161,15 @@ export async function countBatchesByStage(batchIds) {
     }
   }
   return countByStage(stages);
+}
+
+async function readLogs(readRange) {
+  const toBlock = await provider.getBlockNumber();
+  return readInPages(readRange, {
+    fromBlock: config.DEPLOY_BLOCK,
+    toBlock,
+    pageSize: config.LOG_BLOCK_RANGE,
+  });
 }
 
 async function getBlockTimestamps(logs) {

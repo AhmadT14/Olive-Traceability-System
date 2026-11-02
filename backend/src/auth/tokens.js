@@ -3,15 +3,31 @@ import jwt from "jsonwebtoken";
 export const TOKEN_ALGORITHM = "HS256";
 export const TOKEN_ISSUER = "olive-traceability";
 export const TOKEN_AUDIENCE = "olive-traceability-api";
-const TOKEN_TTL = "1h";
+export const TOKEN_TTL_SECONDS = 60 * 60;
+export const SESSION_MAX_SECONDS = 24 * 60 * 60;
 
-export function signToken(claims, secret) {
-  return jwt.sign(claims, secret, {
-    algorithm: TOKEN_ALGORITHM,
-    issuer: TOKEN_ISSUER,
-    audience: TOKEN_AUDIENCE,
-    expiresIn: TOKEN_TTL,
-  });
+const nowInSeconds = () => Math.floor(Date.now() / 1000);
+
+export function signToken(
+  claims,
+  secret,
+  { authTime, now = nowInSeconds() } = {},
+) {
+  const auth_time = authTime ?? now;
+  return jwt.sign(
+    {
+      ...claims,
+      auth_time,
+      iat: now,
+      exp: Math.min(now + TOKEN_TTL_SECONDS, auth_time + SESSION_MAX_SECONDS),
+    },
+    secret,
+    {
+      algorithm: TOKEN_ALGORITHM,
+      issuer: TOKEN_ISSUER,
+      audience: TOKEN_AUDIENCE,
+    },
+  );
 }
 
 export function verifyToken(token, secret) {
@@ -20,4 +36,8 @@ export function verifyToken(token, secret) {
     issuer: TOKEN_ISSUER,
     audience: TOKEN_AUDIENCE,
   });
+}
+
+export function canRefresh(authTime, now = nowInSeconds()) {
+  return Number.isInteger(authTime) && now < authTime + SESSION_MAX_SECONDS;
 }
