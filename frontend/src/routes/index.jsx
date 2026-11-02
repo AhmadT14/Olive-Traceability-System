@@ -1,34 +1,43 @@
+import { lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import { ROLE_HOME, ROLE_LABELS, ROLE_NAV, SHARED_NAV } from "../auth/roles";
 import RequireRole from "../auth/RequireRole";
+import LoadBoundary from "../components/LoadBoundary";
 import Home from "../features/public/Home";
 import Trace from "../features/consumer/Trace";
 import Login from "../features/public/Login";
 import NoRole from "../features/public/NoRole";
 import NotFound from "../features/public/NotFound";
-import AppShell from "../features/shell/AppShell";
-import RolePlaceholder from "../features/shell/RolePlaceholder";
-import FindBatch from "../features/batch/FindBatch";
-import BatchDetail from "../features/batch/BatchDetail";
-import FarmerOverview from "../features/farmer/Overview";
-import CreateBatch from "../features/farmer/CreateBatch";
-import JobBoard from "../features/transporter/JobBoard";
-import ClaimJob from "../features/transporter/ClaimJob";
-import MyJobs from "../features/transporter/MyJobs";
-import DeliverJob from "../features/transporter/DeliverJob";
-import FacilityInbox from "../features/facility/Inbox";
-import Intake from "../features/facility/Intake";
-import ListForPickup from "../features/facility/ListForPickup";
-import Label from "../features/facility/Label";
-import Inventory from "../features/facility/Inventory";
 import { FACILITIES } from "../features/facility/config";
-import Participants from "../features/admin/Participants";
-import RoleChange from "../features/admin/RoleChange";
-import Settings from "../features/settings/Settings";
-import AdminOverview from "../features/overview/AdminOverview";
-import TransporterOverview from "../features/overview/TransporterOverview";
-import FacilityOverview from "../features/overview/FacilityOverview";
+
+// The public pages above load at once, since QR scans come from phones.
+// Everything behind sign in loads when it is opened.
+const AppShell = lazy(() => import("../features/shell/AppShell"));
+const RolePlaceholder = lazy(() => import("../features/shell/RolePlaceholder"));
+const FindBatch = lazy(() => import("../features/batch/FindBatch"));
+const BatchDetail = lazy(() => import("../features/batch/BatchDetail"));
+const FarmerOverview = lazy(() => import("../features/farmer/Overview"));
+const CreateBatch = lazy(() => import("../features/farmer/CreateBatch"));
+const JobBoard = lazy(() => import("../features/transporter/JobBoard"));
+const ClaimJob = lazy(() => import("../features/transporter/ClaimJob"));
+const MyJobs = lazy(() => import("../features/transporter/MyJobs"));
+const DeliverJob = lazy(() => import("../features/transporter/DeliverJob"));
+const FacilityInbox = lazy(() => import("../features/facility/Inbox"));
+const Intake = lazy(() => import("../features/facility/Intake"));
+const ListForPickup = lazy(() => import("../features/facility/ListForPickup"));
+const Label = lazy(() => import("../features/facility/Label"));
+const Inventory = lazy(() => import("../features/facility/Inventory"));
+const Participants = lazy(() => import("../features/admin/Participants"));
+const RoleChange = lazy(() => import("../features/admin/RoleChange"));
+const Settings = lazy(() => import("../features/settings/Settings"));
+const AdminOverview = lazy(() => import("../features/overview/AdminOverview"));
+const TransporterOverview = lazy(
+  () => import("../features/overview/TransporterOverview"),
+);
+const FacilityOverview = lazy(
+  () => import("../features/overview/FacilityOverview"),
+);
 
 const facilityRoles = Object.keys(FACILITIES);
 
@@ -107,61 +116,63 @@ function AppHome() {
 
 export default function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/trace" element={<Navigate to="/" replace />} />
-      <Route path="/trace/:batchId" element={<Trace />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/no-role" element={<NoRole />} />
-      <Route path="/app" element={<AppHome />} />
-      {LABEL_ROLES.map((role) => (
+    <LoadBoundary>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/trace" element={<Navigate to="/" replace />} />
+        <Route path="/trace/:batchId" element={<Trace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/no-role" element={<NoRole />} />
+        <Route path="/app" element={<AppHome />} />
+        {LABEL_ROLES.map((role) => (
+          <Route
+            key={role}
+            path={`/${role}/batches/:batchId/label`}
+            element={
+              <RequireRole role={role}>
+                <Label role={role} />
+              </RequireRole>
+            }
+          />
+        ))}
         <Route
-          key={role}
-          path={`/${role}/batches/:batchId/label`}
           element={
-            <RequireRole role={role}>
-              <Label role={role} />
+            <RequireRole>
+              <AppShell />
             </RequireRole>
           }
-        />
-      ))}
-      <Route
-        element={
-          <RequireRole>
-            <AppShell />
-          </RequireRole>
-        }
-      >
-        {Object.entries(ROLE_NAV).flatMap(([role, links]) =>
-          links.map((link) => (
+        >
+          {Object.entries(ROLE_NAV).flatMap(([role, links]) =>
+            links.map((link) => (
+              <Route
+                key={link.path}
+                path={link.path}
+                element={
+                  <RequireRole role={role}>
+                    {page(link.path, `${ROLE_LABELS[role]}: ${link.label}`)}
+                  </RequireRole>
+                }
+              />
+            )),
+          )}
+          {ROLE_PAGES.map(({ role, path, element }) => (
+            <Route
+              key={path}
+              path={path}
+              element={<RequireRole role={role}>{element}</RequireRole>}
+            />
+          ))}
+          {SHARED_NAV.map((link) => (
             <Route
               key={link.path}
               path={link.path}
-              element={
-                <RequireRole role={role}>
-                  {page(link.path, `${ROLE_LABELS[role]}: ${link.label}`)}
-                </RequireRole>
-              }
+              element={page(link.path, link.label)}
             />
-          )),
-        )}
-        {ROLE_PAGES.map(({ role, path, element }) => (
-          <Route
-            key={path}
-            path={path}
-            element={<RequireRole role={role}>{element}</RequireRole>}
-          />
-        ))}
-        {SHARED_NAV.map((link) => (
-          <Route
-            key={link.path}
-            path={link.path}
-            element={page(link.path, link.label)}
-          />
-        ))}
-        <Route path="/batches/:batchId" element={<BatchDetail />} />
-      </Route>
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+          ))}
+          <Route path="/batches/:batchId" element={<BatchDetail />} />
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </LoadBoundary>
   );
 }

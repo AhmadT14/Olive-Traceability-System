@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BrowserProvider } from "ethers";
 import { CHAIN_ID } from "../api";
 import { WalletContext } from "./context";
 
@@ -116,10 +115,11 @@ export function WalletProvider({ children }) {
     }
   }, [eth]);
 
-  const getSigner = useCallback(
-    () => new BrowserProvider(eth).getSigner(),
-    [eth],
-  );
+  // ethers is large and only needed to sign, so it loads on the first use.
+  const getSigner = useCallback(async () => {
+    const { BrowserProvider } = await import("ethers");
+    return new BrowserProvider(eth).getSigner();
+  }, [eth]);
 
   const value = useMemo(
     () => ({

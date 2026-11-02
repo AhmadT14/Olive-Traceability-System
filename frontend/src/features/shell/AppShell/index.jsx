@@ -1,5 +1,11 @@
 import { useEffect } from "react";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import {
+  Link,
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { useAuth } from "../../../auth/useAuth";
 import { useWallet } from "../../../wallet/useWallet";
 import {
@@ -18,6 +24,7 @@ import {
 import { useAsync } from "../../../hooks/useAsync";
 import Badge from "../../../components/Badge";
 import Button from "../../../components/Button";
+import LoadBoundary from "../../../components/LoadBoundary";
 import { shortAddress } from "../../../utils/format";
 import "./style.css";
 
@@ -29,6 +36,7 @@ export default function AppShell() {
   const { session, switchRole, logout } = useAuth();
   const wallet = useWallet();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const role = session.activeRole;
   const { data: profile, reload: reloadProfile } = useAsync(
     () => getParticipantProfile(session.address),
@@ -132,7 +140,10 @@ export default function AppShell() {
           <p className="app-shell__notice-error">{wallet.error}</p>
         )}
         <div className="app-shell__content">
-          <Outlet />
+          {/* The key clears a failed load when the user moves to another page. */}
+          <LoadBoundary key={pathname}>
+            <Outlet />
+          </LoadBoundary>
         </div>
       </div>
     </div>

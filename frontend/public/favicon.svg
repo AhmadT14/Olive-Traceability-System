@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Temporary icon until the project has a logo. -->
+  <rect width="32" height="32" rx="7" fill="#4b6b2f"/>
+  <path d="M16 12C16 7 20 4 26 4c0 6-4 9-10 8z" fill="#c5d89a"/>
+  <ellipse cx="14" cy="19" rx="7.5" ry="9" transform="rotate(-18 14 19)" fill="#f3f6e8"/>
+</svg>
