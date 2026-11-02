@@ -6,7 +6,7 @@ import {
 import { useAsync } from "../../../hooks/useAsync";
 import Card from "../../../components/Card";
 import Badge from "../../../components/Badge";
-import Button from "../../../components/Button";
+import RefreshButton from "../../../components/RefreshButton";
 import Table from "../../../components/Table";
 import { Loading, ErrorMessage } from "../../../components/State";
 import { formatDay } from "../../../utils/format";
@@ -54,13 +54,15 @@ const ACTIVE_COLUMNS = [
     key: "action",
     label: C.action,
     render: (j) =>
-      j.status === "claimed" && (
+      j.status === "claimed" ? (
         <Link
           to={`/transporter/active/${enc(j.batchId)}/deliver`}
           className="button button--primary"
         >
           {T.deliver}
         </Link>
+      ) : (
+        <span className="my-jobs__note">{T.waitingReceiver}</span>
       ),
   },
 ];
@@ -84,9 +86,12 @@ export default function MyJobs() {
     <div className="my-jobs">
       <div className="my-jobs__head">
         <h1 className="my-jobs__title">{T.title}</h1>
-        <Button variant="secondary" onClick={reload}>
+        <RefreshButton
+          loading={active.loading || done.loading}
+          onClick={reload}
+        >
           {TEXT.refresh}
-        </Button>
+        </RefreshButton>
       </div>
       <PendingNotice kinds={PENDING_KINDS} />
 

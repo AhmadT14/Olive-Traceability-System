@@ -1,3 +1,4 @@
+import Button from "../../../components/Button";
 import TxLink from "../../../components/TxLink";
 import { TEXT } from "../strings";
 import "./style.css";
@@ -27,6 +28,11 @@ export default function IntegrityBanner({ verify, events, integrity }) {
     <section className={`integrity integrity--${TONE[key] || "warn"}`}>
       <h2 className="integrity__title">{info.title}</h2>
       <p className="integrity__text">{info.text}</p>
+      {verify.error && (
+        <Button variant="secondary" onClick={verify.reload}>
+          {TEXT.trace.retry}
+        </Button>
+      )}
       {events && events.length > 0 && (
         <details className="integrity__proof">
           <summary>{TEXT.integrity.proof}</summary>

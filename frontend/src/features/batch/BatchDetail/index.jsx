@@ -2,7 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { getBatchChain, getBatchHistory, verifyBatch } from "../../../api";
 import { useAsync } from "../../../hooks/useAsync";
 import Card from "../../../components/Card";
-import Button from "../../../components/Button";
+import RefreshButton from "../../../components/RefreshButton";
 import BatchLookup from "../../../components/BatchLookup";
 import BatchStatusCard from "../../../components/BatchStatusCard";
 import IntegrityBadge from "../../../components/IntegrityBadge";
@@ -45,9 +45,12 @@ export default function BatchDetail() {
             >
               View public page
             </Link>
-            <Button variant="secondary" onClick={refresh}>
+            <RefreshButton
+              loading={chain.loading || history.loading || verify.loading}
+              onClick={refresh}
+            >
               Refresh
-            </Button>
+            </RefreshButton>
           </div>
           <ErrorMessage error={verify.error} onRetry={verify.reload} />
         </BatchStatusCard>

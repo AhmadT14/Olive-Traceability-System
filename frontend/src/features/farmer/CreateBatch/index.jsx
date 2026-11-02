@@ -106,6 +106,7 @@ export default function CreateBatch() {
   const batchId = pendingPayload ? pendingPayload.batchId : idFor(suffix);
 
   const millOptions = (mills.data && mills.data.destinations) || [];
+  const noMills = mills.data && millOptions.length === 0;
   const destination =
     (pendingPayload && pendingPayload.destinationAddress) ||
     mill ||
@@ -165,9 +166,7 @@ export default function CreateBatch() {
   }
 
   if (flow.step === "done" && flow.result) {
-    return (
-      <Created batchId={flow.result.batchId} onAnother={startAnother} />
-    );
+    return <Created batchId={flow.result.batchId} onAnother={startAnother} />;
   }
 
   const locked = checking || flow.busy || Boolean(flow.pending);
@@ -183,6 +182,7 @@ export default function CreateBatch() {
           label={T.mill}
           name="destinationAddress"
           error={fieldErrors.destinationAddress}
+          hint={noMills ? T.noMillsHint : undefined}
         >
           <select
             id="destinationAddress"
@@ -191,7 +191,13 @@ export default function CreateBatch() {
             disabled={locked || millOptions.length === 0}
           >
             {millOptions.length === 0 && (
-              <option value="">{T.noMills}</option>
+              <option value="">
+                {mills.error
+                  ? T.millsFailed
+                  : mills.data
+                    ? T.noMills
+                    : T.loadingMills}
+              </option>
             )}
             {millOptions.map((m) => (
               <option key={m.address} value={m.address}>
@@ -200,7 +206,6 @@ export default function CreateBatch() {
             ))}
           </select>
         </Field>
-        {mills.loading && <Loading text={T.loadingMills} />}
         <ErrorMessage error={mills.error} onRetry={mills.reload} />
 
         <RecordFields
@@ -217,7 +222,7 @@ export default function CreateBatch() {
         <ErrorMessage error={checkError} />
 
         {!flow.pending && (
-          <Button type="submit" disabled={locked}>
+          <Button type="submit" disabled={locked || !destination}>
             {locked ? T.working : T.submit}
           </Button>
         )}

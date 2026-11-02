@@ -6,11 +6,19 @@ import "./style.css";
 
 // Facility name (and location) for a wallet. The address stays in the tooltip.
 export default function Facility({ address, withLocation = false }) {
-  const { data } = useAsync(
+  const { data, loading } = useAsync(
     () => getParticipantProfile(address),
     address || null,
   );
   if (!address) return null;
+  // "Registered participant" is only for a wallet that really has no name.
+  if (loading && !data) {
+    return (
+      <span className="facility" title={address}>
+        <span className="facility__name">...</span>
+      </span>
+    );
+  }
 
   const name =
     (data && data.name) ||

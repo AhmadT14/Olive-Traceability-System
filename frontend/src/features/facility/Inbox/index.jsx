@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { getMyBatches } from "../../../api";
 import { useAsync } from "../../../hooks/useAsync";
 import Card from "../../../components/Card";
-import Button from "../../../components/Button";
+import RefreshButton from "../../../components/RefreshButton";
 import Table from "../../../components/Table";
 import StageBadge from "../../../components/StageBadge";
 import StatusBadge from "../../../components/StatusBadge";
@@ -130,9 +130,9 @@ export default function FacilityInbox({ role }) {
     <div className="facility-inbox">
       <div className="facility-inbox__head">
         <h1 className="facility-inbox__title">{R.inbox}</h1>
-        <Button variant="secondary" onClick={mine.reload}>
+        <RefreshButton loading={mine.loading} onClick={mine.reload}>
           {TEXT.refresh}
-        </Button>
+        </RefreshButton>
       </div>
       <PendingNotice kinds={pendingKinds(role)} />
 

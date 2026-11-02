@@ -210,7 +210,12 @@ export default function RoleChange({ mode }) {
         {nothingToRevoke ? (
           <p className="role-change__note">{TEXT.revoke.nothing}</p>
         ) : (
-          <Field label={F.role} name="role" error={fieldErrors.role}>
+          <Field
+            label={F.role}
+            name="role"
+            error={fieldErrors.role}
+            hint={mode === "revoke" && !lookup ? F.walletFirst : undefined}
+          >
             <select
               id="role"
               value={chosen}

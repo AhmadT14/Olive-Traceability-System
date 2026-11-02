@@ -153,6 +153,9 @@ export const TEXT = {
   list: {
     pick: "Pick where it goes.",
     none: "No facility is available",
+    noneHint:
+      "No facility for the next step is registered and available right now, so this batch cannot be listed yet. Try again later or contact the ministry.",
+    optionsFailed: "Could not load the facilities",
     loadingOptions: "Loading the facilities",
     qrTitle: "QR label",
     qrHint:

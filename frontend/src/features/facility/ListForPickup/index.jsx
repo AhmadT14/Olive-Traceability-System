@@ -215,6 +215,7 @@ export default function ListForPickup({ role }) {
             label={R.destination}
             name="destinationAddress"
             error={fieldErrors.destinationAddress}
+            hint={targets.data && options.length === 0 ? T.noneHint : undefined}
           >
             <select
               id="destinationAddress"
@@ -222,7 +223,15 @@ export default function ListForPickup({ role }) {
               onChange={(e) => setPicked(e.target.value)}
               disabled={locked || options.length === 0}
             >
-              {options.length === 0 && <option value="">{T.none}</option>}
+              {options.length === 0 && (
+                <option value="">
+                  {targets.error
+                    ? T.optionsFailed
+                    : targets.data
+                      ? T.none
+                      : T.loadingOptions}
+                </option>
+              )}
               {options.map((s) => (
                 <option key={s.address} value={s.address}>
                   {s.name || shortAddress(s.address)}
@@ -230,9 +239,6 @@ export default function ListForPickup({ role }) {
               ))}
             </select>
           </Field>
-        )}
-        {targets.loading && !targets.data && (
-          <Loading text={T.loadingOptions} />
         )}
         <ErrorMessage error={targets.error} onRetry={targets.reload} />
 
@@ -246,7 +252,7 @@ export default function ListForPickup({ role }) {
           disabled={locked}
         />
         {!pending && (
-          <Button type="submit" disabled={locked}>
+          <Button type="submit" disabled={locked || !destination}>
             {locked ? T.working : T.submit}
           </Button>
         )}

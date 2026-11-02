@@ -36,6 +36,9 @@ export const TEXT = {
     loading: "Loading jobs",
     empty: "No jobs are waiting for pickup right now.",
     claim: "Claim this job",
+    unavailable:
+      "You are marked as unavailable, so you cannot claim jobs. Mark yourself available in Settings first.",
+    toSettings: "Open Settings",
     count: (n) => (n === 1 ? "1 open job" : `${n} open jobs`),
   },
 
@@ -95,6 +98,7 @@ export const TEXT = {
       "Completed jobs will appear here once the system supports it.",
     loading: "Loading your jobs",
     deliver: "Deliver",
+    waitingReceiver: "The receiver confirms next",
     columns: {
       batchId: "Batch ID",
       product: "Product",

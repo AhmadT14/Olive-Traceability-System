@@ -4,7 +4,7 @@ import { getAdminParticipants } from "../../../api";
 import { useAsync } from "../../../hooks/useAsync";
 import { roleLabel } from "../../../auth/roles";
 import Card from "../../../components/Card";
-import Button from "../../../components/Button";
+import RefreshButton from "../../../components/RefreshButton";
 import Badge from "../../../components/Badge";
 import Field from "../../../components/Field";
 import Table from "../../../components/Table";
@@ -108,13 +108,9 @@ export default function Participants() {
           />
         </Field>
         <div className="participants__buttons">
-          <Button
-            variant="secondary"
-            onClick={list.reload}
-            disabled={list.loading}
-          >
+          <RefreshButton loading={list.loading} onClick={list.reload}>
             {T.refresh}
-          </Button>
+          </RefreshButton>
           <Link to="/admin/participants/new" className="button button--primary">
             {T.register}
           </Link>

@@ -40,6 +40,7 @@ export const TEXT = {
     role: "Role *",
     pickRole: "Pick a role.",
     choose: "Choose a role",
+    walletFirst: "Enter a wallet address first to see its roles.",
     hasRole: "already has it",
     alreadyHas: "This wallet already has this role.",
     working: "Working",

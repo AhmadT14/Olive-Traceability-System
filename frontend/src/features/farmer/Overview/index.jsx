@@ -4,6 +4,7 @@ import { getFarmerBatches } from "../../../api";
 import { useAsync } from "../../../hooks/useAsync";
 import Card from "../../../components/Card";
 import Button from "../../../components/Button";
+import RefreshButton from "../../../components/RefreshButton";
 import Table from "../../../components/Table";
 import StageBadge from "../../../components/StageBadge";
 import StatusBadge from "../../../components/StatusBadge";
@@ -208,9 +209,9 @@ export default function FarmerOverview() {
               emptyText={batches.length > 0 ? F.noMatch : T.empty}
             />
             <div className="farmer-overview__actions">
-              <Button variant="secondary" onClick={list.reload}>
+              <RefreshButton loading={list.loading} onClick={list.reload}>
                 {T.refresh}
-              </Button>
+              </RefreshButton>
             </div>
           </>
         )}

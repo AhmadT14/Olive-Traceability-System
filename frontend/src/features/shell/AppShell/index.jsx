@@ -38,7 +38,11 @@ export default function AppShell() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const role = session.activeRole;
-  const { data: profile, reload: reloadProfile } = useAsync(
+  const {
+    data: profile,
+    loading: profileLoading,
+    reload: reloadProfile,
+  } = useAsync(
     () => getParticipantProfile(session.address),
     session.address,
   );
@@ -99,7 +103,8 @@ export default function AppShell() {
             <Badge tone="success">{ROLE_LABELS[role] || role}</Badge>
           )}
           <span className="app-shell__wallet" title={session.address}>
-            {(profile && profile.name) || shortAddress(session.address)}
+            {(profile && profile.name) ||
+              (profileLoading ? "..." : shortAddress(session.address))}
           </span>
           {USE_MOCKS && (
             <Button variant="secondary" onClick={handleResetMocks}>

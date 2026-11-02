@@ -49,6 +49,9 @@ export const TEXT = {
       "Made automatically from the farm location and the harvest year.",
     mill: "Destination mill *",
     noMills: "No mills found",
+    noMillsHint:
+      "No mill is registered and available right now, so a batch cannot be created yet. Try again later or contact the ministry.",
+    millsFailed: "Could not load the mills",
     pickMill: "Pick a mill.",
     loadingMills: "Loading mills",
     checking: "Checking the batch ID",

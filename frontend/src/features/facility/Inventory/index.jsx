@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { getMyBatches } from "../../../api";
 import { useAsync } from "../../../hooks/useAsync";
 import Card from "../../../components/Card";
-import Button from "../../../components/Button";
+import RefreshButton from "../../../components/RefreshButton";
 import Table from "../../../components/Table";
 import { Loading, ErrorMessage } from "../../../components/State";
 import { batchPath, labelPath, tracePath } from "../flow";
@@ -45,9 +45,9 @@ export default function Inventory() {
     <div className="facility-inbox">
       <div className="facility-inbox__head">
         <h1 className="facility-inbox__title">{T.title}</h1>
-        <Button variant="secondary" onClick={mine.reload}>
+        <RefreshButton loading={mine.loading} onClick={mine.reload}>
           {TEXT.refresh}
-        </Button>
+        </RefreshButton>
       </div>
       <p>{T.intro}</p>
       {mine.loading && !mine.data && <Loading text={TEXT.inbox.loading} />}

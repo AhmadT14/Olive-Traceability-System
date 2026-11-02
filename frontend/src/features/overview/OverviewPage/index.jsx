@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import Card from "../../../components/Card";
-import Button from "../../../components/Button";
+import RefreshButton from "../../../components/RefreshButton";
 import StatTiles from "../../../components/StatTiles";
 import { Loading, ErrorMessage } from "../../../components/State";
 import ChartGrid from "../ChartGrid";
@@ -22,9 +22,9 @@ export default function OverviewPage({
     <div className="overview">
       <div className="overview__head">
         <h1 className="overview__title">{title}</h1>
-        <Button variant="secondary" onClick={load.reload}>
+        <RefreshButton loading={load.loading} onClick={load.reload}>
           {TEXT.refresh}
-        </Button>
+        </RefreshButton>
       </div>
 
       {load.loading && !load.data && <Loading text={TEXT.loading} />}
