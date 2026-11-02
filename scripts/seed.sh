@@ -15,6 +15,12 @@ EXPORTER_ADDR=0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc
 IMPORTER_ADDR=0x976EA74026E726554dB657fA54763abd0C3a0aa9
 RETAILER_ADDR=0x14dC79964da2C08b23698B3D3cc7Ca32193d9955
 
+b1_status="$(cast call "$BATCH_CUSTODY_ADDRESS" "batches(string)(uint8,uint8,address,address)" "B1" --rpc-url "$RPC" | head -n 1)"
+if [ "$b1_status" != "0" ]; then
+  echo "Already seeded (batch B1 exists); skipping."
+  exit 0
+fi
+
 register() {
   echo "Registering $1..."
   cast send "$REGISTRY_ADDRESS" "registerParticipant(address,bytes32)" \

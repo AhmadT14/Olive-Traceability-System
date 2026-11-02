@@ -65,8 +65,12 @@ services:
         condition: service_completed_successfully
 
   anvil:
-    image: ghcr.io/foundry-rs/foundry:latest
-    entrypoint: ["anvil", "--host", "0.0.0.0"]
+    image: ghcr.io/foundry-rs/foundry:v1.8.5
+    user: "0:0"
+    entrypoint:
+      ["anvil", "--host", "0.0.0.0", "--state", "/data/state.json", "--state-interval", "5"]
+    volumes:
+      - anvil-data:/data
     ports:
       - "8545:8545"
     healthcheck:
@@ -76,7 +80,7 @@ services:
       retries: 15
 
   forge:
-    image: ghcr.io/foundry-rs/foundry:latest
+    image: ghcr.io/foundry-rs/foundry:v1.8.5
     user: "0:0"
     working_dir: /workspace
     volumes:
@@ -89,7 +93,7 @@ services:
       - tools
 
   deploy:
-    image: ghcr.io/foundry-rs/foundry:latest
+    image: ghcr.io/foundry-rs/foundry:v1.8.5
     user: "0:0"
     working_dir: /workspace
     volumes:
@@ -105,6 +109,22 @@ services:
     command:
       - |
         set -eu
+        rpc=http://anvil:8545
+        if [ -f /runtime/deployment.env ]; then
+          . /runtime/deployment.env
+          registry_code="$$(cast code "$$REGISTRY_ADDRESS" --rpc-url "$$rpc")"
+          custody_code="$$(cast code "$$BATCH_CUSTODY_ADDRESS" --rpc-url "$$rpc")"
+          if [ "$$registry_code" != "0x" ] && [ "$$custody_code" != "0x" ]; then
+            forge build > /dev/null 2>&1 || { echo "forge build failed" >&2; exit 1; }
+            if [ "$$registry_code" = "$$(forge inspect src/ParticipantRegistry.sol:ParticipantRegistry deployedBytecode)" ] &&
+               [ "$$custody_code" = "$$(forge inspect src/BatchCustody.sol:BatchCustody deployedBytecode)" ]; then
+              echo "Contracts already deployed at the saved addresses; skipping deploy."
+              exit 0
+            fi
+            echo "The contracts changed since they were deployed. Reset the chain and database: docker compose down -v" >&2
+            exit 1
+          fi
+        fi
         output="$$(forge script script/Deploy.s.sol:Deploy --rpc-url http://anvil:8545 --broadcast --private-key "$$PRIVATE_KEY" 2>&1)"
         printf '%s\n' "$$output"
         registry="$$(printf '%s\n' "$$output" | sed -n 's/.*REGISTRY_ADDRESS= *\(0x[0-9a-fA-F]\{40\}\).*/\1/p' | tail -n 1)"
@@ -121,7 +141,7 @@ services:
         condition: service_healthy
 
   seed:
-    image: ghcr.io/foundry-rs/foundry:latest
+    image: ghcr.io/foundry-rs/foundry:v1.8.5
     working_dir: /workspace
     volumes:
       - ./scripts:/workspace/scripts:ro
@@ -142,6 +162,7 @@ services:
         condition: service_completed_successfully
 
 volumes:
+  anvil-data:
   postgres-data:
   deployment-data:
   forge-build:

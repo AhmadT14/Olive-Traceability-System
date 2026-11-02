@@ -2,15 +2,15 @@
 
 An early-stage olive batch traceability project. The Solidity contracts provide an on-chain participant registry and custody workflow for batches moving from farms through mills, storage, exporters, importers, and retailers. Batch events accept hashes for harvest, outgoing, and intake records so documents can be tied to an on-chain history without storing their contents in the contract.
 
-> **Project status:** the backend API and contract workflows are implemented through the complete Farm → Mill → Storage → Exporter → Importer → Retailer chain. The frontend is still the Vite starter screen.
+> **Project status:** the backend API and contract workflows are implemented through the complete Farm → Mill → Storage → Exporter → Importer → Retailer chain. The frontend has wallet login, a dashboard for each role, and the public batch trace page (see `frontend/README.md`).
 
 ## Repository layout
 
 - `API.md`: API reference for the project team, including backend routes and integration workflow.
 - `contracts/`: Foundry contracts, deployment script, and Solidity tests.
-- `backend/`: Node.js API scaffold, PostgreSQL/Drizzle schema, and contract ABI support.
+- `backend/`: Node.js API, PostgreSQL/Drizzle schema, and contract ABI support.
 - `backend/src/validation/`: centralized Zod schemas for request payloads and role-specific profile details.
-- `frontend/`: React and Vite application scaffold.
+- `frontend/`: React and Vite application (role dashboards and the public trace page).
 - `scripts/`: local Anvil deployment and sample data scripts.
 - `docker-compose.yml`: PostgreSQL, backend, and local Anvil services.
 
@@ -41,6 +41,21 @@ database step, for example after wiping the `postgres-data` volume:
 
 ```sh
 docker compose run --rm migrate
+```
+
+#### The chain is kept between restarts
+
+Anvil saves its chain in the `anvil-data` volume (every few seconds and on
+shutdown), so stopping and starting the stack keeps every contract, role,
+batch and transaction, in step with the database. On a restart, `deploy` and
+`seed` see the existing contracts and batch `B1` and skip themselves.
+
+If you change a contract, `deploy` stops with `The contracts changed since they
+were deployed`. Reset the chain and the database together, then start again:
+
+```sh
+docker compose down -v
+docker compose up --build
 ```
 
 #### Demo participants
@@ -117,7 +132,7 @@ Rules for this file:
 
 On a fresh Anvil chain the deploy addresses are normally identical every time, so you usually change nothing.
 
-### 4. Generate the ABIs
+### 3. Generate the ABIs
 
 Run this only in these cases:
 
@@ -133,48 +148,52 @@ npm run sync:abis
 
 Run `npm install` in `backend/` only the first time, and again when `package.json` changes (for example after pulling new dependencies).
 
-### 5. Seed sample data
+### 4. Seed sample data
+
+Docker Compose runs this for you. To run it by hand against a chain outside Docker:
 
 ```sh
 bash scripts/seed.sh
 ```
 
-This registers the seven demo participants (see the table above) and creates batch `B1`. Running it twice on the same chain fails, because `B1` already exists. It only touches the chain; store the participants' names in the database with `npm run db:seed` from `backend/` (after `npm run db:migrate`).
+This registers the seven demo participants (see the table above) and creates batch `B1`. If `B1` already exists it does nothing, so running it twice is safe. It only touches the chain; store the participants' names in the database with `npm run db:seed` from `backend/` (after `npm run db:migrate`).
 
-### 6. Verify the chain connection
+### 5. Verify the chain connection
+
+With the stack running:
 
 ```sh
-cd backend
-node scripts/smoke.js
-node scripts/read-test.js
+curl -s http://localhost:3000/batches/B1/chain
+curl -s http://localhost:3000/participants/0x70997970C51812dc3A010C7d01b50e0d17dc79C8/roles
 ```
 
-`read-test.js` should show `B1` as `Created` at stage `Farm`, the farmer role as `true`, and the MILL role as `false`.
+The first should show `B1` as `Listed` at stage `Farm`, waiting for a transporter; the second should list the `FARMER` role.
 
-These scripts use publicly known Anvil development keys and are strictly for a local chain. Never fund or use those keys on a public or production network.
+The demo uses publicly known Anvil development keys and is strictly for a local chain. Never fund or use those keys on a public or production network.
 
 ## Daily workflow
 
-| Situation                          | What to run                                                           |
-| ---------------------------------- | --------------------------------------------------------------------- |
-| Anvil still running                | Nothing. Just start the backend.                                      |
-| Anvil container stopped or deleted | Do the reset routine below.                                           |
-| You changed a contract             | `forge build`, then `npm run sync:abis` in `backend/`, then redeploy. |
+| Situation                    | What to run                                                                                     |
+| ---------------------------- | ----------------------------------------------------------------------------------------------- |
+| Stack stopped or restarted   | `docker compose up --build`. The chain and the database are both kept.                          |
+| You changed a contract       | `forge build`, then `npm run sync:abis` in `backend/`, then the reset routine below.           |
+| You want a clean demo        | The reset routine below.                                                                        |
 
 ### Reset routine
 
-Anvil keeps its chain in memory. Stopping or deleting the container wipes every contract, role, batch, and transaction. After any restart, from the repo root:
+Wipe the chain and the database together, then start fresh:
 
 ```sh
-docker compose up -d anvil
-bash scripts/deploy.sh
-bash scripts/seed.sh
+docker compose down -v
+docker compose up --build
 ```
 
-Then:
+Resetting only one of them leaves the database pointing at transactions that
+no longer exist on the chain (or the other way round), so always reset both.
 
-- Compare the deploy addresses with `backend/.env` and update the file if they differ.
-- Clear old test rows from PostgreSQL. Their transaction hashes no longer exist on the fresh chain. With Docker, `docker compose down -v` followed by `docker compose up --build` resets the chain and the database together.
+Without Docker, start Anvil yourself, then run `bash scripts/deploy.sh` and
+`bash scripts/seed.sh` from the repo root, copy the printed addresses into
+`backend/.env`, and clear the old database rows.
 
 ### Checking that everything still works
 
@@ -259,8 +278,8 @@ Vite prints the local URL, typically `http://localhost:5173`.
 | `relation "participants" does not exist`   | The migrations have not run. Run `docker compose run --rm migrate`, or `npm run db:migrate` in `backend/`.                            |
 | `ENOENT ... abis/*.json`                   | ABIs not generated. Run `npm run sync:abis` in `backend/`.                                                                            |
 | `Missing script: "sync:abis"`              | Add the script to `backend/package.json`.                                                                                             |
-| `read-test.js` shows `B1` as `None`        | The chain is fresh. Run deploy and seed.                                                                                              |
-| Backend cannot find contracts              | Addresses in `backend/.env` do not match the deploy output.                                                                           |
+| `deploy` fails: `The contracts changed`    | A contract changed since the saved chain was deployed. Run `docker compose down -v`, then `docker compose up --build`.               |
+| Backend exits: `Backend not started: …`    | The startup check failed: the chain is unreachable, `CHAIN_ID` is wrong, or no contract is at an address. The message says which.  |
 
 ## Contracts
 
@@ -274,9 +293,8 @@ forge test
 
 ## Current limitations
 
-- Frontend is uncustomized Vite starter content.
 - The backend requires PostgreSQL, a deployed local chain, and wallet-signature authentication for end-to-end use.
 - Variable event and role-specific profile details are stored in validated PostgreSQL JSONB fields; shared participant fields such as name, contact information, location, and availability remain relational.
 - `docker-compose.yml` deploys and seeds contracts, runs the database migrations, and stores the demo participants automatically before starting the backend.
-- Anvil state is not persisted, so the chain resets whenever the container stops.
+- The local chain is kept in a Docker volume; after a contract change it must be reset together with the database (`docker compose down -v`).
 - No production network, deployment, or key-management configuration is included.
