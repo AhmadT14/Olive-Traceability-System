@@ -161,21 +161,24 @@ const DETAILS_FORM = {
 };
 
 // Saved record values as [{ name, label, value }] in form order, with the
-// unit added to quantities. Unknown fields come last.
-export function describeRecord(type, values) {
+// unit added to quantities. Unknown fields come last. `labels` and `units`
+// replace the English words when the page is in another language.
+export function describeRecord(type, values, { labels = {}, units = {} } = {}) {
   const fields = RECORD_FIELDS[DETAILS_FORM[type]] || [];
   const known = fields
     .filter((f) => values[f.name] !== undefined && values[f.name] !== "")
     .map((f) => ({
       name: f.name,
-      label: f.label,
-      value: f.unit ? `${values[f.name]} ${f.unit}` : String(values[f.name]),
+      label: labels[f.name] || f.label,
+      value: f.unit
+        ? `${values[f.name]} ${units[f.unit] || f.unit}`
+        : String(values[f.name]),
     }));
   const extra = Object.keys(values)
     .filter((name) => !fields.some((f) => f.name === name))
     .map((name) => ({
       name,
-      label: fieldLabel(name),
+      label: labels[name] || fieldLabel(name),
       value: String(values[name]),
     }));
   return [...known, ...extra];

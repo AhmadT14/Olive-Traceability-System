@@ -4,6 +4,11 @@
   box-sizing: border-box;
 }
 
+/* Spacing out letters breaks the joins between Arabic letters. */
+html[dir="rtl"] * {
+  letter-spacing: normal;
+}
+
 body {
   margin: 0;
   font-family: var(--font-body);

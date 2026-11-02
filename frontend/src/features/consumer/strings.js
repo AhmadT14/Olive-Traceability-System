@@ -1,8 +1,14 @@
-// Every text shown on the public pages. An Arabic copy of this file is added
-// in Phase 10, so keep user-facing words here and out of the components.
+// Every text shown on the public pages. strings.ar.js is the Arabic copy with
+// the same keys, so keep user-facing words here and out of the components.
 
 export const TEXT = {
   brand: "Olive Traceability",
+  // undefined follows the browser's own date format.
+  locale: undefined,
+  switchTo: "العربية",
+  switchLanguage: "ar",
+  copy: "Copy",
+  copied: "Copied",
 
   landing: {
     title: "Where does your olive oil come from?",
@@ -33,8 +39,9 @@ export const TEXT = {
       Listed: "Waiting for pickup at",
       PendingHandover: "Delivered to",
     },
-    pendingSuffix: "waiting for them to confirm",
+    pendingSuffix: ", waiting for them to confirm",
     loading: "Loading the journey of this batch",
+    loadingStep: "Loading",
     notFoundTitle: "Batch not found",
     notFound:
       "We could not find this batch. Check the code on the label and try again.",
@@ -109,4 +116,8 @@ export const TEXT = {
     HandoverInitiated: "Delivered",
     ReceiptConfirmed: "Receipt confirmed",
   },
+
+  // Empty in English: forms/fields.js already has the English labels and units.
+  fields: {},
+  units: {},
 };

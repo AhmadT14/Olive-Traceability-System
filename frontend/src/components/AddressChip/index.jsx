@@ -4,7 +4,12 @@ import "./style.css";
 
 // Shows a name (or a short address when there is no name). The full value is
 // in the tooltip and the copy button copies it.
-export default function AddressChip({ address, name }) {
+export default function AddressChip({
+  address,
+  name,
+  copyText = "Copy",
+  copiedText = "Copied",
+}) {
   const [copied, setCopied] = useState(false);
   if (!address) return null;
 
@@ -20,16 +25,14 @@ export default function AddressChip({ address, name }) {
 
   return (
     <span className="address-chip" title={address}>
-      <span className="address-chip__label">
-        {name || shortAddress(address)}
-      </span>
+      <bdi className="address-chip__label">{name || shortAddress(address)}</bdi>
       <button
         type="button"
         className="address-chip__copy"
         onClick={copy}
-        aria-label={`Copy ${address}`}
+        aria-label={`${copyText} ${address}`}
       >
-        {copied ? "Copied" : "Copy"}
+        {copied ? copiedText : copyText}
       </button>
     </span>
   );

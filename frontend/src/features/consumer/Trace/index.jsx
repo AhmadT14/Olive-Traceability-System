@@ -9,10 +9,11 @@ import PublicBar from "../../public/PublicBar";
 import Facility from "../Facility";
 import IntegrityBanner from "../IntegrityBanner";
 import Journey from "../Journey";
-import { TEXT } from "../strings";
+import { useLanguage } from "../language/useLanguage";
 import "./style.css";
 
 function Now({ batch }) {
+  const { text: TEXT } = useLanguage();
   const pending = batch.status === "PendingHandover";
   const address =
     pending && !isZeroAddress(batch.pendingTarget)
@@ -22,12 +23,13 @@ function Now({ batch }) {
     <p className="trace__now">
       {TEXT.trace.now[batch.status] || TEXT.trace.now.Created}{" "}
       <Facility address={address} withLocation />
-      {pending && `, ${TEXT.trace.pendingSuffix}`}
+      {pending && TEXT.trace.pendingSuffix}
     </p>
   );
 }
 
 function Problem({ title, text, onRetry }) {
+  const { text: TEXT } = useLanguage();
   return (
     <section className="trace__problem" role="alert">
       {title && <h1 className="trace__problem-title">{title}</h1>}
@@ -43,6 +45,7 @@ function Problem({ title, text, onRetry }) {
 
 // Public page a QR code opens. No wallet and no login.
 export default function Trace() {
+  const { text: TEXT } = useLanguage();
   const { batchId } = useParams();
   const chain = useAsync(() => getBatchChain(batchId), batchId);
   const history = useAsync(() => getBatchHistory(batchId), batchId);
@@ -83,7 +86,7 @@ export default function Trace() {
                   : TEXT.trace.product.oil}
               </p>
               <h1 className="trace__title">
-                {TEXT.trace.batch} {batch.batchId}
+                {TEXT.trace.batch} <bdi>{batch.batchId}</bdi>
               </h1>
               <Now batch={batch} />
             </section>
@@ -98,7 +101,9 @@ export default function Trace() {
               <h2 className="trace__section-title">
                 {TEXT.trace.journeyTitle}
               </h2>
-              {history.loading && !history.data && <Loading />}
+              {history.loading && !history.data && (
+                <Loading text={TEXT.trace.loadingStep} />
+              )}
               {history.error && (
                 <Problem text={TEXT.trace.error} onRetry={history.reload} />
               )}

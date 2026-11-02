@@ -1,6 +1,6 @@
 import Button from "../../../components/Button";
 import TxLink from "../../../components/TxLink";
-import { TEXT } from "../strings";
+import { useLanguage } from "../language/useLanguage";
 import "./style.css";
 
 const TONE = {
@@ -13,6 +13,7 @@ const TONE = {
 // Overall result of GET /batches/:id/verify, with an expandable list of
 // every chain event (block and transaction) as proof.
 export default function IntegrityBanner({ verify, events, integrity }) {
+  const { text: TEXT } = useLanguage();
   if (verify.loading && !verify.data) {
     return (
       <div className="integrity integrity--checking" role="status">
@@ -42,8 +43,8 @@ export default function IntegrityBanner({ verify, events, integrity }) {
                 <tr>
                   <th>{TEXT.integrity.step}</th>
                   <th>{TEXT.integrity.block}</th>
-                  <th>{TEXT.integrity.transaction}</th>
                   <th>{TEXT.integrity.result}</th>
+                  <th>{TEXT.integrity.transaction}</th>
                 </tr>
               </thead>
               <tbody>
@@ -56,10 +57,14 @@ export default function IntegrityBanner({ verify, events, integrity }) {
                     <tr key={`${event.txHash}-${event.name}`}>
                       <td>{TEXT.events[event.name] || event.name}</td>
                       <td className="integrity__num">{event.blockNumber}</td>
-                      <td>
-                        <TxLink hash={event.txHash} />
-                      </td>
                       <td>{TEXT.integrity.status[status] || status}</td>
+                      <td>
+                        <TxLink
+                          hash={event.txHash}
+                          copyText={TEXT.copy}
+                          copiedText={TEXT.copied}
+                        />
+                      </td>
                     </tr>
                   );
                 })}

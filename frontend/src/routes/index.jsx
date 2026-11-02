@@ -6,6 +6,7 @@ import RequireRole from "../auth/RequireRole";
 import LoadBoundary from "../components/LoadBoundary";
 import Home from "../features/public/Home";
 import Trace from "../features/consumer/Trace";
+import PublicLanguage from "../features/consumer/language";
 import Login from "../features/public/Login";
 import NoRole from "../features/public/NoRole";
 import NotFound from "../features/public/NotFound";
@@ -118,9 +119,11 @@ export default function AppRoutes() {
   return (
     <LoadBoundary>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route element={<PublicLanguage />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/trace/:batchId" element={<Trace />} />
+        </Route>
         <Route path="/trace" element={<Navigate to="/" replace />} />
-        <Route path="/trace/:batchId" element={<Trace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/no-role" element={<NoRole />} />
         <Route path="/app" element={<AppHome />} />

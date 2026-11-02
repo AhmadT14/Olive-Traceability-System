@@ -15,6 +15,22 @@
   font-weight: 700;
   text-decoration: none;
 }
+.public-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-3);
+}
+.public-bar__language {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid #fff;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
 .public-bar__account {
   color: #fff;
 }

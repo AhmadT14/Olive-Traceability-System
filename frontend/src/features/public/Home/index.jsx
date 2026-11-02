@@ -3,15 +3,14 @@ import { Link } from "react-router-dom";
 import { getHealth, USE_MOCKS } from "../../../api";
 import BatchLookup from "../../../components/BatchLookup";
 import Badge from "../../../components/Badge";
-import { TEXT } from "../../consumer/strings";
+import { useLanguage } from "../../consumer/language/useLanguage";
 import PublicBar from "../PublicBar";
 import { useAccountLink } from "../useAccountLink";
 import "./style.css";
 
-const T = TEXT.landing;
-
 // Public landing: batch code search for consumers, sign in for members.
 export default function Home() {
+  const T = useLanguage().text.landing;
   const account = useAccountLink();
   const [state, setState] = useState({ status: "loading", message: "" });
 

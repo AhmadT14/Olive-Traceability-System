@@ -2,10 +2,11 @@ import Facility from "../Facility";
 import RecordBlock from "../RecordBlock";
 import { buildJourney, firstRecordedAt } from "../buildJourney";
 import { formatDay } from "../../../utils/format";
-import { TEXT } from "../strings";
+import { useLanguage } from "../language/useLanguage";
 import "./style.css";
 
 function Leg({ leg, integrity }) {
+  const { text: TEXT } = useLanguage();
   return (
     <div className="journey__leg">
       <p className="journey__leg-title">
@@ -30,6 +31,7 @@ function Leg({ leg, integrity }) {
 
 // Farm to retailer, one item per stage. Stages not reached yet say so.
 export default function Journey({ events, integrity }) {
+  const { text: TEXT } = useLanguage();
   const stages = buildJourney(events);
 
   return (
@@ -48,7 +50,9 @@ export default function Journey({ events, integrity }) {
                 <span className="journey__role">{label.role}</span>
                 {s.reached ? (
                   date && (
-                    <span className="journey__date">{formatDay(date)}</span>
+                    <span className="journey__date">
+                      {formatDay(date, TEXT.locale)}
+                    </span>
                   )
                 ) : (
                   <span className="journey__date">{TEXT.trace.notYet}</span>

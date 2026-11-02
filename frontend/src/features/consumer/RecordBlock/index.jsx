@@ -1,5 +1,5 @@
 import { describeRecord } from "../../../forms/fields";
-import { TEXT } from "../strings";
+import { useLanguage } from "../language/useLanguage";
 import "./style.css";
 
 const TONE = {
@@ -11,6 +11,7 @@ const TONE = {
 
 // One saved record (a history event) with its check result.
 export default function RecordBlock({ event, integrity }) {
+  const { text: TEXT } = useLanguage();
   const heading = TEXT.trace.records[event.name] || event.name;
   const status = integrity && integrity.get(event.txHash.toLowerCase());
 
@@ -23,7 +24,10 @@ export default function RecordBlock({ event, integrity }) {
     );
   }
 
-  const rows = describeRecord(event.details.type, event.details.values || {});
+  const rows = describeRecord(event.details.type, event.details.values || {}, {
+    labels: TEXT.fields,
+    units: TEXT.units,
+  });
   return (
     <div className="record">
       <h4 className="record__heading">
@@ -40,7 +44,9 @@ export default function RecordBlock({ event, integrity }) {
         {rows.map((row) => (
           <div key={row.name} className="record__row">
             <dt>{row.label}</dt>
-            <dd>{row.value}</dd>
+            <dd>
+              <bdi>{row.value}</bdi>
+            </dd>
           </div>
         ))}
       </dl>
