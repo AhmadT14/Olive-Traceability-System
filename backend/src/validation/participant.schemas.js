@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { txHashSchema } from "./common.schemas.js";
 
 export const profileDetailsSchemas = {
   FARMER: z.object({
@@ -49,7 +48,7 @@ export const profileSchema = z.object({
   details: z.record(z.string(), z.unknown()).optional(),
 });
 
-export const availabilityValues = ["available", "unavailable"];
+const availabilityValues = ["available", "unavailable"];
 
 export const updateAvailabilitySchema = z.object({
   availability: z.enum(availabilityValues),
@@ -69,10 +68,4 @@ export const validateProfileDetails = (role, details) => {
   if (!schema)
     throw new Error(`No profile schema registered for role "${role}"`);
   return schema.parse(details ?? {});
-};
-
-export const roleChangeIdentity = {
-  address: z.string(),
-  role: z.string(),
-  txHash: txHashSchema,
 };

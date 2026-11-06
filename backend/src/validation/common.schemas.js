@@ -16,5 +16,3 @@ export const walletAddressSchema = z
   .string()
   .refine(isAddress, "must be a valid wallet address");
 export const quantitySchema = z.union([z.string(), z.number()]);
-
-export const eventRecord = (fields) => z.object(fields);

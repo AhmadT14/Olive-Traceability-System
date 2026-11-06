@@ -112,7 +112,3 @@ export function checkCanConfirmReceipt({ batch, actor }) {
 export function getNextStageRole(stage) {
   return NEXT_STAGE_ROLE[stage] ?? null;
 }
-
-export function isKnownStage(stage) {
-  return Stage.includes(stage);
-}

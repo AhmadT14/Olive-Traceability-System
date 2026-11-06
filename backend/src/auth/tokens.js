@@ -1,10 +1,10 @@
 import jwt from "jsonwebtoken";
 
-export const TOKEN_ALGORITHM = "HS256";
+const TOKEN_ALGORITHM = "HS256";
 export const TOKEN_ISSUER = "olive-traceability";
 export const TOKEN_AUDIENCE = "olive-traceability-api";
-export const TOKEN_TTL_SECONDS = 60 * 60;
-export const SESSION_MAX_SECONDS = 24 * 60 * 60;
+const TOKEN_TTL_SECONDS = 60 * 60;
+const SESSION_MAX_SECONDS = 24 * 60 * 60;
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
 

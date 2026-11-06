@@ -2,7 +2,7 @@ import { eq, inArray } from "drizzle-orm";
 import { db } from "../db/db.js";
 import { participantProfiles, participants } from "../db/schema.js";
 
-export function findByWallet(walletAddress, exec = db) {
+function findByWallet(walletAddress, exec = db) {
   return exec
     .select({ walletAddress: participants.walletAddress })
     .from(participants)

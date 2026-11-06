@@ -1,7 +1,6 @@
 import { decodeTx, getBatch, hasRole } from "../chain/reader.js";
 import {
   AppError,
-  badRequest,
   conflict,
   forbidden,
   internalError,

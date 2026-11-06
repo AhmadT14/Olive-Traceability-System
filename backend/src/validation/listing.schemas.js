@@ -34,12 +34,3 @@ export const storageListingSchema = z.object({
   ...oilFields,
   loading_details: z.string().optional(),
 });
-
-export const exporterListingSchema = z.object({
-  ...destination,
-  quantity_shipped: quantitySchema.optional(),
-  shipment_details: z.string().optional(),
-  ...oilFields,
-});
-
-export const importerListingSchema = exporterListingSchema;

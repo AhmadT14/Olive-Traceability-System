@@ -2,7 +2,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "../db/db.js";
 import { batchEvents } from "../db/schema.js";
 
-export function findByTxHash(txHash, exec = db) {
+function findByTxHash(txHash, exec = db) {
   return exec
     .select({ eventTxHash: batchEvents.eventTxHash })
     .from(batchEvents)
@@ -15,7 +15,7 @@ export async function existsByTxHash(txHash, exec = db) {
   return rows.length > 0;
 }
 
-export function findByBatchAndType(batchId, detailsType, exec = db) {
+function findByBatchAndType(batchId, detailsType, exec = db) {
   return exec
     .select({ eventTxHash: batchEvents.eventTxHash })
     .from(batchEvents)

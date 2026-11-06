@@ -9,7 +9,7 @@ export const millReceiptSchema = z.object({
   notes: z.string().optional(),
 });
 
-export const storageReceiptSchema = z.object({
+const storageReceiptSchema = z.object({
   quantity_received: quantitySchema.optional(),
   storage_start_date: z.string().optional(),
   expected_duration: z.number().int().optional(),
@@ -18,7 +18,7 @@ export const storageReceiptSchema = z.object({
   notes: z.string().optional(),
 });
 
-export const exporterReceiptSchema = z.object({
+const exporterReceiptSchema = z.object({
   quantity_received: quantitySchema.optional(),
   shipment_arrival_details: z.string().optional(),
   received_product_details: z.string().optional(),
@@ -26,9 +26,9 @@ export const exporterReceiptSchema = z.object({
   notes: z.string().optional(),
 });
 
-export const importerReceiptSchema = exporterReceiptSchema;
+const importerReceiptSchema = exporterReceiptSchema;
 
-export const retailerReceiptSchema = z.object({
+const retailerReceiptSchema = z.object({
   quantity_received: quantitySchema.optional(),
   final_receipt_details: z.string().optional(),
   product_condition: z.string().optional(),

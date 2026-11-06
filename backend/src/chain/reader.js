@@ -4,7 +4,6 @@ import { RoleNames, Status, Stage } from "./enums.js";
 import { config } from "../config.js";
 import { eventArgsToObject } from "./eventArgs.js";
 import { readInPages } from "./logPages.js";
-import { countByStage } from "./stageCounts.js";
 
 export const ROLES = Object.fromEntries(
   RoleNames.map((name) => [name, id(`${name}_ROLE`)]),
@@ -128,39 +127,6 @@ export async function getBatchCreatedEvents(farmerAddress) {
     blockNumber: log.blockNumber,
     timestamp: timestamps.get(log.blockNumber),
   }));
-}
-
-export async function getReceiptEvents(address) {
-  const filter = batchCustody.filters.ReceiptConfirmed(null, address);
-  const logs = await readLogs((fromBlock, toBlock) =>
-    batchCustody.queryFilter(filter, fromBlock, toBlock),
-  );
-  const timestamps = await getBlockTimestamps(logs);
-
-  return logs.map((log) => ({
-    txHash: log.transactionHash,
-    blockNumber: log.blockNumber,
-    timestamp: timestamps.get(log.blockNumber),
-    batchTopic: log.topics[1],
-  }));
-}
-
-const STAGE_READ_BATCH_SIZE = 25;
-
-export async function countBatchesByStage(batchIds) {
-  const stages = [];
-  for (let i = 0; i < batchIds.length; i += STAGE_READ_BATCH_SIZE) {
-    const chunk = batchIds.slice(i, i + STAGE_READ_BATCH_SIZE);
-    const batches = await Promise.all(
-      chunk.map((batchId) => batchCustody.batches(batchId)),
-    );
-    for (const batch of batches) {
-      if (Status[Number(batch.status)] !== "None") {
-        stages.push(Stage[Number(batch.stage)]);
-      }
-    }
-  }
-  return countByStage(stages);
 }
 
 async function readLogs(readRange) {

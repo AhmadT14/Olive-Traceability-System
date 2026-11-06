@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/db.js";
 import { batches } from "../db/schema.js";
 
-export function findById(batchId, exec = db) {
+function findById(batchId, exec = db) {
   return exec
     .select({ batchId: batches.batchId })
     .from(batches)

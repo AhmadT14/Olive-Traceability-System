@@ -22,7 +22,7 @@ const transactionSchema = z.object({
   gas: z.string(),
 });
 
-export const chainBatchSchema = z.object({
+const chainBatchSchema = z.object({
   batchId: z.string(),
   status: z.string(),
   stage: z.string(),
