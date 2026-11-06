@@ -1,3 +1,13 @@
+x-backend: &backend
+  build: ./backend
+  env_file:
+    - .env
+  environment:
+    DATABASE_URL: postgres://olive_app:olive_pass@postgres:5432/olive_traceability
+    RPC_URL: http://anvil:8545
+  volumes:
+    - deployment-data:/runtime
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -16,14 +26,7 @@ services:
       retries: 15
 
   migrate:
-    build: ./backend
-    environment:
-      - DATABASE_URL=postgres://olive_app:olive_pass@postgres:5432/olive_traceability
-      - RPC_URL=http://anvil:8545
-    env_file:
-      - .env
-    volumes:
-      - deployment-data:/runtime
+    <<: *backend
     command:
       - sh
       - -c
@@ -41,15 +44,7 @@ services:
         condition: service_completed_successfully
 
   backend:
-    build: ./backend
-    environment:
-      - DATABASE_URL=postgres://olive_app:olive_pass@postgres:5432/olive_traceability
-      - PORT=3000
-      - RPC_URL=http://anvil:8545
-    env_file:
-      - .env
-    volumes:
-      - deployment-data:/runtime
+    <<: *backend
     command:
       - sh
       - -c
@@ -67,7 +62,6 @@ services:
   frontend:
     build: ./frontend
     ports:
-      # 5173 matches the default AUTH_DOMAIN and AUTH_URI of the sign-in message.
       - "5173:80"
     depends_on:
       - backend
@@ -76,7 +70,15 @@ services:
     image: ghcr.io/foundry-rs/foundry:v1.8.5
     user: "0:0"
     entrypoint:
-      ["anvil", "--host", "0.0.0.0", "--state", "/data/state.json", "--state-interval", "5"]
+      [
+        "anvil",
+        "--host",
+        "0.0.0.0",
+        "--state",
+        "/data/state.json",
+        "--state-interval",
+        "5",
+      ]
     volumes:
       - anvil-data:/data
     ports:
@@ -87,63 +89,23 @@ services:
       timeout: 5s
       retries: 15
 
-  forge:
-    image: ghcr.io/foundry-rs/foundry:v1.8.5
-    user: "0:0"
-    working_dir: /workspace
-    volumes:
-      - ./contracts:/workspace
-      - forge-build:/workspace/out
-      - forge-cache:/workspace/cache
-    entrypoint: ["forge"]
-    command: ["build"]
-    profiles:
-      - tools
-
   deploy:
     image: ghcr.io/foundry-rs/foundry:v1.8.5
     user: "0:0"
-    working_dir: /workspace
+    working_dir: /repo/contracts
     volumes:
-      - ./contracts:/workspace
+      - ./contracts:/repo/contracts
+      - ./scripts:/repo/scripts:ro
       - deployment-data:/runtime
-      - forge-build:/workspace/out
-      - forge-cache:/workspace/cache
-      - forge-broadcast:/workspace/broadcast
+      - forge-build:/repo/contracts/out
+      - forge-cache:/repo/contracts/cache
+      - forge-broadcast:/repo/contracts/broadcast
     environment:
       ADMIN_ADDRESS: ${ADMIN_ADDRESS:-0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266}
       PRIVATE_KEY: ${PRIVATE_KEY:-0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80}
-    entrypoint: ["sh", "-c"]
-    command:
-      - |
-        set -eu
-        rpc=http://anvil:8545
-        if [ -f /runtime/deployment.env ]; then
-          . /runtime/deployment.env
-          registry_code="$$(cast code "$$REGISTRY_ADDRESS" --rpc-url "$$rpc")"
-          custody_code="$$(cast code "$$BATCH_CUSTODY_ADDRESS" --rpc-url "$$rpc")"
-          if [ "$$registry_code" != "0x" ] && [ "$$custody_code" != "0x" ]; then
-            forge build > /dev/null 2>&1 || { echo "forge build failed" >&2; exit 1; }
-            if [ "$$registry_code" = "$$(forge inspect src/ParticipantRegistry.sol:ParticipantRegistry deployedBytecode)" ] &&
-               [ "$$custody_code" = "$$(forge inspect src/BatchCustody.sol:BatchCustody deployedBytecode)" ]; then
-              echo "Contracts already deployed at the saved addresses; skipping deploy."
-              exit 0
-            fi
-            echo "The contracts changed since they were deployed. Reset the chain and database: docker compose down -v" >&2
-            exit 1
-          fi
-        fi
-        output="$$(forge script script/Deploy.s.sol:Deploy --rpc-url http://anvil:8545 --broadcast --private-key "$$PRIVATE_KEY" 2>&1)"
-        printf '%s\n' "$$output"
-        registry="$$(printf '%s\n' "$$output" | sed -n 's/.*REGISTRY_ADDRESS= *\(0x[0-9a-fA-F]\{40\}\).*/\1/p' | tail -n 1)"
-        custody="$$(printf '%s\n' "$$output" | sed -n 's/.*BATCH_CUSTODY_ADDRESS= *\(0x[0-9a-fA-F]\{40\}\).*/\1/p' | tail -n 1)"
-        block="$$(cast block-number --rpc-url http://anvil:8545)"
-        test -n "$$registry" && test -n "$$custody"
-        {
-          printf 'REGISTRY_ADDRESS=%s\n' "$$registry"
-          printf 'BATCH_CUSTODY_ADDRESS=%s\n' "$$custody"
-          printf 'DEPLOY_BLOCK=%s\n' "$$block"
-        } > /runtime/deployment.env
+      RPC_URL: http://anvil:8545
+      DEPLOYMENT_ENV: /runtime/deployment.env
+    entrypoint: ["sh", "/repo/scripts/deploy.sh"]
     depends_on:
       anvil:
         condition: service_healthy
@@ -163,7 +125,6 @@ services:
         set -a
         . /runtime/deployment.env
         set +a
-        export RPC_URL
         sh /workspace/scripts/seed.sh
     depends_on:
       deploy:
