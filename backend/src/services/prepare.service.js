@@ -40,6 +40,8 @@ import {
   prepareOliveDeliverySchema,
   prepareOlivePickupSchema,
 } from "../validation/transporter.schemas.js";
+import { sameAddress } from "../chain/addresses.js";
+import { batchExists } from "../chain/enums.js";
 
 const prepareTransaction = (user, to, data) =>
   simulateTransaction(provider, config.CHAIN_ID, user.address, {
@@ -108,7 +110,7 @@ export async function prepareBatch(user, body) {
     const existingBatch = await getBatch(batchId);
     const check = checkCanCreateBatch({
       role: farmer ? "FARMER" : null,
-      batchExists: existingBatch.status !== "None",
+      batchExists: batchExists(existingBatch),
     });
 
     if (!check.allowed) {
@@ -183,7 +185,7 @@ async function prepareStageListing(user, body, spec) {
       getBatch(batchId),
     ]);
     if (!hasStageRole) throw forbidden(spec.roleError);
-    if (batch.status === "None") throw notFound("batch not found");
+    if (!batchExists(batch)) throw notFound("batch not found");
     if (batch.stage !== spec.stage) throw conflict(spec.stageError);
 
     const check = checkCanPostForPickup({ batch, actor: user.address });
@@ -245,7 +247,7 @@ export async function prepareClaim(user, body) {
       getBatch(batchId),
     ]);
     if (!transporter) throw forbidden("caller is not a transporter");
-    if (batch.status === "None") throw notFound("batch not found");
+    if (!batchExists(batch)) throw notFound("batch not found");
 
     const check = checkCanClaimBatch({ batch, role: "TRANSPORTER" });
     if (!check.allowed) throw conflict(check.reason);
@@ -303,7 +305,7 @@ export async function prepareHandover(user, body) {
       getBatch(batchId),
     ]);
     if (!transporter) throw forbidden("caller is not a transporter");
-    if (batch.status === "None") throw notFound("batch not found");
+    if (!batchExists(batch)) throw notFound("batch not found");
 
     const expectedRole = getNextStageRole(batch.stage);
     const check = checkCanInitiateHandover({
@@ -331,7 +333,7 @@ export async function prepareHandover(user, body) {
     if (job.length === 0) {
       throw conflict("transporter has no claimed job for this batch");
     }
-    if (job[0].destinationParty.toLowerCase() !== targetAddress.toLowerCase()) {
+    if (!sameAddress(job[0].destinationParty, targetAddress)) {
       throw badRequest(
         "target must match the destination selected for this job",
       );
@@ -373,7 +375,7 @@ export async function prepareReceipt(user, body) {
 
   try {
     const batch = await getBatch(batchId);
-    if (batch.status === "None") throw notFound("batch not found");
+    if (!batchExists(batch)) throw notFound("batch not found");
 
     const receivingStage = getStageAfter(batch.stage);
     const receipt = receivingStage && receiptSchemas[receivingStage];

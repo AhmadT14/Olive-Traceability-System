@@ -17,6 +17,8 @@ import * as transporterJobRepository from "../repositories/transporterJob.reposi
 import { runInTransaction } from "../repositories/unitOfWork.js";
 import { parseBatchId, parseBody, parseTxHash } from "../validation/parse.js";
 import { receiptSchemas } from "../validation/receipt.schemas.js";
+import { sameAddress } from "../chain/addresses.js";
+import { batchExists } from "../chain/enums.js";
 
 export async function recordReceipt(user, rawBatchId, body) {
   const batchId = parseBatchId(rawBatchId);
@@ -25,7 +27,7 @@ export async function recordReceipt(user, rawBatchId, body) {
   let definition;
   try {
     const batch = await getBatch(batchId);
-    if (batch.status === "None") throw notFound("batch not found");
+    if (!batchExists(batch)) throw notFound("batch not found");
 
     definition = receiptSchemas[batch.stage];
     if (!definition) {
@@ -35,7 +37,7 @@ export async function recordReceipt(user, rawBatchId, body) {
     }
     if (
       batch.status !== "Created" ||
-      batch.custodian.toLowerCase() !== user.address.toLowerCase()
+      !sameAddress(batch.custodian, user.address)
     ) {
       throw conflict("caller is not the confirmed receipt custodian");
     }
@@ -73,7 +75,7 @@ export async function recordReceipt(user, rawBatchId, body) {
     const receipt = decoded?.events.find(
       (event) =>
         event.name === "ReceiptConfirmed" &&
-        event.args.newCustodian?.toLowerCase() === user.address.toLowerCase(),
+        sameAddress(event.args.newCustodian, user.address),
     );
     if (!receipt) {
       throw conflict("receipt event was not submitted by caller");

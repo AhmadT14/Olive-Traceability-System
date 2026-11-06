@@ -7,6 +7,7 @@ import {
 } from "../hashing/verify.js";
 import * as batchEventRepository from "../repositories/batchEvent.repository.js";
 import { parseBatchId } from "../validation/parse.js";
+import { batchExists } from "../chain/enums.js";
 
 const VERIFIABLE_EVENT_TYPES = {
   farm: { stageKey: "farm", contractEvent: "BatchCreated" },
@@ -103,7 +104,7 @@ export async function verifyBatch(rawBatchId) {
   } catch (err) {
     throw internalError("chain read failed", err);
   }
-  if (batch.status === "None") throw notFound("batch not found");
+  if (!batchExists(batch)) throw notFound("batch not found");
 
   let storedEvents;
   try {

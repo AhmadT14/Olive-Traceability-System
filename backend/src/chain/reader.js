@@ -1,24 +1,23 @@
 import { id, ZeroHash } from "ethers";
 import { registry, batchCustody, provider } from "./contracts.js";
-import { RoleNames, Status, Stage } from "./enums.js";
+import { ROLES, Status, Stage } from "./enums.js";
+import { sameAddress } from "./addresses.js";
 import { config } from "../config.js";
 import { eventArgsToObject } from "./eventArgs.js";
 import { readInPages } from "./logPages.js";
 
-export const ROLES = Object.fromEntries(
-  RoleNames.map((name) => [name, id(`${name}_ROLE`)]),
-);
+export { ROLES };
 
 export async function getBatch(batchId) {
-  const [b, destination] = await Promise.all([
+  const [batch, destination] = await Promise.all([
     batchCustody.batches(batchId),
     batchCustody.destinations(batchId),
   ]);
   return {
-    status: Status[Number(b.status)],
-    stage: Stage[Number(b.stage)],
-    custodian: b.custodian,
-    pendingTarget: b.pendingTarget,
+    status: Status[Number(batch.status)],
+    stage: Stage[Number(batch.stage)],
+    custodian: batch.custodian,
+    pendingTarget: batch.pendingTarget,
     destination,
   };
 }
@@ -31,31 +30,16 @@ export function hasAdminRole(address) {
   return registry.hasRole(ZeroHash, address);
 }
 
-export async function decodeTx(txHash) {
+async function decodeReceipt(contract, txHash, toEvent) {
   const receipt = await provider.getTransactionReceipt(txHash);
   if (!receipt) return null;
 
   const events = receipt.logs
-    .filter(
-      (log) => log.address.toLowerCase() === batchCustody.target.toLowerCase(),
-    )
-    .map((log) => {
-      const parsed = batchCustody.interface.parseLog(log);
-      // topics is kept alongside the decoded args: batchId is `string
-      // indexed` on every BatchCustody event, so Solidity only stores its
-      // keccak256 in the topic — ethers can't reconstruct the original
-      // string from args, only the raw topic hash is usable (see how
-      // getBatchHistory below matches batchId, same reasoning).
-      return (
-        parsed && {
-          name: parsed.name,
-          fragment: parsed.fragment,
-          args: parsed.args,
-          topics: log.topics,
-        }
-      );
-    })
-    .filter(Boolean);
+    .filter((log) => sameAddress(log.address, contract.target))
+    .flatMap((log) => {
+      const parsed = contract.interface.parseLog(log);
+      return parsed ? [toEvent(parsed, log)] : [];
+    });
 
   return {
     success: receipt.status === 1,
@@ -64,25 +48,25 @@ export async function decodeTx(txHash) {
   };
 }
 
-export async function decodeRegistryTx(txHash) {
-  const receipt = await provider.getTransactionReceipt(txHash);
-  if (!receipt) return null;
+export function decodeTx(txHash) {
+  // topics is kept alongside the decoded args: batchId is `string
+  // indexed` on every BatchCustody event, so Solidity only stores its
+  // keccak256 in the topic — ethers can't reconstruct the original
+  // string from args, only the raw topic hash is usable (see how
+  // getBatchHistory below matches batchId, same reasoning).
+  return decodeReceipt(batchCustody, txHash, (parsed, log) => ({
+    name: parsed.name,
+    fragment: parsed.fragment,
+    args: parsed.args,
+    topics: log.topics,
+  }));
+}
 
-  const events = receipt.logs
-    .filter(
-      (log) => log.address.toLowerCase() === registry.target.toLowerCase(),
-    )
-    .map((log) => {
-      const parsed = registry.interface.parseLog(log);
-      return parsed && { name: parsed.name, args: parsed.args };
-    })
-    .filter(Boolean);
-
-  return {
-    success: receipt.status === 1,
-    blockNumber: receipt.blockNumber,
-    events,
-  };
+export function decodeRegistryTx(txHash) {
+  return decodeReceipt(registry, txHash, (parsed) => ({
+    name: parsed.name,
+    args: parsed.args,
+  }));
 }
 
 // Every event for one batch, oldest first. batchId is the first indexed value

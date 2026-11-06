@@ -1,4 +1,5 @@
 import { id } from "ethers";
+import { blockTimeToIso, newestFirst } from "./eventOrder.js";
 
 export function matchBatchIdsByTopic(events, batchIds) {
   const byTopic = new Map(
@@ -14,12 +15,9 @@ export function matchBatchIdsByTopic(events, batchIds) {
           batchId,
           txHash: event.txHash,
           receivedBlock: event.blockNumber,
-          receivedAt: new Date(event.timestamp * 1000).toISOString(),
+          receivedAt: blockTimeToIso(event.timestamp),
         },
       ];
     })
-    .sort(
-      (a, b) =>
-        b.receivedBlock - a.receivedBlock || a.batchId.localeCompare(b.batchId),
-    );
+    .sort(newestFirst("receivedBlock"));
 }

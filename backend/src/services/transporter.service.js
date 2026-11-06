@@ -22,6 +22,8 @@ import {
   oliveDeliverySchema,
   olivePickupSchema,
 } from "../validation/transporter.schemas.js";
+import { sameAddress } from "../chain/addresses.js";
+import { batchExists } from "../chain/enums.js";
 
 const productTypeFor = (batch) => (batch.stage === "Farm" ? "olive" : "oil");
 
@@ -35,10 +37,10 @@ export async function claimBatch(user, rawBatchId, body) {
       getBatch(batchId),
     ]);
     if (!transporter) throw forbidden("caller is not a transporter");
-    if (batch.status === "None") throw notFound("batch not found");
+    if (!batchExists(batch)) throw notFound("batch not found");
     if (
       batch.status !== "Created" ||
-      batch.custodian.toLowerCase() !== user.address.toLowerCase()
+      !sameAddress(batch.custodian, user.address)
     ) {
       throw conflict("transporter does not hold this claimed batch");
     }
@@ -71,7 +73,7 @@ export async function claimBatch(user, rawBatchId, body) {
     const claim = decoded?.events.find(
       (event) =>
         event.name === "BatchClaimed" &&
-        event.args.transporter?.toLowerCase() === user.address.toLowerCase(),
+        sameAddress(event.args.transporter, user.address),
     );
     if (!claim) {
       throw conflict("claim event was not submitted by caller");
@@ -134,10 +136,10 @@ export async function handoverBatch(user, rawBatchId, body) {
       getBatch(batchId),
     ]);
     if (!transporter) throw forbidden("caller is not a transporter");
-    if (currentBatch.status === "None") throw notFound("batch not found");
+    if (!batchExists(currentBatch)) throw notFound("batch not found");
     if (
       currentBatch.status !== "PendingHandover" ||
-      currentBatch.custodian.toLowerCase() !== user.address.toLowerCase()
+      !sameAddress(currentBatch.custodian, user.address)
     ) {
       throw conflict("no pending handover from this transporter");
     }
@@ -172,10 +174,8 @@ export async function handoverBatch(user, rawBatchId, body) {
     const handover = decoded?.events.find(
       (event) =>
         event.name === "HandoverInitiated" &&
-        event.args.currentCustodian?.toLowerCase() ===
-          user.address.toLowerCase() &&
-        event.args.targetAddress?.toLowerCase() ===
-          batch.pendingTarget.toLowerCase(),
+        sameAddress(event.args.currentCustodian, user.address) &&
+        sameAddress(event.args.targetAddress, batch.pendingTarget),
     );
     if (!handover) {
       throw conflict("handover event does not match caller and pending target");

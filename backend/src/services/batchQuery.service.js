@@ -7,6 +7,7 @@ import { internalError, notFound } from "../errors.js";
 import * as batchEventRepository from "../repositories/batchEvent.repository.js";
 import * as participantRepository from "../repositories/participant.repository.js";
 import { parseBatchId } from "../validation/parse.js";
+import { batchExists } from "../chain/enums.js";
 
 export async function getChainBatch(rawBatchId) {
   const batchId = parseBatchId(rawBatchId);
@@ -18,7 +19,7 @@ export async function getChainBatch(rawBatchId) {
     throw internalError("chain read failed", err);
   }
 
-  if (batch.status === "None") throw notFound("batch not found on chain");
+  if (!batchExists(batch)) throw notFound("batch not found on chain");
 
   return { batchId, ...batch };
 }

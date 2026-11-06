@@ -27,6 +27,8 @@ import {
 } from "../validation/listing.schemas.js";
 import { parseBatchId, parseBody } from "../validation/parse.js";
 import { millReceiptSchema } from "../validation/receipt.schemas.js";
+import { sameAddress } from "../chain/addresses.js";
+import { batchExists } from "../chain/enums.js";
 
 // Field names deliberately match HASH_FIELDS.* (snake_case) rather than the
 // camelCase Drizzle column names, because this payload is passed straight into
@@ -95,7 +97,7 @@ export async function recordFarmBatch(user, body) {
     if (!decoded?.success || !creation) {
       throw notFound("tx not found or has no successful BatchCreated event");
     }
-    if (creation.args.farmer?.toLowerCase() !== user.address.toLowerCase()) {
+    if (!sameAddress(creation.args.farmer, user.address)) {
       throw forbidden("batch transaction was not submitted by caller");
     }
 
@@ -175,11 +177,11 @@ export async function recordMillIntake(user, rawBatchId, body) {
       getBatch(batchId),
     ]);
     if (!mill) throw forbidden("caller is not a mill");
-    if (batch.status === "None") throw notFound("batch not found");
+    if (!batchExists(batch)) throw notFound("batch not found");
     if (
       batch.status !== "Created" ||
       batch.stage !== "Mill" ||
-      batch.custodian.toLowerCase() !== user.address.toLowerCase()
+      !sameAddress(batch.custodian, user.address)
     ) {
       throw conflict("caller is not the confirmed receipt custodian");
     }
@@ -214,7 +216,7 @@ export async function recordMillIntake(user, rawBatchId, body) {
     const receipt = decoded?.events.find(
       (event) =>
         event.name === "ReceiptConfirmed" &&
-        event.args.newCustodian?.toLowerCase() === user.address.toLowerCase(),
+        sameAddress(event.args.newCustodian, user.address),
     );
     if (!receipt) {
       throw conflict("receipt event was not submitted by caller");
@@ -271,11 +273,11 @@ export async function recordMillOutgoing(user, rawBatchId, body) {
       getBatch(batchId),
     ]);
     if (!mill) throw forbidden("caller is not a mill");
-    if (batch.status === "None") throw notFound("batch not found");
+    if (!batchExists(batch)) throw notFound("batch not found");
     if (batch.stage !== "Mill" || batch.status !== "Listed") {
       throw conflict("batch is not listed by a mill");
     }
-    if (batch.custodian.toLowerCase() !== user.address.toLowerCase()) {
+    if (!sameAddress(batch.custodian, user.address)) {
       throw forbidden("caller is not current custodian");
     }
   } catch (err) {
@@ -300,7 +302,7 @@ export async function recordMillOutgoing(user, rawBatchId, body) {
     const listing = decoded?.events.find(
       (event) =>
         event.name === "BatchListed" &&
-        event.args.custodian?.toLowerCase() === user.address.toLowerCase(),
+        sameAddress(event.args.custodian, user.address),
     );
     if (!listing) {
       throw conflict("listing event was not submitted by caller");
@@ -386,11 +388,11 @@ async function recordStageListing(user, rawBatchId, body, spec) {
       getBatch(batchId),
     ]);
     if (!hasStageRole) throw forbidden(spec.roleError);
-    if (batch.status === "None") throw notFound("batch not found");
+    if (!batchExists(batch)) throw notFound("batch not found");
     if (batch.stage !== spec.stage || batch.status !== "Listed") {
       throw conflict(spec.stageError);
     }
-    if (batch.custodian.toLowerCase() !== user.address.toLowerCase()) {
+    if (!sameAddress(batch.custodian, user.address)) {
       throw forbidden("caller is not current custodian");
     }
   } catch (err) {
@@ -415,7 +417,7 @@ async function recordStageListing(user, rawBatchId, body, spec) {
     const listing = decoded?.events.find(
       (event) =>
         event.name === "BatchListed" &&
-        event.args.custodian?.toLowerCase() === user.address.toLowerCase(),
+        sameAddress(event.args.custodian, user.address),
     );
     if (!listing) {
       throw conflict("listing event was not submitted by caller");

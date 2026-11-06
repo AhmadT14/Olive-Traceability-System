@@ -1,3 +1,5 @@
+import { blockTimeToIso, newestFirst } from "./eventOrder.js";
+
 // Joins a farmer's BatchCreated events (from the chain) with the saved farm
 // records (from the database). batchId is an indexed string on the event, so
 // the log only carries its hash; the saved record, found by transaction hash,
@@ -19,14 +21,11 @@ export function matchCreatedBatches(events, rows) {
         {
           batchId: row.batchId,
           createdBlock: event.blockNumber,
-          createdAt: new Date(event.timestamp * 1000).toISOString(),
+          createdAt: blockTimeToIso(event.timestamp),
           harvestDate:
             typeof harvestDate === "string" && harvestDate ? harvestDate : null,
         },
       ];
     })
-    .sort(
-      (a, b) =>
-        b.createdBlock - a.createdBlock || a.batchId.localeCompare(b.batchId),
-    );
+    .sort(newestFirst("createdBlock"));
 }

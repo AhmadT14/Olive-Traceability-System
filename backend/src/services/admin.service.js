@@ -25,6 +25,7 @@ import {
 import { parseBody } from "../validation/parse.js";
 import { readRoles } from "./participant.service.js";
 import { buildRoleProfile } from "./roleProfile.js";
+import { sameAddress } from "../chain/addresses.js";
 
 const prepareTransaction = (user, to, data) =>
   simulateTransaction(provider, config.CHAIN_ID, user.address, {
@@ -94,8 +95,8 @@ export async function confirmRoleChange(user, body) {
       (event) =>
         event.name === eventName &&
         String(event.args.role).toLowerCase() === ROLES[role].toLowerCase() &&
-        event.args.account?.toLowerCase() === address.toLowerCase() &&
-        event.args.sender?.toLowerCase() === user.address.toLowerCase(),
+        sameAddress(event.args.account, address) &&
+        sameAddress(event.args.sender, user.address),
     );
     if (!roleEvent) {
       throw conflict(

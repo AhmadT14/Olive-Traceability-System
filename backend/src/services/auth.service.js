@@ -10,6 +10,7 @@ import {
 } from "../validation/auth.schemas.js";
 import { hasAdminRole } from "../chain/reader.js";
 import { readRoles } from "./participant.service.js";
+import { sameAddress } from "../chain/addresses.js";
 
 // JWT `exp` is in seconds since the epoch; the API reports ISO timestamps.
 const expiryOf = (exp) => new Date(exp * 1000).toISOString();
@@ -59,7 +60,7 @@ export async function login(body) {
   } catch {
     throw unauthorized("invalid signature");
   }
-  if (signer.toLowerCase() !== address.toLowerCase()) {
+  if (!sameAddress(signer, address)) {
     throw unauthorized("signature does not match address");
   }
 

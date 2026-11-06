@@ -1,5 +1,7 @@
 const TIMEOUT_MS = 10_000;
 
+const errorMessage = (err) => err.shortMessage ?? err.message;
+
 function withTimeout(promise, ms) {
   let timer;
   const timeout = new Promise((_, reject) => {
@@ -19,9 +21,7 @@ export async function checkChain(
       await withTimeout(provider.send("eth_chainId", []), timeoutMs),
     );
   } catch (err) {
-    return [
-      `cannot reach the chain at RPC_URL (${err.shortMessage ?? err.message})`,
-    ];
+    return [`cannot reach the chain at RPC_URL (${errorMessage(err)})`];
   }
 
   if (actualChainId !== chainId) {
@@ -34,7 +34,7 @@ export async function checkChain(
     try {
       code = await withTimeout(provider.getCode(address), timeoutMs);
     } catch (err) {
-      problems.push(`cannot read ${name} (${err.shortMessage ?? err.message})`);
+      problems.push(`cannot read ${name} (${errorMessage(err)})`);
       continue;
     }
     if (code === "0x") {
