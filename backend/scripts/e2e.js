@@ -13,9 +13,8 @@
 // on a profile is put back at the end. It only works against the seeded demo
 // stack (Anvil accounts 0-7), never a real network.
 import { HDNodeWallet, JsonRpcProvider, Wallet } from "ethers";
-import config from "./src";
 
-const API_URL = config.API_URL ?? "http://localhost:3000";
+const API_URL = process.env.API_URL ?? "http://localhost:3000";
 const RPC_URL = process.env.RPC_URL ?? "http://127.0.0.1:8545";
 const MNEMONIC = "test test test test test test test test test test test junk";
 
