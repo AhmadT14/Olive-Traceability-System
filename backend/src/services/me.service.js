@@ -11,12 +11,13 @@ import {
 import * as batchEventRepository from "../repositories/batchEvent.repository.js";
 import * as batchRepository from "../repositories/batch.repository.js";
 import * as participantRepository from "../repositories/participant.repository.js";
+import * as transporterJobRepository from "../repositories/transporterJob.repository.js";
 import {
-  profileDetailsSchemas,
+  profileDetailsSchemaForRoles,
   updateAvailabilitySchema,
   updateProfileSchema,
 } from "../validation/participant.schemas.js";
-import { parseBody } from "../validation/parse.js";
+import { pageOf, parseBody, parsePageQuery } from "../validation/parse.js";
 import { readRoles } from "./participant.service.js";
 
 // The database keeps wallets in lower case.
@@ -72,14 +73,13 @@ export async function updateMyProfile(user, body) {
     const updates = { ...fields };
 
     if (details !== undefined) {
-      // Role-specific details are checked against the participant's role.
-      // Wallets that hold several roles are validated as their first one.
-      const role = roles[0];
-      if (!role) throw forbidden("wallet has no registered role");
+      // Role-specific details are checked against every role the participant
+      // holds, so a wallet with several roles keeps the keys of each one.
+      if (roles.length === 0) throw forbidden("wallet has no registered role");
 
       // Keys that are not sent keep their stored value.
       const merged = { ...(existing.details ?? {}), ...details };
-      const result = profileDetailsSchemas[role].safeParse(merged);
+      const result = profileDetailsSchemaForRoles(roles).safeParse(merged);
       if (!result.success) {
         throw unprocessable("invalid profile details", result.error.flatten());
       }
@@ -143,8 +143,10 @@ export async function listMyBatches(user) {
 // Every batch the caller created as a farmer, newest first, with its current
 // chain state, so a batch stays in the list after a transporter has taken it.
 // Created batches come from the chain's BatchCreated events for the caller;
-// the readable batch id and harvest date come from the saved farm record.
-export async function listCreatedBatches(user) {
+// the readable batch id and the farm fields come from the saved farm record.
+export async function listCreatedBatches(user, query) {
+  const page = parsePageQuery(query);
+
   try {
     if (!(await hasRole("FARMER", user.address))) {
       throw forbidden("caller is not a farmer");
@@ -154,7 +156,10 @@ export async function listCreatedBatches(user) {
     const rows = await batchEventRepository.findFarmEventsByTxHashes(
       events.map((event) => event.txHash),
     );
-    const created = matchCreatedBatches(events, rows);
+    const created = pageOf(matchCreatedBatches(events, rows), page);
+    const detailsByBatch = new Map(
+      rows.map((row) => [row.batchId, row.details]),
+    );
 
     const batches = [];
     for (let i = 0; i < created.length; i += CHAIN_READ_BATCH_SIZE) {
@@ -162,14 +167,43 @@ export async function listCreatedBatches(user) {
       const states = await Promise.all(
         chunk.map(({ batchId }) => getBatch(batchId)),
       );
-      chunk.forEach((item, index) =>
-        batches.push({ ...states[index], ...item }),
-      );
+      chunk.forEach((item, index) => {
+        const details = detailsByBatch.get(item.batchId);
+        batches.push({
+          ...states[index],
+          ...item,
+          quantity: details?.quantity ?? null,
+          olive_type: details?.olive_type ?? null,
+        });
+      });
     }
 
     return { batches };
   } catch (err) {
     if (err instanceof AppError) throw err;
     throw internalError("created batch lookup failed", err);
+  }
+}
+
+export async function listReceivedBatches(user, query) {
+  const page = parsePageQuery(query);
+
+  try {
+    const rows = await transporterJobRepository.listReceivedByParty(
+      walletOf(user),
+      page,
+    );
+
+    return {
+      batches: rows.map((row) => ({
+        batchId: row.batchId,
+        txHash: row.txHash,
+        receivedAt: new Date(row.receivedAt).toISOString(),
+        quantityReceived: row.details?.quantity_received ?? null,
+      })),
+    };
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    throw internalError("received batch lookup failed", err);
   }
 }

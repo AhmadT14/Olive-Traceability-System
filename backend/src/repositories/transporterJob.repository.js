@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "../db/db.js";
-import { transporterJobs } from "../db/schema.js";
+import { batchEvents, transporterJobs } from "../db/schema.js";
 
 export function insert(values, exec = db) {
   return exec.insert(transporterJobs).values(values);
@@ -109,6 +109,56 @@ export function listActiveForTransporter(transporter, exec = db) {
     .orderBy(desc(transporterJobs.createdAt));
 }
 
+export function listCompletedForTransporter(transporter, exec = db) {
+  return exec
+    .select({
+      id: transporterJobs.id,
+      status: transporterJobs.status,
+      batchId: transporterJobs.batchId,
+      sourceParty: transporterJobs.sourceParty,
+      destinationParty: transporterJobs.destinationParty,
+      listingTxHash: transporterJobs.listingTxHash,
+      createdAt: transporterJobs.createdAt,
+    })
+    .from(transporterJobs)
+    .where(
+      and(
+        eq(transporterJobs.transporter, transporter),
+        eq(transporterJobs.status, "completed"),
+      ),
+    )
+    .orderBy(desc(transporterJobs.createdAt), desc(transporterJobs.id));
+}
+
+export function listReceivedByParty(party, { limit, offset }, exec = db) {
+  let query = exec
+    .select({
+      batchId: transporterJobs.batchId,
+      txHash: transporterJobs.receiptTxHash,
+      receivedAt: batchEvents.recordedAt,
+      details: batchEvents.details,
+    })
+    .from(transporterJobs)
+    .innerJoin(
+      batchEvents,
+      and(
+        eq(batchEvents.batchId, transporterJobs.batchId),
+        eq(batchEvents.eventTxHash, transporterJobs.receiptTxHash),
+      ),
+    )
+    .where(
+      and(
+        eq(transporterJobs.destinationParty, party),
+        eq(transporterJobs.status, "completed"),
+      ),
+    )
+    .orderBy(desc(batchEvents.recordedAt), desc(transporterJobs.id))
+    .$dynamic();
+  if (limit !== undefined) query = query.limit(limit);
+  if (offset > 0) query = query.offset(offset);
+  return query;
+}
+
 export function listAvailable(exec = db) {
   return exec
     .select({
@@ -121,5 +171,6 @@ export function listAvailable(exec = db) {
       createdAt: transporterJobs.createdAt,
     })
     .from(transporterJobs)
-    .where(eq(transporterJobs.status, "available"));
+    .where(eq(transporterJobs.status, "available"))
+    .orderBy(desc(transporterJobs.createdAt), desc(transporterJobs.id));
 }

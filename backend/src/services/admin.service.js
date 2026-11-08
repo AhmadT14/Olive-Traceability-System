@@ -22,7 +22,7 @@ import {
   prepareRoleChangeSchema,
   roleNames,
 } from "../validation/admin.schemas.js";
-import { parseBody } from "../validation/parse.js";
+import { pageOf, parseBody, parsePageQuery } from "../validation/parse.js";
 import { readRoles } from "./participant.service.js";
 import { buildRoleProfile } from "./roleProfile.js";
 import { sameAddress } from "../chain/addresses.js";
@@ -146,13 +146,15 @@ export async function confirmRoleChange(user, body) {
 // The admin's directory: every participant the backend has a record for, with
 // the roles they hold on chain right now. A participant whose roles were all
 // revoked still appears, with an empty list, so they can be registered again.
-export async function listParticipants(user) {
+export async function listParticipants(user, query) {
+  const page = parsePageQuery(query);
+
   try {
     if (!(await hasAdminRole(user.address))) {
       throw forbidden("caller is not a registry admin");
     }
 
-    const rows = await participantRepository.listDirectory();
+    const rows = pageOf(await participantRepository.listDirectory(), page);
     const roles = await Promise.all(rows.map((row) => readRoles(row.address)));
 
     return {

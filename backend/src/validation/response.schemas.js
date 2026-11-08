@@ -285,10 +285,27 @@ export const adminParticipantsResponseSchema = z.object({
   ),
 });
 
+export const receivedBatchesResponseSchema = z.object({
+  batches: z.array(
+    z.object({
+      batchId: z.string(),
+      txHash: z.string(),
+      receivedAt: z.string(),
+      quantityReceived: z.union([z.string(), z.number()]).nullable(),
+    }),
+  ),
+});
+
+export const batchStageStatsResponseSchema = z.object({
+  stages: z.array(z.object({ stage: z.string(), count: z.number() })),
+});
+
 export const createdBatchesResponseSchema = z.object({
   batches: z.array(
     chainBatchSchema.extend({
       harvestDate: z.string().nullable(),
+      quantity: z.union([z.string(), z.number()]).nullable(),
+      olive_type: z.string().nullable(),
       createdBlock: z.number(),
       createdAt: z.string(),
     }),

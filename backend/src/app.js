@@ -22,10 +22,12 @@ import verificationRoutes from "./api/routes/verification.routes.js";
 import adminRoutes from "./api/routes/admin.routes.js";
 import meRoutes from "./api/routes/me.routes.js";
 import { errorHandler, notFoundHandler } from "./api/errorHandler.js";
+import { allowOrigins } from "./api/cors.js";
 import { authRateLimit, requestId } from "./api/security.js";
 
 const app = express();
 app.use(requestId);
+if (config.CORS_ORIGIN.length > 0) app.use(allowOrigins(config.CORS_ORIGIN));
 app.use(helmet());
 app.use("/auth/nonce", authRateLimit());
 app.use("/auth/login", authRateLimit());

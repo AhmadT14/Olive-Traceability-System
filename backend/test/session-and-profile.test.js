@@ -5,10 +5,16 @@ import {
   isAvailable,
 } from "../src/chain/checks.js";
 import {
+  profileDetailsSchemaForRoles,
   updateAvailabilitySchema,
   updateProfileSchema,
 } from "../src/validation/participant.schemas.js";
-import { parseMineQuery } from "../src/validation/parse.js";
+import {
+  pageOf,
+  parseJobStatusQuery,
+  parseMineQuery,
+  parsePageQuery,
+} from "../src/validation/parse.js";
 import {
   adminParticipantsResponseSchema,
   availabilityResponseSchema,
@@ -63,6 +69,37 @@ test("parseMineQuery accepts only true, false or nothing", () => {
   assert.equal(parseMineQuery("true"), true);
   for (const bad of ["1", "yes", "TRUE", ""]) {
     assert.throws(() => parseMineQuery(bad), { status: 400 });
+  }
+});
+
+test("profile details of a wallet with several roles keep every role's keys", () => {
+  const details = {
+    farmName: "Olive Grove",
+    vehicleDetails: "refrigerated truck",
+    licenseDetails: "TR-1",
+  };
+  const result = profileDetailsSchemaForRoles(["FARMER", "TRANSPORTER"]).parse(
+    details,
+  );
+  assert.deepEqual(result, details);
+  assert.deepEqual(profileDetailsSchemaForRoles(["FARMER"]).parse(details), {
+    farmName: "Olive Grove",
+  });
+  assert.equal(
+    profileDetailsSchemaForRoles(["FARMER", "MILL"]).safeParse({
+      processingCapacity: false,
+    }).success,
+    false,
+  );
+});
+
+test("parseJobStatusQuery accepts completed only together with mine", () => {
+  assert.equal(parseJobStatusQuery(undefined, false), undefined);
+  assert.equal(parseJobStatusQuery(undefined, true), undefined);
+  assert.equal(parseJobStatusQuery("completed", true), "completed");
+  assert.throws(() => parseJobStatusQuery("completed", false), { status: 400 });
+  for (const bad of ["claimed", "COMPLETED", "", ["completed", "completed"]]) {
+    assert.throws(() => parseJobStatusQuery(bad, true), { status: 400 });
   }
 });
 
@@ -205,4 +242,32 @@ test("a participant is available unless they chose unavailable", () => {
   assert.equal(isAvailable(null), true);
   assert.equal(isAvailable(undefined), true);
   assert.equal(isAvailable("unavailable"), false);
+});
+
+test("parsePageQuery reads an optional limit and offset", () => {
+  assert.deepEqual(parsePageQuery({}), { limit: undefined, offset: 0 });
+  assert.deepEqual(parsePageQuery(undefined), { limit: undefined, offset: 0 });
+  assert.deepEqual(parsePageQuery({ limit: "10", offset: "20" }), {
+    limit: 10,
+    offset: 20,
+  });
+  assert.deepEqual(parsePageQuery({ offset: "5" }), {
+    limit: undefined,
+    offset: 5,
+  });
+  for (const limit of ["0", "101", "-1", "1.5", "ten", "", ["10", "20"]]) {
+    assert.throws(() => parsePageQuery({ limit }), { status: 400 });
+  }
+  for (const offset of ["-1", "1.5", "x", "", ["1"]]) {
+    assert.throws(() => parsePageQuery({ offset }), { status: 400 });
+  }
+});
+
+test("pageOf slices a list by limit and offset", () => {
+  const items = [1, 2, 3, 4, 5];
+  assert.deepEqual(pageOf(items, { limit: undefined, offset: 0 }), items);
+  assert.deepEqual(pageOf(items, { limit: 2, offset: 0 }), [1, 2]);
+  assert.deepEqual(pageOf(items, { limit: 2, offset: 3 }), [4, 5]);
+  assert.deepEqual(pageOf(items, { limit: undefined, offset: 4 }), [5]);
+  assert.deepEqual(pageOf(items, { limit: 2, offset: 9 }), []);
 });

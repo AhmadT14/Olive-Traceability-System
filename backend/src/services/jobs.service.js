@@ -3,11 +3,29 @@ import { AppError, forbidden, internalError } from "../errors.js";
 import * as batchEventRepository from "../repositories/batchEvent.repository.js";
 import * as participantRepository from "../repositories/participant.repository.js";
 import * as transporterJobRepository from "../repositories/transporterJob.repository.js";
-import { parseMineQuery } from "../validation/parse.js";
+import {
+  pageOf,
+  parseJobStatusQuery,
+  parseMineQuery,
+  parsePageQuery,
+} from "../validation/parse.js";
 
 // Maps each outgoing record type to the camelCase shape the transporter job
 // board exposes. Unknown types return null and are filtered out.
+const shipmentDetails = (details) => ({
+  quantityShipped: details.quantity_shipped ?? null,
+  shipmentDetails: details.shipment_details ?? null,
+  productCondition: details.product_condition ?? null,
+  packagingCondition: details.packaging_condition ?? null,
+  notes: details.notes ?? null,
+});
+
 const OUTGOING_DETAIL_MAPPERS = {
+  farm: (details) => ({
+    quantity: details.quantity ?? null,
+    oliveType: details.olive_type ?? null,
+    harvestDate: details.harvest_date ?? null,
+  }),
   storage_outgoing: (details) => ({
     quantityReleased: details.quantity_released ?? null,
     storageEndDate: details.storage_end_date ?? null,
@@ -25,25 +43,36 @@ const OUTGOING_DETAIL_MAPPERS = {
     qrCodeReference: details.qr_code_reference ?? null,
     notes: details.notes ?? null,
   }),
+  exporter_outgoing: shipmentDetails,
+  importer_outgoing: shipmentDetails,
 };
+
+function findJobs(address, mine, status) {
+  if (status === "completed") {
+    return transporterJobRepository.listCompletedForTransporter(address);
+  }
+  return mine
+    ? transporterJobRepository.listActiveForTransporter(address)
+    : transporterJobRepository.listAvailable();
+}
 
 // The job board. By default it lists the open jobs any transporter may claim.
 // With ?mine=true it lists the caller's own jobs that are still in progress
 // (claimed, or handed over and waiting for the facility to confirm), so a
-// transporter can find a job again after claiming it.
-export async function listJobs(user, rawMine) {
-  const mine = parseMineQuery(rawMine);
+// transporter can find a job again after claiming it. Adding status=completed
+// lists the caller's finished jobs instead.
+export async function listJobs(user, query) {
+  const mine = parseMineQuery(query.mine);
+  const status = parseJobStatusQuery(query.status, mine);
+  const page = parsePageQuery(query);
 
   try {
     if (!(await hasRole("TRANSPORTER", user.address))) {
       throw forbidden("caller is not a transporter");
     }
 
-    const jobs = mine
-      ? await transporterJobRepository.listActiveForTransporter(
-          user.address.toLowerCase(),
-        )
-      : await transporterJobRepository.listAvailable();
+    const found = await findJobs(user.address.toLowerCase(), mine, status);
+    const jobs = mine ? pageOf(found, page) : found;
     if (jobs.length === 0) return { jobs: [] };
 
     const addresses = [
@@ -132,7 +161,7 @@ export async function listJobs(user, rawMine) {
       ];
     });
 
-    return { jobs: availableJobs };
+    return { jobs: mine ? availableJobs : pageOf(availableJobs, page) };
   } catch (err) {
     if (err instanceof AppError) throw err;
     throw internalError("job lookup failed", err);

@@ -89,12 +89,21 @@ test("the created-batches response schema accepts the service output", () => {
     pendingTarget: "0x0000000000000000000000000000000000000000",
     destination: wallet,
     harvestDate: null,
+    quantity: null,
+    olive_type: null,
     createdBlock: 12,
     createdAt: "2026-10-31T10:00:00.000Z",
   };
   assert.ok(
     createdBatchesResponseSchema.safeParse({ batches: [item] }).success,
   );
+  for (const quantity of ["120", 120]) {
+    assert.ok(
+      createdBatchesResponseSchema.safeParse({
+        batches: [{ ...item, quantity, olive_type: "Nabali" }],
+      }).success,
+    );
+  }
   assert.ok(createdBatchesResponseSchema.safeParse({ batches: [] }).success);
   const { createdBlock: _drop, ...incomplete } = item;
   assert.equal(

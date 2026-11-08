@@ -2,7 +2,10 @@ import { badRequest, internalError, unprocessable } from "../errors.js";
 import {
   batchIdParamSchema,
   destinationRoleQuerySchema,
+  jobStatusQuerySchema,
+  limitQuerySchema,
   mineQuerySchema,
+  offsetQuerySchema,
   txHashParamSchema,
   walletAddressParamSchema,
 } from "./request.schemas.js";
@@ -67,6 +70,29 @@ export function parseMineQuery(raw) {
   const parsed = mineQuerySchema.safeParse(raw);
   if (!parsed.success) throw badRequest("mine must be true or false");
   return parsed.data === "true";
+}
+
+export function parseJobStatusQuery(raw, mine) {
+  const parsed = jobStatusQuerySchema.safeParse(raw);
+  if (!parsed.success) throw badRequest("status must be completed");
+  if (parsed.data && !mine) throw badRequest("status requires mine=true");
+  return parsed.data;
+}
+
+export function parsePageQuery(query) {
+  const limit = limitQuerySchema.safeParse(query?.limit);
+  if (!limit.success) {
+    throw badRequest("limit must be an integer from 1 to 100");
+  }
+  const offset = offsetQuerySchema.safeParse(query?.offset);
+  if (!offset.success) {
+    throw badRequest("offset must be a non-negative integer");
+  }
+  return { limit: limit.data, offset: offset.data ?? 0 };
+}
+
+export function pageOf(items, { limit, offset }) {
+  return items.slice(offset, limit === undefined ? undefined : offset + limit);
 }
 
 // -- responses ------------------------------------------------------------

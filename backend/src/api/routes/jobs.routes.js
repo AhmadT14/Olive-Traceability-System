@@ -12,7 +12,7 @@ router.get(
   handle(
     async (req) => ({
       status: 200,
-      body: await listJobs(req.user, req.query.mine),
+      body: await listJobs(req.user, req.query),
     }),
     jobsResponseSchema,
   ),

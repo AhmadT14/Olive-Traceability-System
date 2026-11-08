@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { z } from "zod";
+import { parseCorsOrigins } from "./api/cors.js";
 
 const address = z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x address");
 
@@ -15,6 +16,7 @@ const schema = z.object({
   JWT_SECRET: z.string().min(32),
   AUTH_DOMAIN: z.string().min(1).default("localhost:5173"),
   AUTH_URI: z.string().url().default("http://localhost:5173"),
+  CORS_ORIGIN: z.string().optional().transform(parseCorsOrigins),
 });
 
 export const config = schema.parse(process.env);

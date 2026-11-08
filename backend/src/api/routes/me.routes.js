@@ -4,6 +4,7 @@ import {
   getMyProfile,
   listCreatedBatches,
   listMyBatches,
+  listReceivedBatches,
   updateMyAvailability,
   updateMyProfile,
 } from "../../services/me.service.js";
@@ -12,6 +13,7 @@ import {
   createdBatchesResponseSchema,
   myBatchesResponseSchema,
   myProfileResponseSchema,
+  receivedBatchesResponseSchema,
 } from "../../validation/response.schemas.js";
 import { handle } from "../response.js";
 
@@ -63,8 +65,23 @@ router.get(
   "/me/batches/created",
   requireAuth,
   handle(
-    async (req) => ({ status: 200, body: await listCreatedBatches(req.user) }),
+    async (req) => ({
+      status: 200,
+      body: await listCreatedBatches(req.user, req.query),
+    }),
     createdBatchesResponseSchema,
+  ),
+);
+
+router.get(
+  "/me/batches/received",
+  requireAuth,
+  handle(
+    async (req) => ({
+      status: 200,
+      body: await listReceivedBatches(req.user, req.query),
+    }),
+    receivedBatchesResponseSchema,
   ),
 );
 

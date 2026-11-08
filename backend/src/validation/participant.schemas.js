@@ -63,6 +63,14 @@ export const updateProfileSchema = profileSchema
     message: "provide at least one field to update",
   });
 
+export const profileDetailsSchemaForRoles = (roles) =>
+  z.object(
+    Object.assign(
+      {},
+      ...roles.map((role) => profileDetailsSchemas[role]?.shape ?? {}),
+    ),
+  );
+
 export const validateProfileDetails = (role, details) => {
   const schema = profileDetailsSchemas[role];
   if (!schema)

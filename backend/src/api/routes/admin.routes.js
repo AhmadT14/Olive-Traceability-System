@@ -5,8 +5,10 @@ import {
   listParticipants,
   prepareRoleChange,
 } from "../../services/admin.service.js";
+import { countBatchesPerStage } from "../../services/stats.service.js";
 import {
   adminParticipantsResponseSchema,
+  batchStageStatsResponseSchema,
   roleChangeConfirmedResponseSchema,
   roleChangePreparedResponseSchema,
 } from "../../validation/response.schemas.js";
@@ -20,9 +22,21 @@ router.get(
   handle(
     async (req) => ({
       status: 200,
-      body: await listParticipants(req.user),
+      body: await listParticipants(req.user, req.query),
     }),
     adminParticipantsResponseSchema,
+  ),
+);
+
+router.get(
+  "/admin/stats/batches",
+  requireAuth,
+  handle(
+    async (req) => ({
+      status: 200,
+      body: await countBatchesPerStage(req.user),
+    }),
+    batchStageStatsResponseSchema,
   ),
 );
 
