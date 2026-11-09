@@ -1,4 +1,4 @@
-import { decodeTx, getBatch, hasRole } from "../chain/reader.js";
+import { decodeCustodyTx, getBatch, hasRole } from "../chain/reader.js";
 import {
   AppError,
   conflict,
@@ -71,7 +71,7 @@ export async function recordReceipt(user, rawBatchId, body) {
   }
 
   try {
-    const decoded = await decodeTx(txHash);
+    const decoded = await decodeCustodyTx(txHash);
     const receipt = decoded?.events.find(
       (event) =>
         event.name === "ReceiptConfirmed" &&

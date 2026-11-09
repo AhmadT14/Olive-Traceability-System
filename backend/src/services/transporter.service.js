@@ -1,4 +1,4 @@
-import { decodeTx, getBatch, hasRole } from "../chain/reader.js";
+import { decodeCustodyTx, getBatch, hasRole } from "../chain/reader.js";
 import {
   AppError,
   conflict,
@@ -69,7 +69,7 @@ export async function claimBatch(user, rawBatchId, body) {
   }
 
   try {
-    const decoded = await decodeTx(txHash);
+    const decoded = await decodeCustodyTx(txHash);
     const claim = decoded?.events.find(
       (event) =>
         event.name === "BatchClaimed" &&
@@ -170,7 +170,7 @@ export async function handoverBatch(user, rawBatchId, body) {
   }
 
   try {
-    const decoded = await decodeTx(txHash);
+    const decoded = await decodeCustodyTx(txHash);
     const handover = decoded?.events.find(
       (event) =>
         event.name === "HandoverInitiated" &&

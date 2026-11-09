@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getStageAfter } from "../src/chain/checks.js";
+import { getNextStage } from "../src/chain/checks.js";
 import {
   createBatchSchema,
   farmPreparationSchema,
@@ -55,14 +55,14 @@ test("harvest_date, location and olive_type are required and non-empty", () => {
   }
 });
 
-test("getStageAfter gives the stage a receipt moves the batch to", () => {
-  assert.equal(getStageAfter("Farm"), "Mill");
-  assert.equal(getStageAfter("Mill"), "Storage");
-  assert.equal(getStageAfter("Storage"), "Exporter");
-  assert.equal(getStageAfter("Exporter"), "Importer");
-  assert.equal(getStageAfter("Importer"), "Retailer");
-  assert.equal(getStageAfter("Retailer"), null);
-  assert.equal(getStageAfter("nonsense"), null);
+test("getNextStage gives the stage a receipt moves the batch to", () => {
+  assert.equal(getNextStage("Farm"), "Mill");
+  assert.equal(getNextStage("Mill"), "Storage");
+  assert.equal(getNextStage("Storage"), "Exporter");
+  assert.equal(getNextStage("Exporter"), "Importer");
+  assert.equal(getNextStage("Importer"), "Retailer");
+  assert.equal(getNextStage("Retailer"), null);
+  assert.equal(getNextStage("nonsense"), null);
 });
 
 test("every receiving stage has a receipt definition for its own role", () => {
@@ -81,7 +81,7 @@ test("every receiving stage has a receipt definition for its own role", () => {
   // stage that has a next stage must resolve to a receipt definition.
   for (const sender of ["Farm", "Mill", "Storage", "Exporter", "Importer"]) {
     assert.ok(
-      receiptSchemas[getStageAfter(sender)],
+      receiptSchemas[getNextStage(sender)],
       `no receipt after ${sender}`,
     );
   }

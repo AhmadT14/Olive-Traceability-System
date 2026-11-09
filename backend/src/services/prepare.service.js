@@ -6,7 +6,7 @@ import {
   checkCanInitiateHandover,
   checkCanPostForPickup,
   getNextStageRole,
-  getStageAfter,
+  getNextStage,
   isAvailable,
 } from "../chain/checks.js";
 import { getBatch, hasRole } from "../chain/reader.js";
@@ -377,7 +377,7 @@ export async function prepareReceipt(user, body) {
     const batch = await getBatch(batchId);
     if (!batchExists(batch)) throw notFound("batch not found");
 
-    const receivingStage = getStageAfter(batch.stage);
+    const receivingStage = getNextStage(batch.stage);
     const receipt = receivingStage && receiptSchemas[receivingStage];
     if (!receipt) {
       throw conflict(`receipt schema is not defined for stage ${batch.stage}`);

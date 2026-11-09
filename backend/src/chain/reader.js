@@ -48,7 +48,7 @@ async function decodeReceipt(contract, txHash, toEvent) {
   };
 }
 
-export function decodeTx(txHash) {
+export function decodeCustodyTx(txHash) {
   // topics is kept alongside the decoded args: batchId is `string
   // indexed` on every BatchCustody event, so Solidity only stores its
   // keccak256 in the topic — ethers can't reconstruct the original
@@ -99,8 +99,8 @@ export async function getBatchHistory(batchId) {
 // Every BatchCreated event for one farmer, with the time of its block. Only
 // events from the farmer's own address are returned (the event indexes it), so
 // the cost follows the farmer's batch count, not the size of the whole chain.
-export async function getBatchCreatedEvents(farmerAddress) {
-  const filter = batchCustody.filters.BatchCreated(null, farmerAddress);
+export async function getBatchCreatedEvents(address) {
+  const filter = batchCustody.filters.BatchCreated(null, address);
   const logs = await readLogs((fromBlock, toBlock) =>
     batchCustody.queryFilter(filter, fromBlock, toBlock),
   );

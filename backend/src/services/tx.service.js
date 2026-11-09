@@ -1,5 +1,5 @@
 import { eventArgsToObject } from "../chain/eventArgs.js";
-import { decodeTx } from "../chain/reader.js";
+import { decodeCustodyTx } from "../chain/reader.js";
 import { internalError, notFound } from "../errors.js";
 import { parseTxHash } from "../validation/parse.js";
 
@@ -8,7 +8,7 @@ export async function decodeTransaction(rawHash) {
 
   let result;
   try {
-    result = await decodeTx(hash);
+    result = await decodeCustodyTx(hash);
   } catch (err) {
     throw internalError("chain read failed", err);
   }

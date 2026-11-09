@@ -1,6 +1,6 @@
 import { id } from "ethers";
 import { computeRecordHash } from "./canonical.js";
-import { decodeTx } from "../chain/reader.js";
+import { decodeCustodyTx } from "../chain/reader.js";
 
 export class HashMismatchError extends Error {
   constructor({ stageKey, txHash, onChainHash, computedHash }) {
@@ -84,7 +84,7 @@ export async function verifyRecordAgainstChain(
     );
   }
 
-  const decoded = await decodeTx(txHash);
+  const decoded = await decodeCustodyTx(txHash);
   const expectedBatchTopic = id(batchId);
 
   if (!decoded || !decoded.success) {

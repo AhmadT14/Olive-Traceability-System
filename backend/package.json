@@ -13,7 +13,7 @@
     "test:e2e": "node scripts/e2e.js",
     "db:generate": "drizzle-kit generate",
     "knip": "knip",
-    "lint": "npx eslint"
+    "lint": "eslint ."
   },
   "keywords": [],
   "author": "",
@@ -29,16 +29,14 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.13.0",
-    "prettier": "^3.9.10",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^26.6.6",
     "drizzle-kit": "^1.0.0-rc.4",
     "eslint": "^10.14.0",
     "globals": "^17.14.0",
     "knip": "^6.44.1",
-    "typescript": "^7.0.2"
+    "prettier": "^3.9.10"
   }
 }

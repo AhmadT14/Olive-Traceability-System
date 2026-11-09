@@ -7,19 +7,19 @@ import { blockTimeToIso, newestFirst } from "./eventOrder.js";
 //
 // A batch created on chain but never saved through the API has no record to
 // join, so it is left out.
-export function matchCreatedBatches(events, rows) {
+export function matchCreatedBatches(events, records) {
   const recordsByTx = new Map(
-    rows.map((row) => [row.eventTxHash.toLowerCase(), row]),
+    records.map((record) => [record.eventTxHash.toLowerCase(), record]),
   );
 
   return events
     .flatMap((event) => {
-      const row = recordsByTx.get(event.txHash.toLowerCase());
-      if (!row) return [];
-      const harvestDate = row.details?.harvest_date;
+      const record = recordsByTx.get(event.txHash.toLowerCase());
+      if (!record) return [];
+      const harvestDate = record.details?.harvest_date;
       return [
         {
-          batchId: row.batchId,
+          batchId: record.batchId,
           createdBlock: event.blockNumber,
           createdAt: blockTimeToIso(event.timestamp),
           harvestDate:

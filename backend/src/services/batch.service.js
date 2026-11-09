@@ -1,4 +1,4 @@
-import { decodeTx, getBatch, hasRole } from "../chain/reader.js";
+import { decodeCustodyTx, getBatch, hasRole } from "../chain/reader.js";
 import {
   AppError,
   conflict,
@@ -90,7 +90,7 @@ export async function recordFarmBatch(user, body) {
       throw forbidden("caller is not a farmer");
     }
 
-    const decoded = await decodeTx(txHash);
+    const decoded = await decodeCustodyTx(txHash);
     const creation = decoded?.events.find(
       (event) => event.name === "BatchCreated",
     );
@@ -212,7 +212,7 @@ export async function recordMillIntake(user, rawBatchId, body) {
       throw conflict("record already recorded off-chain");
     }
 
-    const decoded = await decodeTx(txHash);
+    const decoded = await decodeCustodyTx(txHash);
     const receipt = decoded?.events.find(
       (event) =>
         event.name === "ReceiptConfirmed" &&
@@ -298,7 +298,7 @@ export async function recordMillOutgoing(user, rawBatchId, body) {
   }
 
   try {
-    const decoded = await decodeTx(txHash);
+    const decoded = await decodeCustodyTx(txHash);
     const listing = decoded?.events.find(
       (event) =>
         event.name === "BatchListed" &&
@@ -413,7 +413,7 @@ async function recordStageListing(user, rawBatchId, body, spec) {
   }
 
   try {
-    const decoded = await decodeTx(txHash);
+    const decoded = await decodeCustodyTx(txHash);
     const listing = decoded?.events.find(
       (event) =>
         event.name === "BatchListed" &&

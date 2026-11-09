@@ -5,21 +5,25 @@ import { batchExists, Stage, StageRole } from "./enums.js";
 const allow = () => ({ allowed: true, reason: null });
 const deny = (reason) => ({ allowed: false, reason });
 
+// The zero address is how the chain says "nobody" (no pending target, no
+// custodian), so it never counts as a participant.
+const sameParticipant = (left, right) =>
+  sameAddress(left, right) && left.toLowerCase() !== ZeroAddress;
+
 // The stage a batch moves to when the next participant confirms receipt, or
 // null at the final stage.
-export function getStageAfter(stage) {
+export function getNextStage(stage) {
   const index = Stage.indexOf(stage);
   return index >= 0 && index < Stage.length - 1 ? Stage[index + 1] : null;
+}
+
+export function getNextStageRole(stage) {
+  return StageRole[getNextStage(stage)] ?? null;
 }
 
 // A participant counts as available unless they have switched themselves to
 // "unavailable". A profile that never set a value is therefore available.
 export const isAvailable = (availability) => availability !== "unavailable";
-
-// The zero address is how the chain says "nobody" (no pending target, no
-// custodian), so it never counts as a participant.
-const sameWallet = (left, right) =>
-  sameAddress(left, right) && left.toLowerCase() !== ZeroAddress;
 
 // Where a batch belongs on a participant's "my batches" screen, from chain
 // state alone. A transporter that has named the next facility still holds the
@@ -29,11 +33,11 @@ export function classifyBatchForParticipant(batch, address) {
   if (!batch) return null;
   if (
     batch.status === "PendingHandover" &&
-    sameWallet(batch.pendingTarget, address)
+    sameParticipant(batch.pendingTarget, address)
   ) {
     return "awaitingMyConfirmation";
   }
-  if (!sameWallet(batch.custodian, address)) return null;
+  if (!sameParticipant(batch.custodian, address)) return null;
   if (batch.status === "Listed") return "listedByMe";
   if (batch.status === "Created" || batch.status === "PendingHandover") {
     return "holding";
@@ -53,7 +57,7 @@ export function checkCanPostForPickup({ batch, actor }) {
     return deny("caller is not current custodian");
   }
   if (batch.status !== "Created") return deny("batch not in a listable state");
-  if (getStageAfter(batch.stage) === null)
+  if (getNextStage(batch.stage) === null)
     return deny("batch already at final stage");
   return allow();
 }
@@ -89,8 +93,4 @@ export function checkCanConfirmReceipt({ batch, actor }) {
     return deny("caller is not the pending target");
   }
   return allow();
-}
-
-export function getNextStageRole(stage) {
-  return StageRole[getStageAfter(stage)] ?? null;
 }
