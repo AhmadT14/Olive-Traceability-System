@@ -1,4 +1,4 @@
-import { batchCustody, provider } from "../chain/contracts.js";
+import { batchCustody } from "../chain/contracts.js";
 import {
   checkCanClaimBatch,
   checkCanConfirmReceipt,
@@ -10,7 +10,6 @@ import {
   isAvailable,
 } from "../chain/checks.js";
 import { getBatch, hasRole } from "../chain/reader.js";
-import { simulateTransaction } from "../chain/simulate.js";
 import { config } from "../config.js";
 import {
   AppError,
@@ -42,13 +41,7 @@ import {
 } from "../validation/transporter.schemas.js";
 import { sameAddress } from "../chain/addresses.js";
 import { batchExists } from "../chain/enums.js";
-
-const prepareTransaction = (user, to, data) =>
-  simulateTransaction(provider, config.CHAIN_ID, user.address, {
-    to,
-    data,
-    value: "0x0",
-  });
+import { prepareTransaction } from "./transaction.js";
 
 const LISTINGS = {
   mill: {
