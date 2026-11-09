@@ -85,12 +85,13 @@ export async function recordFarmBatch(user, body) {
   const { txHash, batchId, ...record } = parseBody(createBatchSchema, body);
 
   let destinationParty;
+  let decoded;
   try {
     if (!(await hasRole("FARMER", user.address))) {
       throw forbidden("caller is not a farmer");
     }
 
-    const decoded = await decodeCustodyTx(txHash);
+    decoded = await decodeCustodyTx(txHash);
     const creation = decoded?.events.find(
       (event) => event.name === "BatchCreated",
     );
@@ -111,7 +112,7 @@ export async function recordFarmBatch(user, body) {
   }
 
   try {
-    await verifyRecordAgainstChain("farm", txHash, batchId, record);
+    await verifyRecordAgainstChain("farm", txHash, batchId, record, decoded);
   } catch (err) {
     if (err instanceof HashMismatchError) {
       throw conflict("record does not match the on-chain hash");
@@ -190,8 +191,14 @@ export async function recordMillIntake(user, rawBatchId, body) {
     throw internalError("chain read failed", err);
   }
 
+  let decoded;
   try {
-    await verifyRecordAgainstChain("mill_olive", txHash, batchId, record);
+    ({ decoded } = await verifyRecordAgainstChain(
+      "mill_olive",
+      txHash,
+      batchId,
+      record,
+    ));
   } catch (err) {
     if (err instanceof HashMismatchError) {
       throw conflict("record does not match the on-chain hash");
@@ -212,7 +219,6 @@ export async function recordMillIntake(user, rawBatchId, body) {
       throw conflict("record already recorded off-chain");
     }
 
-    const decoded = await decodeCustodyTx(txHash);
     const receipt = decoded?.events.find(
       (event) =>
         event.name === "ReceiptConfirmed" &&
@@ -285,8 +291,14 @@ export async function recordMillOutgoing(user, rawBatchId, body) {
     throw internalError("chain read failed", err);
   }
 
+  let decoded;
   try {
-    await verifyRecordAgainstChain("mill_oil", txHash, batchId, record);
+    ({ decoded } = await verifyRecordAgainstChain(
+      "mill_oil",
+      txHash,
+      batchId,
+      record,
+    ));
   } catch (err) {
     if (err instanceof HashMismatchError) {
       throw conflict("record does not match the on-chain hash");
@@ -298,7 +310,6 @@ export async function recordMillOutgoing(user, rawBatchId, body) {
   }
 
   try {
-    const decoded = await decodeCustodyTx(txHash);
     const listing = decoded?.events.find(
       (event) =>
         event.name === "BatchListed" &&
@@ -400,8 +411,14 @@ async function recordStageListing(user, rawBatchId, body, spec) {
     throw internalError("chain read failed", err);
   }
 
+  let decoded;
   try {
-    await verifyRecordAgainstChain(spec.hashStage, txHash, batchId, record);
+    ({ decoded } = await verifyRecordAgainstChain(
+      spec.hashStage,
+      txHash,
+      batchId,
+      record,
+    ));
   } catch (err) {
     if (err instanceof HashMismatchError) {
       throw conflict("record does not match the on-chain hash");
@@ -413,7 +430,6 @@ async function recordStageListing(user, rawBatchId, body, spec) {
   }
 
   try {
-    const decoded = await decodeCustodyTx(txHash);
     const listing = decoded?.events.find(
       (event) =>
         event.name === "BatchListed" &&

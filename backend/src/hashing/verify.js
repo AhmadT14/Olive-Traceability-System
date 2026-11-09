@@ -67,7 +67,8 @@ const HASH_EVENTS = {
  * @param {string} txHash - the mined tx that's supposed to carry this record's hash
  * @param {string} batchId - the batch this record is being written for
  * @param {Record<string, unknown>} record - the incoming payload to verify
- * @returns {Promise<{ onChainHash: string, computedHash: string }>}
+ * @param {object} [decodedTx] - the already decoded tx, if the caller has it
+ * @returns {Promise<{ onChainHash: string, computedHash: string, decoded: object }>}
  * @throws {EventNotFoundError} if the tx has no matching event for this batch
  * @throws {HashMismatchError} if the hashes don't match
  */
@@ -76,6 +77,7 @@ export async function verifyRecordAgainstChain(
   txHash,
   batchId,
   record,
+  decodedTx,
 ) {
   const mapping = HASH_EVENTS[stageKey];
   if (!mapping) {
@@ -84,7 +86,7 @@ export async function verifyRecordAgainstChain(
     );
   }
 
-  const decoded = await decodeCustodyTx(txHash);
+  const decoded = decodedTx ?? (await decodeCustodyTx(txHash));
   const expectedBatchTopic = id(batchId);
 
   if (!decoded || !decoded.success) {
@@ -122,5 +124,5 @@ export async function verifyRecordAgainstChain(
     });
   }
 
-  return { onChainHash, computedHash };
+  return { onChainHash, computedHash, decoded };
 }

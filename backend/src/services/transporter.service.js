@@ -1,4 +1,4 @@
-import { decodeCustodyTx, getBatch, hasRole } from "../chain/reader.js";
+import { getBatch, hasRole } from "../chain/reader.js";
 import {
   AppError,
   conflict,
@@ -54,8 +54,14 @@ export async function claimBatch(user, rawBatchId, body) {
   const { txHash, ...record } = parseBody(schema, body);
   const hashStage = `transporter_${productType}`;
 
+  let decoded;
   try {
-    await verifyRecordAgainstChain(hashStage, txHash, batchId, record);
+    ({ decoded } = await verifyRecordAgainstChain(
+      hashStage,
+      txHash,
+      batchId,
+      record,
+    ));
   } catch (err) {
     if (err instanceof HashMismatchError) {
       throw conflict("record does not match the on-chain hash");
@@ -69,7 +75,6 @@ export async function claimBatch(user, rawBatchId, body) {
   }
 
   try {
-    const decoded = await decodeCustodyTx(txHash);
     const claim = decoded?.events.find(
       (event) =>
         event.name === "BatchClaimed" &&
@@ -155,8 +160,14 @@ export async function handoverBatch(user, rawBatchId, body) {
   const { txHash, ...record } = parseBody(schema, body);
   const hashStage = `transporter_${productType}_outgoing`;
 
+  let decoded;
   try {
-    await verifyRecordAgainstChain(hashStage, txHash, batchId, record);
+    ({ decoded } = await verifyRecordAgainstChain(
+      hashStage,
+      txHash,
+      batchId,
+      record,
+    ));
   } catch (err) {
     if (err instanceof HashMismatchError) {
       throw conflict("record does not match the on-chain hash");
@@ -170,7 +181,6 @@ export async function handoverBatch(user, rawBatchId, body) {
   }
 
   try {
-    const decoded = await decodeCustodyTx(txHash);
     const handover = decoded?.events.find(
       (event) =>
         event.name === "HandoverInitiated" &&

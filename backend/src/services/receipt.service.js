@@ -1,4 +1,4 @@
-import { decodeCustodyTx, getBatch, hasRole } from "../chain/reader.js";
+import { getBatch, hasRole } from "../chain/reader.js";
 import {
   AppError,
   conflict,
@@ -51,13 +51,14 @@ export async function recordReceipt(user, rawBatchId, body) {
 
   const record = parseBody(definition.schema, body);
 
+  let decoded;
   try {
-    await verifyRecordAgainstChain(
+    ({ decoded } = await verifyRecordAgainstChain(
       definition.hashStage,
       txHash,
       batchId,
       record,
-    );
+    ));
   } catch (err) {
     if (err instanceof HashMismatchError) {
       throw conflict("record does not match the on-chain hash");
@@ -71,7 +72,6 @@ export async function recordReceipt(user, rawBatchId, body) {
   }
 
   try {
-    const decoded = await decodeCustodyTx(txHash);
     const receipt = decoded?.events.find(
       (event) =>
         event.name === "ReceiptConfirmed" &&
