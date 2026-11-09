@@ -1,6 +1,18 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/db.js";
 import { batchEvents, transporterJobs } from "../db/schema.js";
+
+const jobColumns = {
+  id: transporterJobs.id,
+  status: transporterJobs.status,
+  batchId: transporterJobs.batchId,
+  sourceParty: transporterJobs.sourceParty,
+  destinationParty: transporterJobs.destinationParty,
+  transporter: transporterJobs.transporter,
+  listingTxHash: transporterJobs.listingTxHash,
+  reservedAt: transporterJobs.reservedAt,
+  createdAt: transporterJobs.createdAt,
+};
 
 export function insert(values, exec = db) {
   return exec.insert(transporterJobs).values(values);
@@ -88,22 +100,67 @@ export function transition(id, fromStatus, patch, exec = db) {
     .returning({ id: transporterJobs.id });
 }
 
-export function listActiveForTransporter(transporter, exec = db) {
-  return exec
+export async function findById(id, exec = db) {
+  const rows = await exec
+    .select(jobColumns)
+    .from(transporterJobs)
+    .where(eq(transporterJobs.id, id))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function findClaimableForTransporter(
+  batchId,
+  transporter,
+  exec = db,
+) {
+  const rows = await exec
     .select({
       id: transporterJobs.id,
       status: transporterJobs.status,
-      batchId: transporterJobs.batchId,
-      sourceParty: transporterJobs.sourceParty,
-      destinationParty: transporterJobs.destinationParty,
-      listingTxHash: transporterJobs.listingTxHash,
-      createdAt: transporterJobs.createdAt,
+      transporter: transporterJobs.transporter,
     })
     .from(transporterJobs)
     .where(
       and(
+        eq(transporterJobs.batchId, batchId),
+        inArray(transporterJobs.status, ["available", "reserved"]),
+      ),
+    )
+    .orderBy(
+      sql`case when ${transporterJobs.transporter} = ${transporter} then 0 when ${transporterJobs.status} = 'available' then 1 else 2 end`,
+      desc(transporterJobs.createdAt),
+    )
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export function releaseReservation(id, transporter, exec = db) {
+  return exec
+    .update(transporterJobs)
+    .set({ status: "available", transporter: null, reservedAt: null })
+    .where(
+      and(
+        eq(transporterJobs.id, id),
+        eq(transporterJobs.status, "reserved"),
         eq(transporterJobs.transporter, transporter),
-        inArray(transporterJobs.status, ["claimed", "handover_pending"]),
+      ),
+    )
+    .returning({ id: transporterJobs.id });
+}
+
+export function listActiveForTransporter(transporter, exec = db) {
+  return exec
+    .select(jobColumns)
+    .from(transporterJobs)
+    .where(
+      and(
+        eq(transporterJobs.transporter, transporter),
+        inArray(transporterJobs.status, [
+          "reserved",
+          "claimed",
+          "handover_pending",
+        ]),
       ),
     )
     .orderBy(desc(transporterJobs.createdAt));
@@ -111,15 +168,7 @@ export function listActiveForTransporter(transporter, exec = db) {
 
 export function listCompletedForTransporter(transporter, exec = db) {
   return exec
-    .select({
-      id: transporterJobs.id,
-      status: transporterJobs.status,
-      batchId: transporterJobs.batchId,
-      sourceParty: transporterJobs.sourceParty,
-      destinationParty: transporterJobs.destinationParty,
-      listingTxHash: transporterJobs.listingTxHash,
-      createdAt: transporterJobs.createdAt,
-    })
+    .select(jobColumns)
     .from(transporterJobs)
     .where(
       and(
@@ -161,15 +210,7 @@ export function listReceivedByParty(party, { limit, offset }, exec = db) {
 
 export function listAvailable(exec = db) {
   return exec
-    .select({
-      id: transporterJobs.id,
-      status: transporterJobs.status,
-      batchId: transporterJobs.batchId,
-      sourceParty: transporterJobs.sourceParty,
-      destinationParty: transporterJobs.destinationParty,
-      listingTxHash: transporterJobs.listingTxHash,
-      createdAt: transporterJobs.createdAt,
-    })
+    .select(jobColumns)
     .from(transporterJobs)
     .where(eq(transporterJobs.status, "available"))
     .orderBy(desc(transporterJobs.createdAt), desc(transporterJobs.id));

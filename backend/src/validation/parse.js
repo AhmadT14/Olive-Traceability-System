@@ -2,6 +2,7 @@ import { badRequest, internalError, unprocessable } from "../errors.js";
 import {
   batchIdParamSchema,
   destinationRoleQuerySchema,
+  jobIdParamSchema,
   jobStatusQuerySchema,
   limitQuerySchema,
   mineQuerySchema,
@@ -63,6 +64,12 @@ export function parseWalletAddress(raw) {
 export function parseDestinationRole(raw) {
   const parsed = destinationRoleQuerySchema.safeParse(raw);
   if (!parsed.success) throw badRequest("role must be MILL");
+  return parsed.data;
+}
+
+export function parseJobId(raw) {
+  const parsed = jobIdParamSchema.safeParse(raw);
+  if (!parsed.success) throw badRequest("invalid job id");
   return parsed.data;
 }
 

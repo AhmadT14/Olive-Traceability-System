@@ -1,0 +1,1 @@
+ALTER TABLE "transporter_jobs" ADD COLUMN "reserved_at" timestamp with time zone;

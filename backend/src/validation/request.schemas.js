@@ -28,6 +28,8 @@ export const limitQuerySchema = integerQuery
 
 export const offsetQuerySchema = integerQuery.optional();
 
+export const jobIdParamSchema = integerQuery.pipe(z.number().int().min(1));
+
 // The only supported pre-batch destination lookup is a mill. Accept any case
 // for backwards compatibility, then normalise the result.
 export const destinationRoleQuerySchema = z

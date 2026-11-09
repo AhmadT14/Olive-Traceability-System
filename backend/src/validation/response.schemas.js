@@ -179,19 +179,20 @@ const jobPartySchema = z.object({
   roles,
 });
 
+export const jobResponseSchema = z.object({
+  id: z.number(),
+  status: z.string(),
+  batchId: z.string(),
+  stage: z.string(),
+  source: jobPartySchema,
+  destination: jobPartySchema.extend({ address: z.string() }),
+  outgoingDetails: z.union([z.null(), jsonObject]),
+  reservedAt: nullableTimestamp,
+  createdAt: nullableTimestamp,
+});
+
 export const jobsResponseSchema = z.object({
-  jobs: z.array(
-    z.object({
-      id: z.number(),
-      status: z.string(),
-      batchId: z.string(),
-      stage: z.string(),
-      source: jobPartySchema,
-      destination: jobPartySchema.extend({ address: z.string() }),
-      outgoingDetails: z.union([z.null(), jsonObject]),
-      createdAt: nullableTimestamp,
-    }),
-  ),
+  jobs: z.array(jobResponseSchema),
 });
 
 export const preparedBatchResponseSchema = z.object({

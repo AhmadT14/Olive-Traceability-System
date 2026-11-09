@@ -88,6 +88,7 @@ export const transporterJobs = p.pgTable(
     claimTxHash: txHash("claim_tx_hash"),
     handoverTxHash: txHash("handover_tx_hash"),
     receiptTxHash: txHash("receipt_tx_hash"),
+    reservedAt: p.timestamp("reserved_at", { withTimezone: true }),
     createdAt: p.timestamp("created_at").defaultNow(),
   },
   (t) => [
