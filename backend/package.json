@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node src/app.js",
     "sync:abis": "node scripts/sync-abis.js ../contracts/out",
-    "test": "node --test",
+    "test": "node --test --experimental-test-module-mocks",
     "format:write": "prettier --write \"src/**/*.js\" \"test/**/*.js\"",
     "format:check": "prettier --check \"src/**/*.js\" \"test/**/*.js\"",
     "db:migrate": "drizzle-kit migrate",
