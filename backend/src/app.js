@@ -3,6 +3,8 @@ import helmet from "helmet";
 import { config } from "./config.js";
 import { provider } from "./chain/contracts.js";
 import { checkChain } from "./chain/startup.js";
+import { startEventSync } from "./chain/eventIndex.js";
+import { startReconciler } from "./services/reconcile.service.js";
 import participantsRoutes from "./api/routes/participants.routes.js";
 import chainRoutes from "./api/routes/chain.routes.js";
 import txRoutes from "./api/routes/tx.routes.js";
@@ -22,6 +24,7 @@ import verificationRoutes from "./api/routes/verification.routes.js";
 import adminRoutes from "./api/routes/admin.routes.js";
 import meRoutes from "./api/routes/me.routes.js";
 import applicationsRoutes from "./api/routes/applications.routes.js";
+import signupRoutes from "./api/routes/signup.routes.js";
 import { errorHandler, notFoundHandler } from "./api/errorHandler.js";
 import { allowOrigins } from "./api/cors.js";
 import { authRateLimit, requestId } from "./api/security.js";
@@ -58,6 +61,7 @@ app.use(verificationRoutes);
 app.use(adminRoutes);
 app.use(meRoutes);
 app.use(applicationsRoutes);
+app.use(signupRoutes);
 
 // Keep every failure — including unknown routes and malformed bodies — in the
 // same JSON shape: { error, details? }.
@@ -79,3 +83,14 @@ if (chainProblems.length > 0) {
 app.listen(config.PORT, () => {
   console.log(`Server is running on port ${config.PORT}`);
 });
+
+if (config.EVENT_SYNC_INTERVAL_MS > 0) {
+  startEventSync({ intervalMs: config.EVENT_SYNC_INTERVAL_MS });
+}
+
+if (config.RECONCILE_INTERVAL_MS > 0) {
+  startReconciler({
+    intervalMs: config.RECONCILE_INTERVAL_MS,
+    maxAgeMs: config.PENDING_SAVE_MAX_AGE_HOURS * 60 * 60 * 1000,
+  });
+}

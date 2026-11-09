@@ -18,6 +18,9 @@ const schema = z.object({
   AUTH_URI: z.string().url().default("http://localhost:5173"),
   CORS_ORIGIN: z.string().optional().transform(parseCorsOrigins),
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
+  EVENT_SYNC_INTERVAL_MS: z.coerce.number().int().min(0).default(5_000),
+  RECONCILE_INTERVAL_MS: z.coerce.number().int().min(0).default(30_000),
+  PENDING_SAVE_MAX_AGE_HOURS: z.coerce.number().positive().default(24),
 });
 
 export const config = schema.parse(process.env);
