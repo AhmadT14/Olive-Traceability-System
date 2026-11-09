@@ -138,7 +138,12 @@ export async function findClaimableForTransporter(
 export function releaseReservation(id, transporter, exec = db) {
   return exec
     .update(transporterJobs)
-    .set({ status: "available", transporter: null, reservedAt: null })
+    .set({
+      status: "available",
+      transporter: null,
+      reservedAt: null,
+      reserveTxHash: null,
+    })
     .where(
       and(
         eq(transporterJobs.id, id),

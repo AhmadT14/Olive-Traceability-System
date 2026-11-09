@@ -90,11 +90,20 @@ test("releaseReservation only matches the caller's reserved job", () => {
     .toSQL();
   assert.ok(
     sql.includes(
-      `where (("transporter_jobs"."id" = $4) and ("transporter_jobs"."status" = $5) and ("transporter_jobs"."transporter" = $6))`,
+      `where (("transporter_jobs"."id" = $5) and ("transporter_jobs"."status" = $6) and ("transporter_jobs"."transporter" = $7))`,
     ),
     sql,
   );
-  assert.deepEqual(params, [null, "available", null, 7, "reserved", CALLER]);
+  assert.ok(sql.includes(`"reserve_tx_hash" = $3`), sql);
+  assert.deepEqual(params, [
+    null,
+    "available",
+    null,
+    null,
+    7,
+    "reserved",
+    CALLER,
+  ]);
 });
 
 test("the job lists select reservedAt and mine=true includes reserved jobs", () => {

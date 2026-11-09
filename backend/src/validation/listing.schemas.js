@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   addressSchema,
   batchIdSchema,
+  dateSchema,
   quantitySchema,
 } from "./common.schemas.js";
 
@@ -18,7 +19,7 @@ const oilFields = {
 
 export const millListingSchema = z.object({
   ...destination,
-  pressing_date: z.string().optional(),
+  pressing_date: dateSchema.optional(),
   extraction_method: z.string().optional(),
   output_quantity: quantitySchema.optional(),
   oil_quality: z.string().optional(),
@@ -30,7 +31,7 @@ export const millListingSchema = z.object({
 export const storageListingSchema = z.object({
   ...destination,
   quantity_released: quantitySchema.optional(),
-  storage_end_date: z.string().optional(),
+  storage_end_date: dateSchema.optional(),
   ...oilFields,
   loading_details: z.string().optional(),
 });

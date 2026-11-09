@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { quantitySchema } from "./common.schemas.js";
+import { dateSchema, quantitySchema } from "./common.schemas.js";
 
 export const millReceiptSchema = z.object({
   arrival_condition: z.string().optional(),
@@ -11,7 +11,7 @@ export const millReceiptSchema = z.object({
 
 const storageReceiptSchema = z.object({
   quantity_received: quantitySchema.optional(),
-  storage_start_date: z.string().optional(),
+  storage_start_date: dateSchema.optional(),
   expected_duration: z.number().int().optional(),
   conditions: z.string().optional(),
   product_condition: z.string().optional(),

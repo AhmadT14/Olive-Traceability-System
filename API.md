@@ -4,7 +4,7 @@ The backend is an Express JSON API that coordinates the Olive Traceability Syste
 
 ## Base URL and conventions
 
-The local API address is `http://localhost:3000`. Routes below are relative to that address; the server currently does not add an `/api` prefix. Requests with a body use JSON (`Content-Type: application/json`). Batch IDs are strings up to 64 characters. Ethereum addresses use the `0x` plus 40 hexadecimal character format; transaction hashes use `0x` plus 64 hexadecimal characters.
+The local API address is `http://localhost:3000`. Routes below are relative to that address; the server currently does not add an `/api` prefix. Requests with a body use JSON (`Content-Type: application/json`). Batch IDs are strings up to 64 characters. Ethereum addresses use the `0x` plus 40 hexadecimal character format; transaction hashes use `0x` plus 64 hexadecimal characters. Date fields in records (`harvest_date`, `pressing_date`, `storage_start_date`, `storage_end_date`) must be real calendar dates written `YYYY-MM-DD`, with no spaces or time; anything else is a `422`, on the prepare route and on the save route alike. The date is part of the hashed record, so the same text must be sent to both.
 
 Protected routes require a JWT in the header:
 

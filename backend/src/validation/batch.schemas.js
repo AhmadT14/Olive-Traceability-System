@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   addressSchema,
   batchIdSchema,
+  dateSchema,
   quantitySchema,
   txHashSchema,
 } from "./common.schemas.js";
@@ -9,7 +10,7 @@ import {
 // Required on both the prepare and the save step, and the two must agree: the
 // hash the wallet signs is computed from exactly these values.
 const requiredBatchFields = {
-  harvest_date: z.string().trim().min(1),
+  harvest_date: dateSchema,
   location: z.string().trim().min(1).max(255),
   olive_type: z.string().trim().min(1).max(128),
 };

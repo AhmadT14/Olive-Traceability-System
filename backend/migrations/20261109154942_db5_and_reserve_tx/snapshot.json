@@ -1,0 +1,1676 @@
+{
+  "version": "8",
+  "dialect": "postgres",
+  "id": "d12c1c00-6d4b-48db-aeda-48ea23324d5e",
+  "prevIds": [
+    "3e4769d9-fa26-410c-88fc-13561f8739d0"
+  ],
+  "ddl": [
+    {
+      "isRlsEnabled": false,
+      "name": "batch_events",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "batches",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "chain_events",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "chain_sync_state",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "participant_profiles",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "participants",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "pending_saves",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "registration_applications",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "transporter_jobs",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "event_tx_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "batch_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "type": "varchar(32)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contract_event",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "type": "varchar(40)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "details_type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "1",
+      "generated": null,
+      "identity": null,
+      "name": "payload_version",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "details",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "recorded_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "batch_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batches"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "batches"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": {
+        "type": "always",
+        "name": "chain_events_id_seq",
+        "increment": "1",
+        "startWith": "1",
+        "minValue": "1",
+        "maxValue": "9223372036854775807",
+        "cache": 1,
+        "cycle": false
+      },
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contract_address",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "type": "varchar(40)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "event_name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tx_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "log_index",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "block_number",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "block_time",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "batch_topic",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "addresses",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "args",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "type": "varchar(32)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "chain_sync_state"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "last_block",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "chain_sync_state"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "chain_sync_state"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "wallet_address",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contact_phone",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "email",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "address",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "location",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "varchar(32)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "availability",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "details",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "wallet_address",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "participants"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": {
+        "type": "always",
+        "name": "pending_saves_id_seq",
+        "increment": "1",
+        "startWith": "1",
+        "minValue": "1",
+        "maxValue": "2147483647",
+        "cache": 1,
+        "cycle": false
+      },
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "wallet_address",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "batch_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "type": "varchar(40)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "details_type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "payload",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "data_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tx_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "type": "varchar(16)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'pending'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "failure_reason",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "resolved_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": {
+        "type": "always",
+        "name": "registration_applications_id_seq",
+        "increment": "1",
+        "startWith": "1",
+        "minValue": "1",
+        "maxValue": "2147483647",
+        "cache": 1,
+        "cycle": false
+      },
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "registration_applications"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "wallet_address",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "registration_applications"
+    },
+    {
+      "type": "varchar(32)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "role",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "registration_applications"
+    },
+    {
+      "type": "varchar(16)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'pending'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "registration_applications"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "profile",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "registration_applications"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "rejection_reason",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "registration_applications"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "reviewed_by",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "registration_applications"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "registration_applications"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "reviewed_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "registration_applications"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": {
+        "type": "always",
+        "name": "transporter_jobs_id_seq",
+        "increment": "1",
+        "startWith": "1",
+        "minValue": "1",
+        "maxValue": "2147483647",
+        "cache": 1,
+        "cycle": false
+      },
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "batch_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "source_party",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "destination_party",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(42)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "transporter",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(32)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "listing_tx_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "claim_tx_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "handover_tx_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "receipt_tx_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "varchar(66)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "reserve_tx_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "reserved_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "batch_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "batch_events_batch_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "details_type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "batch_events_details_type_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "batch_topic",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "chain_events_batch_topic_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "event_name",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "chain_events_event_name_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "block_number",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "log_index",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "chain_events_block_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "addresses",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "gin",
+      "concurrently": false,
+      "name": "chain_events_addresses_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "batch_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "data_hash",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "pending_saves_batch_hash_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "pending_saves_status_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "wallet_address",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "pending_saves_wallet_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "wallet_address",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"status\" = 'pending'",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "registration_applications_one_pending_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "registration_applications"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "registration_applications_status_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "registration_applications"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "batch_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "transporter_jobs_batch_id_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "transporter_jobs_status_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "transporter",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "transporter_jobs_transporter_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "batch_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "batches",
+      "columnsTo": [
+        "batch_id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "batch_events_batch_id_batches_batch_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "wallet_address"
+      ],
+      "schemaTo": "public",
+      "tableTo": "participants",
+      "columnsTo": [
+        "wallet_address"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "participant_profiles_Ksw8g5D1Q0jl_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "participant_profiles"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "batch_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "batches",
+      "columnsTo": [
+        "batch_id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_batch_id_batches_batch_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "source_party"
+      ],
+      "schemaTo": "public",
+      "tableTo": "participants",
+      "columnsTo": [
+        "wallet_address"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_source_party_participants_wallet_address_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "destination_party"
+      ],
+      "schemaTo": "public",
+      "tableTo": "participants",
+      "columnsTo": [
+        "wallet_address"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_SBT76rscwi4R_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "transporter"
+      ],
+      "schemaTo": "public",
+      "tableTo": "participants",
+      "columnsTo": [
+        "wallet_address"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_transporter_participants_wallet_address_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "batch_id",
+        "listing_tx_hash"
+      ],
+      "schemaTo": "public",
+      "tableTo": "batch_events",
+      "columnsTo": [
+        "batch_id",
+        "event_tx_hash"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_listing_event_fk",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "batch_id",
+        "claim_tx_hash"
+      ],
+      "schemaTo": "public",
+      "tableTo": "batch_events",
+      "columnsTo": [
+        "batch_id",
+        "event_tx_hash"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_claim_event_fk",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "batch_id",
+        "handover_tx_hash"
+      ],
+      "schemaTo": "public",
+      "tableTo": "batch_events",
+      "columnsTo": [
+        "batch_id",
+        "event_tx_hash"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_handover_event_fk",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "batch_id",
+        "receipt_tx_hash"
+      ],
+      "schemaTo": "public",
+      "tableTo": "batch_events",
+      "columnsTo": [
+        "batch_id",
+        "event_tx_hash"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "transporter_jobs_receipt_event_fk",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "columns": [
+        "event_tx_hash"
+      ],
+      "nameExplicit": false,
+      "name": "batch_events_pkey",
+      "schema": "public",
+      "table": "batch_events",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "batch_id"
+      ],
+      "nameExplicit": false,
+      "name": "batches_pkey",
+      "schema": "public",
+      "table": "batches",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "chain_events_pkey",
+      "schema": "public",
+      "table": "chain_events",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "name"
+      ],
+      "nameExplicit": false,
+      "name": "chain_sync_state_pkey",
+      "schema": "public",
+      "table": "chain_sync_state",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "wallet_address"
+      ],
+      "nameExplicit": false,
+      "name": "participant_profiles_pkey",
+      "schema": "public",
+      "table": "participant_profiles",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "wallet_address"
+      ],
+      "nameExplicit": false,
+      "name": "participants_pkey",
+      "schema": "public",
+      "table": "participants",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "pending_saves_pkey",
+      "schema": "public",
+      "table": "pending_saves",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "registration_applications_pkey",
+      "schema": "public",
+      "table": "registration_applications",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "transporter_jobs_pkey",
+      "schema": "public",
+      "table": "transporter_jobs",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "batch_id",
+        "event_tx_hash"
+      ],
+      "nullsNotDistinct": false,
+      "name": "batch_events_batch_tx_unique",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "tx_hash",
+        "log_index"
+      ],
+      "nullsNotDistinct": false,
+      "name": "chain_events_tx_log_unique",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "tx_hash"
+      ],
+      "nullsNotDistinct": false,
+      "name": "pending_saves_tx_hash_unique",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "listing_tx_hash"
+      ],
+      "nullsNotDistinct": false,
+      "name": "transporter_jobs_listing_tx_hash_unique",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "claim_tx_hash"
+      ],
+      "nullsNotDistinct": false,
+      "name": "transporter_jobs_claim_tx_hash_unique",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "handover_tx_hash"
+      ],
+      "nullsNotDistinct": false,
+      "name": "transporter_jobs_handover_tx_hash_unique",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "receipt_tx_hash"
+      ],
+      "nullsNotDistinct": false,
+      "name": "transporter_jobs_receipt_tx_hash_unique",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "reserve_tx_hash"
+      ],
+      "nullsNotDistinct": false,
+      "name": "transporter_jobs_reserve_tx_hash_unique",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "transporter_jobs"
+    },
+    {
+      "value": "\"contract_event\" IN ('BatchCreated', 'BatchListed', 'BatchClaimed', 'HandoverInitiated', 'ReceiptConfirmed')",
+      "name": "batch_events_contract_event_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "value": "\"details_type\" IN ('farm', 'transporter_olive_pickup', 'transporter_oil_pickup', 'transporter_olive_delivery', 'transporter_oil_delivery', 'mill_intake', 'mill_outgoing', 'storage_intake', 'storage_outgoing', 'exporter_intake', 'exporter_outgoing', 'importer_intake', 'importer_outgoing', 'retailer_intake')",
+      "name": "batch_events_details_type_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "value": "\"payload_version\" > 0",
+      "name": "batch_events_payload_version_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "value": "jsonb_typeof(\"details\") = 'object'",
+      "name": "batch_events_details_object_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "batch_events"
+    },
+    {
+      "value": "jsonb_typeof(\"args\") = 'object'",
+      "name": "chain_events_args_object_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "chain_events"
+    },
+    {
+      "value": "\"details_type\" IN ('farm', 'transporter_olive_pickup', 'transporter_oil_pickup', 'transporter_olive_delivery', 'transporter_oil_delivery', 'mill_intake', 'mill_outgoing', 'storage_intake', 'storage_outgoing', 'exporter_intake', 'exporter_outgoing', 'importer_intake', 'importer_outgoing', 'retailer_intake')",
+      "name": "pending_saves_details_type_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "value": "\"status\" IN ('pending', 'confirmed', 'failed')",
+      "name": "pending_saves_status_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "value": "jsonb_typeof(\"payload\") = 'object'",
+      "name": "pending_saves_payload_object_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "pending_saves"
+    },
+    {
+      "value": "\"role\" IN ('FARMER', 'TRANSPORTER', 'MILL', 'STORAGE', 'EXPORTER', 'IMPORTER', 'RETAILER')",
+      "name": "registration_applications_role_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "registration_applications"
+    },
+    {
+      "value": "\"status\" IN ('pending', 'approved', 'rejected')",
+      "name": "registration_applications_status_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "registration_applications"
+    },
+    {
+      "value": "jsonb_typeof(\"profile\") = 'object'",
+      "name": "registration_applications_profile_object_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "registration_applications"
+    }
+  ],
+  "renames": []
+}
