@@ -1,5 +1,6 @@
 import { badRequest, internalError, unprocessable } from "../errors.js";
 import {
+  applicationStatusQuerySchema,
   batchIdParamSchema,
   destinationRoleQuerySchema,
   jobIdParamSchema,
@@ -70,6 +71,14 @@ export function parseDestinationRole(raw) {
 export function parseJobId(raw) {
   const parsed = jobIdParamSchema.safeParse(raw);
   if (!parsed.success) throw badRequest("invalid job id");
+  return parsed.data;
+}
+
+export function parseApplicationStatusQuery(raw) {
+  const parsed = applicationStatusQuerySchema.safeParse(raw);
+  if (!parsed.success) {
+    throw badRequest("status must be pending, approved or rejected");
+  }
   return parsed.data;
 }
 

@@ -17,6 +17,10 @@ export const mineQuerySchema = z.enum(["true", "false"]).optional();
 
 export const jobStatusQuerySchema = z.enum(["completed"]).optional();
 
+export const applicationStatusQuerySchema = z
+  .enum(["pending", "approved", "rejected"])
+  .optional();
+
 const integerQuery = z
   .string()
   .regex(/^\d{1,9}$/)

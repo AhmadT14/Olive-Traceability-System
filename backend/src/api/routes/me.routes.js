@@ -4,6 +4,7 @@ import {
   getMyProfile,
   listCreatedBatches,
   listMyBatches,
+  listMyPendingSaves,
   listReceivedBatches,
   updateMyAvailability,
   updateMyProfile,
@@ -13,6 +14,7 @@ import {
   createdBatchesResponseSchema,
   myBatchesResponseSchema,
   myProfileResponseSchema,
+  pendingSavesResponseSchema,
   receivedBatchesResponseSchema,
 } from "../../validation/response.schemas.js";
 import { handle } from "../response.js";
@@ -82,6 +84,18 @@ router.get(
       body: await listReceivedBatches(req.user, req.query),
     }),
     receivedBatchesResponseSchema,
+  ),
+);
+
+router.get(
+  "/me/pending",
+  requireAuth,
+  handle(
+    async (req) => ({
+      status: 200,
+      body: await listMyPendingSaves(req.user, req.query),
+    }),
+    pendingSavesResponseSchema,
   ),
 );
 

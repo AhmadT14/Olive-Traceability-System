@@ -14,10 +14,14 @@ const participantsRepo = stubModule("repositories/participant.repository.js", [
 const jobsRepo = stubModule("repositories/transporterJob.repository.js", [
   "listReceivedByParty",
 ]);
+const savesRepo = stubModule("repositories/pendingSave.repository.js", [
+  "listForWallet",
+]);
 const {
   getMyProfile,
   listCreatedBatches,
   listMyBatches,
+  listMyPendingSaves,
   listReceivedBatches,
   updateMyAvailability,
   updateMyProfile,
@@ -254,4 +258,36 @@ test("listReceivedBatches turns a database failure into a 500", async () => {
     throw new Error("db down");
   };
   await assert.rejects(listReceivedBatches(user, {}), { status: 500 });
+});
+
+test("listMyPendingSaves lists the caller's drafts with paging", async () => {
+  const asked = [];
+  savesRepo.listForWallet = async (wallet, page) => {
+    asked.push([wallet, page]);
+    return [
+      {
+        id: 4,
+        batchId: "B9",
+        detailsType: "farm",
+        status: "failed",
+        txHash: null,
+        failureReason: "transaction reverted",
+        payload: { harvest_date: "2026-10-01" },
+        createdAt: new Date("2026-11-09T10:00:00Z"),
+        resolvedAt: new Date("2026-11-09T10:05:00Z"),
+      },
+    ];
+  };
+  const { saves } = await listMyPendingSaves(user, { limit: "10" });
+  assert.deepEqual(asked, [[ME.toLowerCase(), { limit: 10, offset: 0 }]]);
+  assert.equal(saves[0].status, "failed");
+  assert.equal(saves[0].failureReason, "transaction reverted");
+  assert.deepEqual(saves[0].payload, { harvest_date: "2026-10-01" });
+  await assert.rejects(listMyPendingSaves(user, { offset: "-1" }), {
+    status: 400,
+  });
+  savesRepo.listForWallet = async () => {
+    throw new Error("db down");
+  };
+  await assert.rejects(listMyPendingSaves(user, {}), { status: 500 });
 });

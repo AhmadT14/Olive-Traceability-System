@@ -11,6 +11,7 @@ import {
 import * as batchEventRepository from "../repositories/batchEvent.repository.js";
 import * as batchRepository from "../repositories/batch.repository.js";
 import * as participantRepository from "../repositories/participant.repository.js";
+import * as pendingSaveRepository from "../repositories/pendingSave.repository.js";
 import * as transporterJobRepository from "../repositories/transporterJob.repository.js";
 import {
   profileDetailsSchemaForRoles,
@@ -205,5 +206,31 @@ export async function listReceivedBatches(user, query) {
   } catch (err) {
     if (err instanceof AppError) throw err;
     throw internalError("received batch lookup failed", err);
+  }
+}
+
+export async function listMyPendingSaves(user, query) {
+  const page = parsePageQuery(query);
+
+  try {
+    const rows = await pendingSaveRepository.listForWallet(
+      walletOf(user),
+      page,
+    );
+    return {
+      saves: rows.map((row) => ({
+        id: row.id,
+        batchId: row.batchId,
+        detailsType: row.detailsType,
+        status: row.status,
+        txHash: row.txHash ?? null,
+        failureReason: row.failureReason ?? null,
+        payload: row.payload,
+        createdAt: row.createdAt,
+        resolvedAt: row.resolvedAt ?? null,
+      })),
+    };
+  } catch (err) {
+    throw internalError("pending save lookup failed", err);
   }
 }

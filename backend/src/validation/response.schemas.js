@@ -191,6 +191,42 @@ export const jobResponseSchema = z.object({
   createdAt: nullableTimestamp,
 });
 
+const applicationSchema = z.object({
+  id: z.number(),
+  address: z.string(),
+  role: z.string(),
+  status: z.enum(["pending", "approved", "rejected"]),
+  profile: jsonObject,
+  rejectionReason: z.string().nullable(),
+  reviewedBy: z.string().nullable(),
+  createdAt: timestamp,
+  reviewedAt: nullableTimestamp,
+});
+
+export const myApplicationResponseSchema = z.object({
+  application: applicationSchema.nullable(),
+});
+
+export const applicationsResponseSchema = z.object({
+  applications: z.array(applicationSchema),
+});
+
+export const pendingSavesResponseSchema = z.object({
+  saves: z.array(
+    z.object({
+      id: z.number(),
+      batchId: z.string(),
+      detailsType: z.string(),
+      status: z.enum(["pending", "confirmed", "failed"]),
+      txHash: z.string().nullable(),
+      failureReason: z.string().nullable(),
+      payload: jsonObject,
+      createdAt: timestamp,
+      resolvedAt: nullableTimestamp,
+    }),
+  ),
+});
+
 export const jobsResponseSchema = z.object({
   jobs: z.array(jobResponseSchema),
 });
