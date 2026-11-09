@@ -17,7 +17,7 @@ An early-stage olive batch traceability project. The Solidity contracts provide 
 ## Requirements
 
 - Docker and Docker Compose
-- Node.js 20 or newer and npm (only needed for running the backend or frontend outside Docker)
+- Node.js 24 or newer and npm (only needed for running the backend or frontend outside Docker)
 
 ## Local development setup
 
