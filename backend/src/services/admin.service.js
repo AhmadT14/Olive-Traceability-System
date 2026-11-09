@@ -110,10 +110,14 @@ export async function confirmRoleChange(user, body) {
     }
 
     if (action === "register") {
-      const { values: profileValues, updates: profileUpdates } =
-        buildRoleProfile(address, role, parsed.profile);
-
       await runInTransaction(async (exec) => {
+        const stored = await participantRepository.findProfile(
+          address.toLowerCase(),
+          exec,
+        );
+        const { values: profileValues, updates: profileUpdates } =
+          buildRoleProfile(address, role, parsed.profile, stored?.details);
+
         await participantRepository.insertIgnore(address.toLowerCase(), exec);
         await participantRepository.upsertProfile(
           profileValues,

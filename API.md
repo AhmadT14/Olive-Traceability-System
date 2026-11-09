@@ -95,7 +95,7 @@ These change the caller's own record and need a bearer token. They do not involv
 | IMPORTER | `businessName` (up to 255), `importLicenseDetails`, `distributionDetails` |
 | RETAILER | `businessName` (up to 255), `retailLicenseDetails`, `businessType` (up to 128) |
 
-With `PATCH /me/profile`, a wallet with several roles may use the keys of all of them. When the admin registers a participant, `profile.details` is checked against the role being registered.
+With `PATCH /me/profile`, a wallet with several roles may use the keys of all of them. When the admin registers a participant, `profile.details` is checked against the role being registered, then merged into the stored `details` key by key, so registering a second role keeps the keys of the first.
 
 The name keys (`farmName`, `facilityName`, `companyName`, `businessName`) are optional and no route uses them: only `GET /me/profile` returns `details`. `profile.name` is the participant's business or facility name, and it is what every other route shows. A client may leave the name keys out. They stay accepted, so existing profiles keep working.
 
@@ -161,7 +161,7 @@ These routes require a bearer token. The `txHash` must refer to a successful on 
 | `POST /batches/:id/storage-outgoing` | Save storage outgoing details after listing. Body: `txHash` and storage outgoing fields. |
 | `POST /batches/:id/exporter-outgoing` | Save exporter outgoing details after listing. Body: `txHash` and exporter outgoing fields. |
 | `POST /batches/:id/importer-outgoing` | Save importer outgoing details after listing. Body: `txHash` and importer outgoing fields. |
-| `POST /admin/participants/confirm-role-change` | Confirm a submitted role transaction. Body for registration includes `address`, `role`, `action: "register"`, `txHash`, and `profile`; revocation omits `profile`. Registration profile requires `name`, with optional shared fields `contactPhone`, `email`, `address`, `location`, `availability`, and role-specific validated `details`. |
+| `POST /admin/participants/confirm-role-change` | Confirm a submitted role transaction. Body for registration includes `address`, `role`, `action: "register"`, `txHash`, and `profile`; revocation omits `profile`. Registration profile requires `name`, with optional shared fields `contactPhone`, `email`, `address`, `location`, `availability`, and role-specific validated `details`, merged into any stored `details` key by key (a key sent again replaces the stored value; other stored keys are kept). |
 
 Record saving can return `409` if the chain event, caller, current batch state, destination, record hash, or corresponding off chain workflow state does not match, or if the record was already saved. Record details are not saved until validation succeeds.
 

@@ -32,7 +32,7 @@ test("eventArgsToObject gives the batch id topic hash, not [object Object]", () 
   });
 });
 
-test("eventArgsToObject works on the shape decodeTx returns", () => {
+test("eventArgsToObject works on the shape decodeCustodyTx returns", () => {
   const parsed = custody.parseLog(
     custody.encodeEventLog("BatchClaimed", ["B1", FARMER, id("pickup")]),
   );
@@ -70,6 +70,35 @@ test("buildRoleProfile writes only the fields that were sent", () => {
     location: "Jenin",
     details: { processingCapacity: 5000 },
   });
+});
+
+test("buildRoleProfile keeps the stored details of an earlier role", () => {
+  const { updates } = buildRoleProfile(
+    MILL,
+    "MILL",
+    {
+      name: "Al-Salam Olive Mill",
+      details: { processingCapacity: 5000 },
+    },
+    { farmName: "Al-Salam Farm", certificationDetails: "organic" },
+  );
+
+  assert.deepEqual(updates.details, {
+    farmName: "Al-Salam Farm",
+    certificationDetails: "organic",
+    processingCapacity: 5000,
+  });
+});
+
+test("buildRoleProfile leaves stored details alone when none are sent", () => {
+  const { updates } = buildRoleProfile(
+    MILL,
+    "MILL",
+    { name: "Al-Salam Olive Mill" },
+    { farmName: "Al-Salam Farm" },
+  );
+
+  assert.equal("details" in updates, false);
 });
 
 test("buildRoleProfile rejects invalid details with 422", () => {

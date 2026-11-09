@@ -9,7 +9,7 @@ const SHARED_FIELDS = [
   "availability",
 ];
 
-export function buildRoleProfile(address, role, profile) {
+export function buildRoleProfile(address, role, profile, storedDetails) {
   const updates = { name: profile.name };
   for (const field of SHARED_FIELDS) {
     if (profile[field] !== undefined) updates[field] = profile[field];
@@ -20,7 +20,7 @@ export function buildRoleProfile(address, role, profile) {
     if (!result.success) {
       throw unprocessable("invalid profile details", result.error.flatten());
     }
-    updates.details = result.data;
+    updates.details = { ...(storedDetails ?? {}), ...result.data };
   }
 
   return {
