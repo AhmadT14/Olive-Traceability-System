@@ -2,9 +2,8 @@ import { id, ZeroHash } from "ethers";
 import { registry, batchCustody, provider } from "./contracts.js";
 import { ROLES, Status, Stage } from "./enums.js";
 import { sameAddress } from "./addresses.js";
-import { config } from "../config.js";
-import { eventArgsToObject } from "./eventArgs.js";
-import { readInPages } from "./logPages.js";
+import * as chainEventRepository from "../repositories/chainEvent.repository.js";
+import { syncEvents } from "./eventIndex.js";
 
 export { ROLES };
 
@@ -69,65 +68,28 @@ export function decodeRegistryTx(txHash) {
   }));
 }
 
-// Every event for one batch, oldest first. batchId is the first indexed value
-// on every BatchCustody event, so the node is asked for just the logs whose
-// second topic is the batch id's hash instead of every event ever emitted.
 export async function getBatchHistory(batchId) {
-  const logs = await readLogs((fromBlock, toBlock) =>
-    provider.getLogs({
-      address: batchCustody.target,
-      fromBlock,
-      toBlock,
-      topics: [null, id(batchId)],
-    }),
-  );
-
-  return logs.flatMap((log) => {
-    const parsed = batchCustody.interface.parseLog(log);
-    if (!parsed) return [];
-    return [
-      {
-        name: parsed.name,
-        txHash: log.transactionHash,
-        blockNumber: log.blockNumber,
-        args: eventArgsToObject(parsed),
-      },
-    ];
-  });
-}
-
-// Every BatchCreated event for one farmer, with the time of its block. Only
-// events from the farmer's own address are returned (the event indexes it), so
-// the cost follows the farmer's batch count, not the size of the whole chain.
-export async function getBatchCreatedEvents(address) {
-  const filter = batchCustody.filters.BatchCreated(null, address);
-  const logs = await readLogs((fromBlock, toBlock) =>
-    batchCustody.queryFilter(filter, fromBlock, toBlock),
-  );
-  const timestamps = await getBlockTimestamps(logs);
-
-  return logs.map((log) => ({
-    txHash: log.transactionHash,
-    blockNumber: log.blockNumber,
-    timestamp: timestamps.get(log.blockNumber),
+  await syncEvents();
+  const rows = await chainEventRepository.listByBatchTopic(id(batchId));
+  return rows.map((row) => ({
+    name: row.eventName,
+    txHash: row.txHash,
+    blockNumber: row.blockNumber,
+    args: row.args,
   }));
 }
 
-async function readLogs(readRange) {
-  const toBlock = await provider.getBlockNumber();
-  return readInPages(readRange, {
-    fromBlock: config.DEPLOY_BLOCK,
-    toBlock,
-    pageSize: config.LOG_BLOCK_RANGE,
-  });
-}
-
-async function getBlockTimestamps(logs) {
-  const blockNumbers = [...new Set(logs.map((log) => log.blockNumber))];
-  const blocks = await Promise.all(
-    blockNumbers.map((n) => provider.getBlock(n)),
+export async function getBatchCreatedEvents(address) {
+  await syncEvents();
+  const rows = await chainEventRepository.listByEventAndAddress(
+    "BatchCreated",
+    address.toLowerCase(),
   );
-  return new Map(
-    blocks.map((block, index) => [blockNumbers[index], block.timestamp]),
-  );
+  return rows
+    .filter((row) => sameAddress(row.args.farmer, address))
+    .map((row) => ({
+      txHash: row.txHash,
+      blockNumber: row.blockNumber,
+      timestamp: Math.floor(new Date(row.blockTime).getTime() / 1000),
+    }));
 }
