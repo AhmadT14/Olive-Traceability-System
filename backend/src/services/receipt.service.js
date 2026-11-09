@@ -19,6 +19,7 @@ import { parseBatchId, parseBody, parseTxHash } from "../validation/parse.js";
 import { receiptSchemas } from "../validation/receipt.schemas.js";
 import { sameAddress } from "../chain/addresses.js";
 import { batchExists } from "../chain/enums.js";
+import { confirmDraft } from "./drafts.js";
 
 export async function recordReceipt(user, rawBatchId, body) {
   const batchId = parseBatchId(rawBatchId);
@@ -52,8 +53,9 @@ export async function recordReceipt(user, rawBatchId, body) {
   const record = parseBody(definition.schema, body);
 
   let decoded;
+  let dataHash;
   try {
-    ({ decoded } = await verifyRecordAgainstChain(
+    ({ decoded, computedHash: dataHash } = await verifyRecordAgainstChain(
       definition.hashStage,
       txHash,
       batchId,
@@ -71,11 +73,32 @@ export async function recordReceipt(user, rawBatchId, body) {
     throw internalError("chain read failed", err);
   }
 
+  await writeReceipt({
+    wallet: user.address,
+    batchId,
+    txHash,
+    record,
+    decoded,
+    dataHash,
+    detailsType: definition.detailsType,
+  });
+  return { batchId, txHash, stage: definition.hashStage };
+}
+
+export async function writeReceipt({
+  wallet,
+  batchId,
+  txHash,
+  record,
+  decoded,
+  dataHash,
+  detailsType,
+}) {
   try {
     const receipt = decoded?.events.find(
       (event) =>
         event.name === "ReceiptConfirmed" &&
-        sameAddress(event.args.newCustodian, user.address),
+        sameAddress(event.args.newCustodian, wallet),
     );
     if (!receipt) {
       throw conflict("receipt event was not submitted by caller");
@@ -84,7 +107,7 @@ export async function recordReceipt(user, rawBatchId, body) {
     const jobs =
       await transporterJobRepository.findPendingHandoverForDestination(
         batchId,
-        user.address.toLowerCase(),
+        wallet.toLowerCase(),
       );
     if (jobs.length === 0) {
       throw conflict("no transporter handover is pending for this batch");
@@ -96,7 +119,7 @@ export async function recordReceipt(user, rawBatchId, body) {
           eventTxHash: txHash,
           batchId,
           contractEvent: "ReceiptConfirmed",
-          detailsType: definition.detailsType,
+          detailsType,
           payloadVersion: 1,
           details: record,
         },
@@ -110,6 +133,7 @@ export async function recordReceipt(user, rawBatchId, body) {
         exec,
       );
       if (updated.length === 0) throw conflict("job state changed");
+      await confirmDraft(wallet, batchId, dataHash, txHash, exec);
     });
   } catch (err) {
     if (err instanceof AppError) throw err;
@@ -118,6 +142,4 @@ export async function recordReceipt(user, rawBatchId, body) {
     }
     throw internalError("db write failed", err);
   }
-
-  return { batchId, txHash, stage: definition.hashStage };
 }

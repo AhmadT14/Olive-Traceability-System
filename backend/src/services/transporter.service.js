@@ -24,6 +24,7 @@ import {
 } from "../validation/transporter.schemas.js";
 import { sameAddress } from "../chain/addresses.js";
 import { batchExists } from "../chain/enums.js";
+import { confirmDraft } from "./drafts.js";
 
 const productTypeFor = (batch) => (batch.stage === "Farm" ? "olive" : "oil");
 
@@ -55,8 +56,9 @@ export async function claimBatch(user, rawBatchId, body) {
   const hashStage = `transporter_${productType}`;
 
   let decoded;
+  let dataHash;
   try {
-    ({ decoded } = await verifyRecordAgainstChain(
+    ({ decoded, computedHash: dataHash } = await verifyRecordAgainstChain(
       hashStage,
       txHash,
       batchId,
@@ -74,11 +76,37 @@ export async function claimBatch(user, rawBatchId, body) {
     throw internalError("chain read failed", err);
   }
 
+  await writeClaim({
+    wallet: user.address,
+    batchId,
+    txHash,
+    record,
+    decoded,
+    dataHash,
+    productType,
+  });
+  return {
+    batchId,
+    txHash,
+    transporter: user.address.toLowerCase(),
+    productType,
+  };
+}
+
+export async function writeClaim({
+  wallet,
+  batchId,
+  txHash,
+  record,
+  decoded,
+  dataHash,
+  productType,
+}) {
   try {
     const claim = decoded?.events.find(
       (event) =>
         event.name === "BatchClaimed" &&
-        sameAddress(event.args.transporter, user.address),
+        sameAddress(event.args.transporter, wallet),
     );
     if (!claim) {
       throw conflict("claim event was not submitted by caller");
@@ -106,13 +134,14 @@ export async function claimBatch(user, rawBatchId, body) {
         jobs[0].id,
         "available",
         {
-          transporter: user.address.toLowerCase(),
+          transporter: wallet.toLowerCase(),
           status: "claimed",
           claimTxHash: txHash,
         },
         exec,
       );
       if (updated.length === 0) throw conflict("job already claimed");
+      await confirmDraft(wallet, batchId, dataHash, txHash, exec);
     });
   } catch (err) {
     if (err instanceof AppError) throw err;
@@ -121,19 +150,11 @@ export async function claimBatch(user, rawBatchId, body) {
     }
     throw internalError("db write failed", err);
   }
-
-  return {
-    batchId,
-    txHash,
-    transporter: user.address.toLowerCase(),
-    productType,
-  };
 }
 
 export async function handoverBatch(user, rawBatchId, body) {
   const batchId = parseBatchId(rawBatchId);
 
-  let batch;
   let productType;
   try {
     const [transporter, currentBatch] = await Promise.all([
@@ -148,8 +169,7 @@ export async function handoverBatch(user, rawBatchId, body) {
     ) {
       throw conflict("no pending handover from this transporter");
     }
-    batch = currentBatch;
-    productType = productTypeFor(batch);
+    productType = productTypeFor(currentBatch);
   } catch (err) {
     if (err instanceof AppError) throw err;
     throw internalError("chain read failed", err);
@@ -161,8 +181,9 @@ export async function handoverBatch(user, rawBatchId, body) {
   const hashStage = `transporter_${productType}_outgoing`;
 
   let decoded;
+  let dataHash;
   try {
-    ({ decoded } = await verifyRecordAgainstChain(
+    ({ decoded, computedHash: dataHash } = await verifyRecordAgainstChain(
       hashStage,
       txHash,
       batchId,
@@ -180,21 +201,42 @@ export async function handoverBatch(user, rawBatchId, body) {
     throw internalError("chain read failed", err);
   }
 
+  const targetAddress = await writeHandover({
+    wallet: user.address,
+    batchId,
+    txHash,
+    record,
+    decoded,
+    dataHash,
+    productType,
+  });
+  return { batchId, txHash, targetAddress, productType };
+}
+
+export async function writeHandover({
+  wallet,
+  batchId,
+  txHash,
+  record,
+  decoded,
+  dataHash,
+  productType,
+}) {
   try {
     const handover = decoded?.events.find(
       (event) =>
         event.name === "HandoverInitiated" &&
-        sameAddress(event.args.currentCustodian, user.address) &&
-        sameAddress(event.args.targetAddress, batch.pendingTarget),
+        sameAddress(event.args.currentCustodian, wallet),
     );
     if (!handover) {
-      throw conflict("handover event does not match caller and pending target");
+      throw conflict("handover event was not submitted by caller");
     }
+    const targetAddress = handover.args.targetAddress;
 
     const job = await transporterJobRepository.findClaimedForHandover(
       batchId,
-      user.address.toLowerCase(),
-      batch.pendingTarget.toLowerCase(),
+      wallet.toLowerCase(),
+      targetAddress.toLowerCase(),
     );
     if (job.length === 0) {
       throw conflict("no matching claimed job for this handover");
@@ -220,7 +262,9 @@ export async function handoverBatch(user, rawBatchId, body) {
         exec,
       );
       if (updated.length === 0) throw conflict("job state changed");
+      await confirmDraft(wallet, batchId, dataHash, txHash, exec);
     });
+    return targetAddress;
   } catch (err) {
     if (err instanceof AppError) throw err;
     if (isUniqueViolation(err)) {
@@ -228,11 +272,4 @@ export async function handoverBatch(user, rawBatchId, body) {
     }
     throw internalError("db write failed", err);
   }
-
-  return {
-    batchId,
-    txHash,
-    targetAddress: batch.pendingTarget,
-    productType,
-  };
 }

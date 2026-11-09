@@ -1,4 +1,4 @@
-import { decodeCustodyTx, getBatch, hasRole } from "../chain/reader.js";
+import { getBatch, hasRole } from "../chain/reader.js";
 import {
   AppError,
   conflict,
@@ -29,6 +29,7 @@ import { parseBatchId, parseBody } from "../validation/parse.js";
 import { millReceiptSchema } from "../validation/receipt.schemas.js";
 import { sameAddress } from "../chain/addresses.js";
 import { batchExists } from "../chain/enums.js";
+import { confirmDraft } from "./drafts.js";
 
 // Field names deliberately match HASH_FIELDS.* (snake_case) rather than the
 // camelCase Drizzle column names, because this payload is passed straight into
@@ -56,8 +57,6 @@ const LISTINGS = {
     stage: "Storage",
     stageError: "batch is not listed by a storage facility",
     hashStage: "storage_outgoing",
-    intakeType: "storage_intake",
-    intakeError: "no storage intake recorded off-chain for this batch yet",
   },
   exporter: {
     schema: stageListingSchema(exporterListingSchema),
@@ -66,8 +65,6 @@ const LISTINGS = {
     stage: "Exporter",
     stageError: "batch is not listed by an exporter",
     hashStage: "exporter_outgoing",
-    intakeType: "exporter_intake",
-    intakeError: "no exporter intake recorded off-chain for this batch yet",
   },
   importer: {
     schema: stageListingSchema(importerListingSchema),
@@ -76,43 +73,30 @@ const LISTINGS = {
     stage: "Importer",
     stageError: "batch is not listed by an importer",
     hashStage: "importer_outgoing",
-    intakeType: "importer_intake",
-    intakeError: "no importer intake recorded off-chain for this batch yet",
   },
 };
 
 export async function recordFarmBatch(user, body) {
   const { txHash, batchId, ...record } = parseBody(createBatchSchema, body);
 
-  let destinationParty;
-  let decoded;
   try {
     if (!(await hasRole("FARMER", user.address))) {
       throw forbidden("caller is not a farmer");
-    }
-
-    decoded = await decodeCustodyTx(txHash);
-    const creation = decoded?.events.find(
-      (event) => event.name === "BatchCreated",
-    );
-    if (!decoded?.success || !creation) {
-      throw notFound("tx not found or has no successful BatchCreated event");
-    }
-    if (!sameAddress(creation.args.farmer, user.address)) {
-      throw forbidden("batch transaction was not submitted by caller");
-    }
-
-    destinationParty = creation.args.destinationAddress?.toLowerCase();
-    if (!destinationParty) {
-      throw conflict("batch event has no on-chain destination");
     }
   } catch (err) {
     if (err instanceof AppError) throw err;
     throw internalError("chain read failed", err);
   }
 
+  let decoded;
+  let dataHash;
   try {
-    await verifyRecordAgainstChain("farm", txHash, batchId, record, decoded);
+    ({ decoded, computedHash: dataHash } = await verifyRecordAgainstChain(
+      "farm",
+      txHash,
+      batchId,
+      record,
+    ));
   } catch (err) {
     if (err instanceof HashMismatchError) {
       throw conflict("record does not match the on-chain hash");
@@ -123,7 +107,38 @@ export async function recordFarmBatch(user, body) {
     throw internalError("chain read failed", err);
   }
 
+  await writeFarmBatch({
+    wallet: user.address,
+    batchId,
+    txHash,
+    record,
+    decoded,
+    dataHash,
+  });
+  return { batchId, txHash };
+}
+
+export async function writeFarmBatch({
+  wallet,
+  batchId,
+  txHash,
+  record,
+  decoded,
+  dataHash,
+}) {
   try {
+    const creation = decoded.events.find(
+      (event) => event.name === "BatchCreated",
+    );
+    if (!creation || !sameAddress(creation.args.farmer, wallet)) {
+      throw forbidden("batch transaction was not submitted by caller");
+    }
+
+    const destinationParty = creation.args.destinationAddress?.toLowerCase();
+    if (!destinationParty) {
+      throw conflict("batch event has no on-chain destination");
+    }
+
     if (!(await participantRepository.exists(destinationParty))) {
       throw conflict(
         "on-chain destination is missing from the participant directory",
@@ -149,13 +164,14 @@ export async function recordFarmBatch(user, body) {
       await transporterJobRepository.insert(
         {
           batchId,
-          sourceParty: user.address.toLowerCase(),
+          sourceParty: wallet.toLowerCase(),
           destinationParty,
           status: "available",
           listingTxHash: txHash,
         },
         exec,
       );
+      await confirmDraft(wallet, batchId, dataHash, txHash, exec);
     });
   } catch (err) {
     if (err instanceof AppError) throw err;
@@ -164,8 +180,6 @@ export async function recordFarmBatch(user, body) {
     }
     throw internalError("db write failed", err);
   }
-
-  return { batchId, txHash };
 }
 
 export async function recordMillIntake(user, rawBatchId, body) {
@@ -192,8 +206,9 @@ export async function recordMillIntake(user, rawBatchId, body) {
   }
 
   let decoded;
+  let dataHash;
   try {
-    ({ decoded } = await verifyRecordAgainstChain(
+    ({ decoded, computedHash: dataHash } = await verifyRecordAgainstChain(
       "mill_olive",
       txHash,
       batchId,
@@ -211,6 +226,25 @@ export async function recordMillIntake(user, rawBatchId, body) {
     throw internalError("chain read failed", err);
   }
 
+  await writeMillIntake({
+    wallet: user.address,
+    batchId,
+    txHash,
+    record,
+    decoded,
+    dataHash,
+  });
+  return { batchId, txHash };
+}
+
+export async function writeMillIntake({
+  wallet,
+  batchId,
+  txHash,
+  record,
+  decoded,
+  dataHash,
+}) {
   try {
     if (!(await batchRepository.existsById(batchId))) {
       throw conflict("batch has no off-chain create record yet");
@@ -222,7 +256,7 @@ export async function recordMillIntake(user, rawBatchId, body) {
     const receipt = decoded?.events.find(
       (event) =>
         event.name === "ReceiptConfirmed" &&
-        sameAddress(event.args.newCustodian, user.address),
+        sameAddress(event.args.newCustodian, wallet),
     );
     if (!receipt) {
       throw conflict("receipt event was not submitted by caller");
@@ -231,7 +265,7 @@ export async function recordMillIntake(user, rawBatchId, body) {
     const jobs =
       await transporterJobRepository.findPendingHandoverForDestination(
         batchId,
-        user.address.toLowerCase(),
+        wallet.toLowerCase(),
       );
     if (jobs.length === 0) {
       throw conflict("no transporter handover is pending for this batch");
@@ -257,6 +291,7 @@ export async function recordMillIntake(user, rawBatchId, body) {
         exec,
       );
       if (updated.length === 0) throw conflict("job state changed");
+      await confirmDraft(wallet, batchId, dataHash, txHash, exec);
     });
   } catch (err) {
     if (err instanceof AppError) throw err;
@@ -265,8 +300,6 @@ export async function recordMillIntake(user, rawBatchId, body) {
     }
     throw internalError("db write failed", err);
   }
-
-  return { batchId, txHash };
 }
 
 export async function recordMillOutgoing(user, rawBatchId, body) {
@@ -292,8 +325,9 @@ export async function recordMillOutgoing(user, rawBatchId, body) {
   }
 
   let decoded;
+  let dataHash;
   try {
-    ({ decoded } = await verifyRecordAgainstChain(
+    ({ decoded, computedHash: dataHash } = await verifyRecordAgainstChain(
       "mill_oil",
       txHash,
       batchId,
@@ -309,69 +343,15 @@ export async function recordMillOutgoing(user, rawBatchId, body) {
     throw internalError("chain read failed", err);
   }
 
-  try {
-    const listing = decoded?.events.find(
-      (event) =>
-        event.name === "BatchListed" &&
-        sameAddress(event.args.custodian, user.address),
-    );
-    if (!listing) {
-      throw conflict("listing event was not submitted by caller");
-    }
-
-    const destinationParty = listing.args.destinationAddress?.toLowerCase();
-    if (!destinationParty) {
-      throw conflict("listing event has no on-chain destination");
-    }
-
-    const [destinationExists, intakeExists, eventExists] = await Promise.all([
-      participantRepository.exists(destinationParty),
-      batchEventRepository.existsByBatchAndType(batchId, "mill_intake"),
-      batchEventRepository.existsByTxHash(txHash),
-    ]);
-    if (!destinationExists) {
-      throw conflict(
-        "on-chain destination is missing from the participant directory",
-      );
-    }
-    if (!intakeExists) {
-      throw conflict("no mill intake recorded off-chain for this batch yet");
-    }
-    if (eventExists) {
-      throw conflict("record already recorded off-chain");
-    }
-
-    await runInTransaction(async (exec) => {
-      await batchEventRepository.insert(
-        {
-          eventTxHash: txHash,
-          batchId,
-          contractEvent: "BatchListed",
-          detailsType: "mill_outgoing",
-          payloadVersion: 1,
-          details: record,
-        },
-        exec,
-      );
-      await transporterJobRepository.insert(
-        {
-          batchId,
-          sourceParty: user.address.toLowerCase(),
-          destinationParty,
-          status: "available",
-          listingTxHash: txHash,
-        },
-        exec,
-      );
-    });
-  } catch (err) {
-    if (err instanceof AppError) throw err;
-    if (isUniqueViolation(err)) {
-      throw conflict("record already recorded off-chain");
-    }
-    throw internalError("db write failed", err);
-  }
-
+  await writeListing({
+    wallet: user.address,
+    batchId,
+    txHash,
+    record,
+    decoded,
+    dataHash,
+    detailsType: "mill_outgoing",
+  });
   return { batchId, txHash };
 }
 
@@ -412,8 +392,9 @@ async function recordStageListing(user, rawBatchId, body, spec) {
   }
 
   let decoded;
+  let dataHash;
   try {
-    ({ decoded } = await verifyRecordAgainstChain(
+    ({ decoded, computedHash: dataHash } = await verifyRecordAgainstChain(
       spec.hashStage,
       txHash,
       batchId,
@@ -429,11 +410,33 @@ async function recordStageListing(user, rawBatchId, body, spec) {
     throw internalError("chain read failed", err);
   }
 
+  await writeListing({
+    wallet: user.address,
+    batchId,
+    txHash,
+    record,
+    decoded,
+    dataHash,
+    detailsType: spec.hashStage,
+  });
+  return { batchId, txHash };
+}
+
+export async function writeListing({
+  wallet,
+  batchId,
+  txHash,
+  record,
+  decoded,
+  dataHash,
+  detailsType,
+}) {
+  const facility = detailsType.replace("_outgoing", "");
   try {
     const listing = decoded?.events.find(
       (event) =>
         event.name === "BatchListed" &&
-        sameAddress(event.args.custodian, user.address),
+        sameAddress(event.args.custodian, wallet),
     );
     if (!listing) {
       throw conflict("listing event was not submitted by caller");
@@ -444,10 +447,13 @@ async function recordStageListing(user, rawBatchId, body, spec) {
       throw conflict("listing event has no on-chain destination");
     }
 
-    const [destinationExists, intakeExists, batchExists, eventExists] =
+    const [destinationExists, intakeExists, batchRecorded, eventExists] =
       await Promise.all([
         participantRepository.exists(destinationParty),
-        batchEventRepository.existsByBatchAndType(batchId, spec.intakeType),
+        batchEventRepository.existsByBatchAndType(
+          batchId,
+          `${facility}_intake`,
+        ),
         batchRepository.existsById(batchId),
         batchEventRepository.existsByTxHash(txHash),
       ]);
@@ -456,8 +462,12 @@ async function recordStageListing(user, rawBatchId, body, spec) {
         "on-chain destination is missing from the participant directory",
       );
     }
-    if (!intakeExists) throw conflict(spec.intakeError);
-    if (!batchExists) {
+    if (!intakeExists) {
+      throw conflict(
+        `no ${facility} intake recorded off-chain for this batch yet`,
+      );
+    }
+    if (!batchRecorded) {
       throw conflict("batch has no off-chain create record yet");
     }
     if (eventExists) throw conflict("record already recorded off-chain");
@@ -468,7 +478,7 @@ async function recordStageListing(user, rawBatchId, body, spec) {
           eventTxHash: txHash,
           batchId,
           contractEvent: "BatchListed",
-          detailsType: spec.hashStage,
+          detailsType,
           payloadVersion: 1,
           details: record,
         },
@@ -477,13 +487,14 @@ async function recordStageListing(user, rawBatchId, body, spec) {
       await transporterJobRepository.insert(
         {
           batchId,
-          sourceParty: user.address.toLowerCase(),
+          sourceParty: wallet.toLowerCase(),
           destinationParty,
           status: "available",
           listingTxHash: txHash,
         },
         exec,
       );
+      await confirmDraft(wallet, batchId, dataHash, txHash, exec);
     });
   } catch (err) {
     if (err instanceof AppError) throw err;
@@ -492,6 +503,4 @@ async function recordStageListing(user, rawBatchId, body, spec) {
     }
     throw internalError("db write failed", err);
   }
-
-  return { batchId, txHash };
 }

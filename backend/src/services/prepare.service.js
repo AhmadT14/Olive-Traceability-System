@@ -41,6 +41,7 @@ import {
 } from "../validation/transporter.schemas.js";
 import { sameAddress } from "../chain/addresses.js";
 import { batchExists } from "../chain/enums.js";
+import { saveDraft } from "./drafts.js";
 import { prepareTransaction } from "./transaction.js";
 
 const LISTINGS = {
@@ -51,6 +52,7 @@ const LISTINGS = {
     stage: "Mill",
     stageError: "batch is not at the mill stage",
     hashStage: "mill_oil",
+    detailsType: "mill_outgoing",
     intakeType: "mill_intake",
     intakeError: "no mill intake recorded off-chain for this batch yet",
     failureMessage: "chain read failed",
@@ -62,6 +64,7 @@ const LISTINGS = {
     stage: "Storage",
     stageError: "batch is not at the storage stage",
     hashStage: "storage_outgoing",
+    detailsType: "storage_outgoing",
     intakeType: "storage_intake",
     intakeError: "no storage intake recorded off-chain for this batch yet",
     failureMessage: "storage listing preparation failed",
@@ -73,6 +76,7 @@ const LISTINGS = {
     stage: "Exporter",
     stageError: "batch is not at the exporter stage",
     hashStage: "exporter_outgoing",
+    detailsType: "exporter_outgoing",
     intakeType: "exporter_intake",
     intakeError: "no exporter intake recorded off-chain for this batch yet",
     failureMessage: "chain read failed",
@@ -84,6 +88,7 @@ const LISTINGS = {
     stage: "Importer",
     stageError: "batch is not at the importer stage",
     hashStage: "importer_outgoing",
+    detailsType: "importer_outgoing",
     intakeType: "importer_intake",
     intakeError: "no importer intake recorded off-chain for this batch yet",
     failureMessage: "chain read failed",
@@ -131,16 +136,19 @@ export async function prepareBatch(user, body) {
       dataHash,
     ]);
 
+    const transaction = await prepareTransaction(
+      user,
+      config.BATCH_CUSTODY_ADDRESS,
+      data,
+    );
+    await saveDraft(user, batchId, "farm", record, dataHash);
+
     return {
       batchId,
       destinationAddress,
       destinationRole: "MILL",
       dataHash,
-      transaction: await prepareTransaction(
-        user,
-        config.BATCH_CUSTODY_ADDRESS,
-        data,
-      ),
+      transaction,
     };
   } catch (err) {
     if (err instanceof AppError) throw err;
@@ -214,16 +222,19 @@ async function prepareStageListing(user, body, spec) {
       dataHash,
     ]);
 
+    const transaction = await prepareTransaction(
+      user,
+      config.BATCH_CUSTODY_ADDRESS,
+      data,
+    );
+    await saveDraft(user, batchId, spec.detailsType, record, dataHash);
+
     return {
       batchId,
       destinationAddress,
       destinationRole: nextRole,
       dataHash,
-      transaction: await prepareTransaction(
-        user,
-        config.BATCH_CUSTODY_ADDRESS,
-        data,
-      ),
+      transaction,
     };
   } catch (err) {
     if (err instanceof AppError) throw err;
@@ -273,15 +284,24 @@ export async function prepareClaim(user, body) {
       dataHash,
     ]);
 
+    const transaction = await prepareTransaction(
+      user,
+      config.BATCH_CUSTODY_ADDRESS,
+      data,
+    );
+    await saveDraft(
+      user,
+      batchId,
+      `transporter_${productType}_pickup`,
+      record,
+      dataHash,
+    );
+
     return {
       batchId,
       productType,
       dataHash,
-      transaction: await prepareTransaction(
-        user,
-        config.BATCH_CUSTODY_ADDRESS,
-        data,
-      ),
+      transaction,
     };
   } catch (err) {
     if (err instanceof AppError) throw err;
@@ -346,16 +366,25 @@ export async function prepareHandover(user, body) {
       dataHash,
     ]);
 
+    const transaction = await prepareTransaction(
+      user,
+      config.BATCH_CUSTODY_ADDRESS,
+      data,
+    );
+    await saveDraft(
+      user,
+      batchId,
+      `transporter_${productType}_delivery`,
+      record,
+      dataHash,
+    );
+
     return {
       batchId,
       targetAddress,
       productType,
       dataHash,
-      transaction: await prepareTransaction(
-        user,
-        config.BATCH_CUSTODY_ADDRESS,
-        data,
-      ),
+      transaction,
     };
   } catch (err) {
     if (err instanceof AppError) throw err;
@@ -399,14 +428,17 @@ export async function prepareReceipt(user, body) {
       dataHash,
     ]);
 
+    const transaction = await prepareTransaction(
+      user,
+      config.BATCH_CUSTODY_ADDRESS,
+      data,
+    );
+    await saveDraft(user, batchId, receipt.detailsType, record, dataHash);
+
     return {
       batchId,
       dataHash,
-      transaction: await prepareTransaction(
-        user,
-        config.BATCH_CUSTODY_ADDRESS,
-        data,
-      ),
+      transaction,
     };
   } catch (err) {
     if (err instanceof AppError) throw err;
