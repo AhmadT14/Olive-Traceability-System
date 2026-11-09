@@ -18,6 +18,8 @@ Paging: `GET /transporter-jobs` (every variant), `GET /me/batches/created`, `GET
 
 CORS is off by default, which is all a same-origin setup needs (the Vite dev proxy, or the frontend and the API behind one domain). To serve the frontend from another origin, set `CORS_ORIGIN` to that origin, or to several separated by commas (for example `CORS_ORIGIN=https://olive.example,http://localhost:5173`). Only the listed origins get CORS headers; preflight requests are answered, and `X-Request-Id` is exposed to the browser.
 
+Proxies: the sign-in rate limit counts requests per client IP. Behind a reverse proxy (such as the nginx of the Docker frontend) every request comes from the proxy's IP, so set `TRUST_PROXY` to the number of proxies in front of the API (`1` for one nginx) and have the proxy send `X-Forwarded-For`; the limit then counts the client address the nearest proxy reports. The default, `0`, ignores `X-Forwarded-For`, which is right when clients reach the API directly. The Docker setup sets `TRUST_PROXY=1`. Only trust a proxy that clients cannot bypass: a client that reaches the API directly can then send its own `X-Forwarded-For`.
+
 ## Authentication
 
 Login uses a wallet signature. Request a one time nonce, sign the returned `message` exactly as received with the wallet, then exchange the signature for a JWT. The message follows the Sign-In with Ethereum format (EIP-4361):

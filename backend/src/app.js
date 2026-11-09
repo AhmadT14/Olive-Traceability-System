@@ -26,6 +26,7 @@ import { allowOrigins } from "./api/cors.js";
 import { authRateLimit, requestId } from "./api/security.js";
 
 const app = express();
+if (config.TRUST_PROXY > 0) app.set("trust proxy", config.TRUST_PROXY);
 app.use(requestId);
 if (config.CORS_ORIGIN.length > 0) app.use(allowOrigins(config.CORS_ORIGIN));
 app.use(helmet());

@@ -5,6 +5,7 @@ x-backend: &backend
   environment:
     DATABASE_URL: postgres://olive_app:olive_pass@postgres:5432/olive_traceability
     RPC_URL: http://anvil:8545
+    TRUST_PROXY: "1"
   volumes:
     - deployment-data:/runtime
 

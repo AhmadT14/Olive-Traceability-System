@@ -17,6 +17,7 @@ const schema = z.object({
   AUTH_DOMAIN: z.string().min(1).default("localhost:5173"),
   AUTH_URI: z.string().url().default("http://localhost:5173"),
   CORS_ORIGIN: z.string().optional().transform(parseCorsOrigins),
+  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
 });
 
 export const config = schema.parse(process.env);

@@ -68,6 +68,27 @@ test("authRateLimit answers 429 in the API error shape after the limit", async (
   }
 });
 
+test("authRateLimit counts each forwarded client on its own behind a trusted proxy", async () => {
+  const { base, close } = await serve((app) => {
+    app.set("trust proxy", 1);
+    app.use("/ping", authRateLimit({ limit: 1 }));
+  });
+  const from = (ip) =>
+    fetch(`${base}/ping`, { headers: { "X-Forwarded-For": ip } });
+  try {
+    const first = await from("203.0.113.1");
+    const other = await from("203.0.113.2");
+    const again = await from("203.0.113.1");
+
+    assert.deepEqual(
+      [first.status, other.status, again.status],
+      [200, 200, 429],
+    );
+  } finally {
+    await close();
+  }
+});
+
 test("helmet adds the security headers", async () => {
   const { base, close } = await serve((app) => app.use(helmet()));
   try {
