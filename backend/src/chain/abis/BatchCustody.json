@@ -183,6 +183,51 @@
   },
   {
     "type": "function",
+    "name": "releaseBatch",
+    "inputs": [
+      {
+        "name": "batchId",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "reserveBatch",
+    "inputs": [
+      {
+        "name": "batchId",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "reservedBy",
+    "inputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "setRegistry",
     "inputs": [
       {
@@ -283,6 +328,25 @@
   },
   {
     "type": "event",
+    "name": "BatchReserved",
+    "inputs": [
+      {
+        "name": "batchId",
+        "type": "string",
+        "indexed": true,
+        "internalType": "string"
+      },
+      {
+        "name": "transporter",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "HandoverInitiated",
     "inputs": [
       {
@@ -349,6 +413,31 @@
       },
       {
         "name": "newRegistry",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ReservationReleased",
+    "inputs": [
+      {
+        "name": "batchId",
+        "type": "string",
+        "indexed": true,
+        "internalType": "string"
+      },
+      {
+        "name": "transporter",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "releasedBy",
         "type": "address",
         "indexed": true,
         "internalType": "address"

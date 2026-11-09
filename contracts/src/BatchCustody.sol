@@ -10,7 +10,8 @@ contract BatchCustody {
         None, // batch does not exist
         Created, // custody held, not listed, no pending handover
         Listed, // posted for open transporter pickup
-        PendingHandover // named handover initiated, awaiting confirmReceipt
+        PendingHandover, // named handover initiated, awaiting confirmReceipt
+        Reserved
     }
 
     enum Stage {
@@ -33,6 +34,7 @@ contract BatchCustody {
     // The active destination is chain state; the database only indexes the
     // corresponding listing and transport transactions for coordination.
     mapping(string => address) public destinations;
+    mapping(string => address) public reservedBy;
 
     event BatchCreated(
         string indexed batchId, address indexed farmer, address indexed destinationAddress, bytes32 harvestDataHash
@@ -40,6 +42,8 @@ contract BatchCustody {
     event BatchListed(
         string indexed batchId, address indexed custodian, address indexed destinationAddress, bytes32 outgoingDataHash
     );
+    event BatchReserved(string indexed batchId, address indexed transporter);
+    event ReservationReleased(string indexed batchId, address indexed transporter, address indexed releasedBy);
     event BatchClaimed(string indexed batchId, address indexed transporter, bytes32 intakeDataHash);
     event HandoverInitiated(
         string indexed batchId,
@@ -88,14 +92,41 @@ contract BatchCustody {
         emit BatchListed(batchId, msg.sender, destinationAddress, outgoingDataHash);
     }
 
-    function claimBatch(string memory batchId, bytes32 intakeDataHash) external {
+    function reserveBatch(string memory batchId) external {
         require(
             participantRegistry.hasRole(participantRegistry.TRANSPORTER_ROLE(), msg.sender),
             "BatchCustody: caller is not a transporter"
         );
         require(batches[batchId].status == Status.Listed, "BatchCustody: batch not listed for pickup");
+        batches[batchId].status = Status.Reserved;
+        reservedBy[batchId] = msg.sender;
+
+        emit BatchReserved(batchId, msg.sender);
+    }
+
+    function releaseBatch(string memory batchId) external {
+        require(batches[batchId].status == Status.Reserved, "BatchCustody: batch not reserved");
+        address transporter = reservedBy[batchId];
+        require(
+            msg.sender == transporter || msg.sender == batches[batchId].custodian,
+            "BatchCustody: caller cannot release this reservation"
+        );
+        batches[batchId].status = Status.Listed;
+        reservedBy[batchId] = address(0);
+
+        emit ReservationReleased(batchId, transporter, msg.sender);
+    }
+
+    function claimBatch(string memory batchId, bytes32 intakeDataHash) external {
+        require(
+            participantRegistry.hasRole(participantRegistry.TRANSPORTER_ROLE(), msg.sender),
+            "BatchCustody: caller is not a transporter"
+        );
+        require(batches[batchId].status == Status.Reserved, "BatchCustody: batch not reserved for pickup");
+        require(reservedBy[batchId] == msg.sender, "BatchCustody: batch reserved by another transporter");
         batches[batchId].status = Status.Created;
         batches[batchId].custodian = msg.sender;
+        reservedBy[batchId] = address(0);
 
         emit BatchClaimed(batchId, msg.sender, intakeDataHash);
     }
