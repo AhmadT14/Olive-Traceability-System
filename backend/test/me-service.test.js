@@ -1,5 +1,6 @@
 import test, { beforeEach } from "node:test";
 import assert from "node:assert/strict";
+import { id } from "ethers";
 import { stubModule, stubReader } from "./support/stubModule.js";
 
 const reader = stubReader();
@@ -16,6 +17,13 @@ const jobsRepo = stubModule("repositories/transporterJob.repository.js", [
 ]);
 const savesRepo = stubModule("repositories/pendingSave.repository.js", [
   "listForWallet",
+]);
+const eventIndex = stubModule("chain/eventIndex.js", [
+  "syncEvents",
+  "startEventSync",
+]);
+const chainEventsRepo = stubModule("repositories/chainEvent.repository.js", [
+  "listBatchTopicsByAddress",
 ]);
 const {
   getMyProfile,
@@ -133,10 +141,26 @@ test("updateMyAvailability writes only a known value", async () => {
   ]);
 });
 
-test("listMyBatches sorts batches by who holds them", async () => {
-  batchRepo.listIds = async () => [{ batchId: "A" }, { batchId: "B" }];
-  reader.getBatch = async (batchId) =>
-    batchId === "A"
+test("listMyBatches reads only the batches whose events name the caller", async () => {
+  const steps = [];
+  eventIndex.syncEvents = async () => {
+    steps.push("sync");
+  };
+  chainEventsRepo.listBatchTopicsByAddress = async (address) => {
+    steps.push(["topics", address]);
+    return [
+      { batchTopic: id("A") },
+      { batchTopic: id("C").toUpperCase().replace("0X", "0x") },
+    ];
+  };
+  batchRepo.listIds = async () => [
+    { batchId: "A" },
+    { batchId: "B" },
+    { batchId: "C" },
+  ];
+  reader.getBatch = async (batchId) => {
+    chainReads.push(batchId);
+    return batchId === "A"
       ? {
           status: "Listed",
           stage: "Farm",
@@ -144,18 +168,31 @@ test("listMyBatches sorts batches by who holds them", async () => {
           pendingTarget: NOBODY,
         }
       : {
-          status: "Created",
+          status: "PendingHandover",
           stage: "Mill",
           custodian: OTHER,
-          pendingTarget: NOBODY,
+          pendingTarget: ME,
         };
+  };
   const result = await listMyBatches(user);
+  assert.deepEqual(steps, ["sync", ["topics", ME.toLowerCase()]]);
+  assert.deepEqual(chainReads, ["A", "C"]);
   assert.deepEqual(
     result.listedByMe.map((b) => b.batchId),
     ["A"],
   );
+  assert.deepEqual(
+    result.awaitingMyConfirmation.map((b) => b.batchId),
+    ["C"],
+  );
   assert.deepEqual(result.holding, []);
-  assert.deepEqual(result.awaitingMyConfirmation, []);
+});
+
+test("listMyBatches turns an event sync failure into a 500", async () => {
+  eventIndex.syncEvents = async () => {
+    throw new Error("chain was reset");
+  };
+  await assert.rejects(listMyBatches(user), { status: 500 });
 });
 
 const createdFixture = () => {

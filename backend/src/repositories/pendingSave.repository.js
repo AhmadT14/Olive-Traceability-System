@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, lt, sql } from "drizzle-orm";
 import { db } from "../db/db.js";
 import { pendingSaves } from "../db/schema.js";
 
@@ -83,5 +83,17 @@ export function resolve(
     .update(pendingSaves)
     .set(patch)
     .where(and(eq(pendingSaves.id, id), eq(pendingSaves.status, "pending")))
+    .returning({ id: pendingSaves.id });
+}
+
+export function deleteFailedBefore(cutoff, exec = db) {
+  return exec
+    .delete(pendingSaves)
+    .where(
+      and(
+        eq(pendingSaves.status, "failed"),
+        lt(pendingSaves.resolvedAt, cutoff),
+      ),
+    )
     .returning({ id: pendingSaves.id });
 }

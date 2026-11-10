@@ -1,18 +1,10 @@
 import { getBatch, hasRole, ROLES } from "../chain/reader.js";
-import { isAvailable } from "../chain/checks.js";
-import {
-  AppError,
-  conflict,
-  forbidden,
-  internalError,
-  notFound,
-} from "../errors.js";
+import { AppError, forbidden, internalError } from "../errors.js";
 import * as batchEventRepository from "../repositories/batchEvent.repository.js";
 import * as participantRepository from "../repositories/participant.repository.js";
 import * as transporterJobRepository from "../repositories/transporterJob.repository.js";
 import {
   pageOf,
-  parseJobId,
   parseJobStatusQuery,
   parseMineQuery,
   parsePageQuery,
@@ -173,72 +165,9 @@ export async function listJobs(user, query) {
   }
 }
 
-async function viewOf(id) {
-  const [view] = await buildJobViews(
-    [await transporterJobRepository.findById(id)],
-    { listedOnly: false },
-  );
+export async function getJobView(id) {
+  const job = await transporterJobRepository.findById(id);
+  if (!job) return null;
+  const [view] = await buildJobViews([job], { listedOnly: false });
   return view;
-}
-
-export async function reserveJob(user, rawId) {
-  const id = parseJobId(rawId);
-  const transporter = user.address.toLowerCase();
-
-  try {
-    if (!(await hasRole("TRANSPORTER", user.address))) {
-      throw forbidden("caller is not a transporter");
-    }
-
-    const self = await participantRepository.findAvailability(transporter);
-    if (self && !isAvailable(self.availability)) {
-      throw conflict("transporter is marked unavailable");
-    }
-
-    const job = await transporterJobRepository.findById(id);
-    if (!job) throw notFound("job not found");
-    if (job.status !== "available") throw conflict("job is not available");
-
-    const batch = await getBatch(job.batchId);
-    if (!isStillListed(job, batch)) {
-      throw conflict("batch is no longer listed for pickup");
-    }
-
-    const updated = await transporterJobRepository.transition(id, "available", {
-      status: "reserved",
-      transporter,
-      reservedAt: new Date(),
-    });
-    if (updated.length === 0) throw conflict("job is not available");
-
-    return await viewOf(id);
-  } catch (err) {
-    if (err instanceof AppError) throw err;
-    throw internalError("job reservation failed", err);
-  }
-}
-
-export async function releaseJob(user, rawId) {
-  const id = parseJobId(rawId);
-  const transporter = user.address.toLowerCase();
-
-  try {
-    const job = await transporterJobRepository.findById(id);
-    if (!job) throw notFound("job not found");
-    if (job.status !== "reserved") throw conflict("job is not reserved");
-    if (job.transporter?.toLowerCase() !== transporter) {
-      throw forbidden("job is reserved by another transporter");
-    }
-
-    const updated = await transporterJobRepository.releaseReservation(
-      id,
-      transporter,
-    );
-    if (updated.length === 0) throw conflict("job is not reserved");
-
-    return await viewOf(id);
-  } catch (err) {
-    if (err instanceof AppError) throw err;
-    throw internalError("job release failed", err);
-  }
 }

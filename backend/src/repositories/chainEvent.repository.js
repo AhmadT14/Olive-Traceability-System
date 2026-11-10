@@ -1,4 +1,4 @@
-import { and, arrayContains, asc, desc, eq, sql } from "drizzle-orm";
+import { and, arrayContains, asc, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "../db/db.js";
 import { chainEvents, chainSyncState } from "../db/schema.js";
 
@@ -39,6 +39,18 @@ export function listByEventAndAddress(
   if (limit !== undefined) query = query.limit(limit);
   if (offset > 0) query = query.offset(offset);
   return query;
+}
+
+export function listBatchTopicsByAddress(address, exec = db) {
+  return exec
+    .selectDistinct({ batchTopic: chainEvents.batchTopic })
+    .from(chainEvents)
+    .where(
+      and(
+        arrayContains(chainEvents.addresses, [address]),
+        isNotNull(chainEvents.batchTopic),
+      ),
+    );
 }
 
 export async function getCursor(name, exec = db) {

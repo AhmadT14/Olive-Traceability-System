@@ -106,14 +106,9 @@ The name keys (`farmName`, `facilityName`, `companyName`, `businessName`) are op
 
 ### Job reservation
 
-A transporter can reserve an open job before driving to the facility. Reserving is a database step only, with no transaction; the on-chain claim (`claimBatch`) happens at pickup. A job moves `available` → `reserved` → `claimed` → `handover_pending` → `completed`, and a reserved job can be released back to `available`. A reservation does not expire.
+A transporter reserves an open job before driving to the facility, and signs the claim (`claimBatch`) at pickup. A job moves `available` → `reserved` → `claimed` → `handover_pending` → `completed`, and a reserved job can be released back to `available`. Reserving and releasing are chain transactions (`reserveBatch`, `releaseBatch`): only the transporter who reserved a batch can claim it, and the reserver or the facility that listed it can release it.
 
-| Method and path | Body | Purpose |
-| --- | --- | --- |
-| `POST /transporter-jobs/:id/reserve` | None | Reserves the job for the caller. Returns the job in the `GET /transporter-jobs` shape, with `status: "reserved"` and `reservedAt` set. `400` for a job id that is not a positive integer, `403` if the caller does not hold the TRANSPORTER role, `404` for an unknown job, and `409` if the caller is marked unavailable (`transporter is marked unavailable`), the job is not available (`job is not available`, also when another transporter reserved it first), or the batch is no longer listed for pickup on chain (`batch is no longer listed for pickup`). |
-| `DELETE /transporter-jobs/:id/reserve` | None | Releases the caller's reservation. Returns the job with `status: "available"` and `reservedAt: null`. `400` for a bad job id, `404` for an unknown job, `409` if the job is not reserved (`job is not reserved`), and `403` if another transporter reserved it. |
-
-Until the claim routes accept reserved jobs, `POST /batches/prepare-claim` answers `409` (`no available transporter job for this batch`) for a reserved job, even for the transporter who reserved it. Release the reservation before claiming, or wait for that change.
+The reservation routes (`POST /transporter-jobs/:id/prepare-reserve` and `prepare-release`, then `POST` and `DELETE /transporter-jobs/:id/reserve` with `{ txHash }`) are being moved to that on-chain flow and are not served until the chain track adds them; they answer `404` meanwhile. The job lists already show `reserved` jobs and `reservedAt` (see `GET /transporter-jobs`).
 
 ### What availability does
 
@@ -121,7 +116,7 @@ A participant counts as available unless they set `unavailable`; a profile that 
 
 - `GET /destinations` and `GET /batches/:id/destinations` leave out unavailable participants.
 - `POST /batches/prepare`, `/batches/prepare-listing`, `/batches/prepare-storage-listing`, `/batches/prepare-exporter-listing` and `/batches/prepare-importer-listing` return `409` (`destination is marked unavailable`) if the chosen destination is unavailable.
-- `POST /batches/prepare-claim` and `POST /transporter-jobs/:id/reserve` return `409` (`transporter is marked unavailable`) for an unavailable transporter. They can still see the job board and release a reservation.
+- `POST /batches/prepare-claim` returns `409` (`transporter is marked unavailable`) for an unavailable transporter. They can still see the job board.
 - `POST /batches/prepare-listing` returns `409` (`no mill intake recorded off-chain for this batch yet`) until the mill's intake record is saved, like the storage, exporter and importer listings.
 - Delivering a batch that is already in transit is never blocked: `prepare-handover` and the facility's receipt work whatever the availability, because the delivery has already happened.
 

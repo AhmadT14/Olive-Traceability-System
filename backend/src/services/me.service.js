@@ -1,5 +1,7 @@
+import { id } from "ethers";
 import { classifyBatchForParticipant } from "../chain/checks.js";
 import { matchCreatedBatches } from "../chain/createdBatches.js";
+import { syncEvents } from "../chain/eventIndex.js";
 import { getBatch, getBatchCreatedEvents, hasRole } from "../chain/reader.js";
 import {
   AppError,
@@ -9,6 +11,7 @@ import {
   unprocessable,
 } from "../errors.js";
 import * as batchEventRepository from "../repositories/batchEvent.repository.js";
+import * as chainEventRepository from "../repositories/chainEvent.repository.js";
 import * as batchRepository from "../repositories/batch.repository.js";
 import * as participantRepository from "../repositories/participant.repository.js";
 import * as pendingSaveRepository from "../repositories/pendingSave.repository.js";
@@ -111,15 +114,25 @@ export async function updateMyAvailability(user, body) {
   }
 }
 
-// Reads the chain state of every batch the backend knows about, a few at a
-// time, and sorts out the ones that concern the caller. The chain decides who
-// holds what; the database only supplies the batch ids. A batch created on
-// chain but never saved through the API is therefore not listed.
+// The event index narrows the batches to the ones whose events name the
+// caller (every change of custodian or pending target does), then their chain
+// state decides who holds what. A batch created on chain but never saved
+// through the API is not listed.
 const CHAIN_READ_BATCH_SIZE = 25;
 
 export async function listMyBatches(user) {
   try {
-    const rows = await batchRepository.listIds();
+    await syncEvents();
+    const [topicRows, idRows] = await Promise.all([
+      chainEventRepository.listBatchTopicsByAddress(walletOf(user)),
+      batchRepository.listIds(),
+    ]);
+    const topics = new Set(
+      topicRows.map(({ batchTopic }) => batchTopic.toLowerCase()),
+    );
+    const rows = idRows.filter(({ batchId }) =>
+      topics.has(id(batchId).toLowerCase()),
+    );
     const result = { holding: [], listedByMe: [], awaitingMyConfirmation: [] };
 
     for (let i = 0; i < rows.length; i += CHAIN_READ_BATCH_SIZE) {

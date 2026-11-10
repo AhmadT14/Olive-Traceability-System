@@ -187,3 +187,24 @@ test("pending saves and applications are looked up by their keys", () => {
   ]);
   assert.deepEqual(applications.findById(3, offline).toSQL().params, [3, 1]);
 });
+
+test("old failed drafts can be deleted, nothing else", () => {
+  const cutoff = new Date("2026-10-01T00:00:00Z");
+  const { sql, params } = pendingSaves
+    .deleteFailedBefore(cutoff, offline)
+    .toSQL();
+  assert.ok(sql.startsWith(`delete from "pending_saves"`), sql);
+  assert.ok(sql.includes(`"pending_saves"."resolved_at" < $2`), sql);
+  assert.equal(params[0], "failed");
+  assert.equal(params[1], cutoff.toISOString());
+});
+
+test("the batches that name an address come from distinct batch topics", () => {
+  const { sql, params } = chainEvents
+    .listBatchTopicsByAddress(WALLET, offline)
+    .toSQL();
+  assert.ok(sql.startsWith(`select distinct "batch_topic"`), sql);
+  assert.ok(sql.includes(`"chain_events"."addresses" @> $1`), sql);
+  assert.ok(sql.includes(`"chain_events"."batch_topic" is not null`), sql);
+  assert.deepEqual(params, [[WALLET]]);
+});
