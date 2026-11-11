@@ -8,9 +8,10 @@ import { syncEvents } from "./eventIndex.js";
 export { ROLES };
 
 export async function getBatch(batchId) {
-  const [batch, destination] = await Promise.all([
+  const [batch, destination, reservedBy] = await Promise.all([
     batchCustody.batches(batchId),
     batchCustody.destinations(batchId),
+    batchCustody.reservedBy(batchId),
   ]);
   return {
     status: Status[Number(batch.status)],
@@ -18,6 +19,7 @@ export async function getBatch(batchId) {
     custodian: batch.custodian,
     pendingTarget: batch.pendingTarget,
     destination,
+    reservedBy,
   };
 }
 
@@ -48,11 +50,6 @@ async function decodeReceipt(contract, txHash, toEvent) {
 }
 
 export function decodeCustodyTx(txHash) {
-  // topics is kept alongside the decoded args: batchId is `string
-  // indexed` on every BatchCustody event, so Solidity only stores its
-  // keccak256 in the topic — ethers can't reconstruct the original
-  // string from args, only the raw topic hash is usable (see how
-  // getBatchHistory below matches batchId, same reasoning).
   return decodeReceipt(batchCustody, txHash, (parsed, log) => ({
     name: parsed.name,
     fragment: parsed.fragment,

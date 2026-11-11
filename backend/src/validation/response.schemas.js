@@ -29,6 +29,7 @@ const chainBatchSchema = z.object({
   custodian: z.string(),
   pendingTarget: z.string(),
   destination: z.string(),
+  reservedBy: z.string(),
 });
 
 export const participantRolesResponseSchema = z.object({
@@ -55,7 +56,6 @@ export const chainBatchResponseSchema = chainBatchSchema;
 
 export const historyResponseSchema = z.object({
   batchId: z.string(),
-  // Lower-case wallet address -> public name and location.
   participants: z.record(
     z.string(),
     z.object({ name: z.string().nullable(), location: z.string().nullable() }),
@@ -129,7 +129,6 @@ export const transactionResponseSchema = z.object({
   ),
 });
 
-// Both the farm-batch and every stage-listing write return this shape.
 export const writeAckSchema = z.object({
   batchId: z.string(),
   txHash: z.string(),
@@ -257,6 +256,12 @@ export const preparedHandoverResponseSchema = z.object({
 export const preparedReceiptResponseSchema = z.object({
   batchId: z.string(),
   dataHash: z.string(),
+  transaction: transactionSchema,
+});
+
+export const preparedReservationResponseSchema = z.object({
+  id: z.number(),
+  batchId: z.string(),
   transaction: transactionSchema,
 });
 

@@ -28,15 +28,9 @@ import {
 import { parseBatchId, parseBody } from "../validation/parse.js";
 import { millReceiptSchema } from "../validation/receipt.schemas.js";
 import { sameAddress } from "../chain/addresses.js";
-import { batchExists } from "../chain/enums.js";
+import { batchExists, isListedForPickup } from "../chain/enums.js";
 import { confirmDraft } from "./drafts.js";
 
-// Field names deliberately match HASH_FIELDS.* (snake_case) rather than the
-// camelCase Drizzle column names, because this payload is passed straight into
-// computeRecordHash â€” keeping the keys identical avoids a mapping that could
-// drift out of sync with fields.js.
-
-// Matches HASH_FIELDS.mill_olive exactly.
 const millIntakeSchema = millReceiptSchema.extend({ txHash: txHashSchema });
 
 // Matches HASH_FIELDS.mill_oil exactly.
@@ -313,7 +307,7 @@ export async function recordMillOutgoing(user, rawBatchId, body) {
     ]);
     if (!mill) throw forbidden("caller is not a mill");
     if (!batchExists(batch)) throw notFound("batch not found");
-    if (batch.stage !== "Mill" || batch.status !== "Listed") {
+    if (batch.stage !== "Mill" || !isListedForPickup(batch)) {
       throw conflict("batch is not listed by a mill");
     }
     if (!sameAddress(batch.custodian, user.address)) {
@@ -355,8 +349,6 @@ export async function recordMillOutgoing(user, rawBatchId, body) {
   return { batchId, txHash };
 }
 
-// Storage, exporter and importer listings share one workflow; only the role,
-// stage, hash key and intake event type differ.
 export function recordStorageOutgoing(user, rawBatchId, body) {
   return recordStageListing(user, rawBatchId, body, LISTINGS.storage);
 }
@@ -380,7 +372,7 @@ async function recordStageListing(user, rawBatchId, body, spec) {
     ]);
     if (!hasStageRole) throw forbidden(spec.roleError);
     if (!batchExists(batch)) throw notFound("batch not found");
-    if (batch.stage !== spec.stage || batch.status !== "Listed") {
+    if (batch.stage !== spec.stage || !isListedForPickup(batch)) {
       throw conflict(spec.stageError);
     }
     if (!sameAddress(batch.custodian, user.address)) {

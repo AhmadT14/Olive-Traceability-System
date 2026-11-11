@@ -21,14 +21,8 @@ export function getNextStageRole(stage) {
   return StageRole[getNextStage(stage)] ?? null;
 }
 
-// A participant counts as available unless they have switched themselves to
-// "unavailable". A profile that never set a value is therefore available.
 export const isAvailable = (availability) => availability !== "unavailable";
 
-// Where a batch belongs on a participant's "my batches" screen, from chain
-// state alone. A transporter that has named the next facility still holds the
-// batch until that facility confirms receipt, so that stays under "holding".
-// Returns null when the batch is not theirs.
 export function classifyBatchForParticipant(batch, address) {
   if (!batch) return null;
   if (
@@ -38,7 +32,9 @@ export function classifyBatchForParticipant(batch, address) {
     return "awaitingMyConfirmation";
   }
   if (!sameParticipant(batch.custodian, address)) return null;
-  if (batch.status === "Listed") return "listedByMe";
+  if (batch.status === "Listed" || batch.status === "Reserved") {
+    return "listedByMe";
+  }
   if (batch.status === "Created" || batch.status === "PendingHandover") {
     return "holding";
   }
@@ -62,10 +58,32 @@ export function checkCanPostForPickup({ batch, actor }) {
   return allow();
 }
 
-export function checkCanClaimBatch({ batch, role }) {
+export function checkCanReserveBatch({ batch, role }) {
   if (role !== "TRANSPORTER") return deny("caller is not a transporter");
   if (!batch || batch.status !== "Listed") {
     return deny("batch not listed for pickup");
+  }
+  return allow();
+}
+
+export function checkCanReleaseBatch({ batch, actor }) {
+  if (!batch || batch.status !== "Reserved") return deny("batch not reserved");
+  if (
+    !sameParticipant(batch.reservedBy, actor) &&
+    !sameParticipant(batch.custodian, actor)
+  ) {
+    return deny("caller cannot release this reservation");
+  }
+  return allow();
+}
+
+export function checkCanClaimBatch({ batch, actor, role }) {
+  if (role !== "TRANSPORTER") return deny("caller is not a transporter");
+  if (!batch || batch.status !== "Reserved") {
+    return deny("batch not reserved for pickup");
+  }
+  if (!sameParticipant(batch.reservedBy, actor)) {
+    return deny("batch reserved by another transporter");
   }
   return allow();
 }

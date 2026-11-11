@@ -112,10 +112,11 @@ export async function writeClaim({
       throw conflict("claim event was not submitted by caller");
     }
 
-    const jobs = await transporterJobRepository.findAvailableByBatch(batchId);
-    if (jobs.length === 0) {
-      throw conflict("no available transporter job for this batch");
-    }
+    const job = await transporterJobRepository.findClaimableForTransporter(
+      batchId,
+      wallet.toLowerCase(),
+    );
+    if (!job) throw conflict("no open transporter job for this batch");
 
     await runInTransaction(async (exec) => {
       await batchEventRepository.insert(
@@ -131,8 +132,8 @@ export async function writeClaim({
       );
 
       const updated = await transporterJobRepository.transition(
-        jobs[0].id,
-        "available",
+        job.id,
+        job.status,
         {
           transporter: wallet.toLowerCase(),
           status: "claimed",

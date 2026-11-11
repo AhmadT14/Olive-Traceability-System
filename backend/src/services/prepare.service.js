@@ -253,10 +253,13 @@ export async function prepareClaim(user, body) {
     if (!transporter) throw forbidden("caller is not a transporter");
     if (!batchExists(batch)) throw notFound("batch not found");
 
-    const check = checkCanClaimBatch({ batch, role: "TRANSPORTER" });
+    const check = checkCanClaimBatch({
+      batch,
+      actor: user.address,
+      role: "TRANSPORTER",
+    });
     if (!check.allowed) throw conflict(check.reason);
 
-    // Only available transporters are in the pool that may claim jobs.
     const self = await participantRepository.findAvailability(
       user.address.toLowerCase(),
     );
@@ -264,11 +267,11 @@ export async function prepareClaim(user, body) {
       throw conflict("transporter is marked unavailable");
     }
 
-    const availableJob =
-      await transporterJobRepository.findAvailableByBatch(batchId);
-    if (availableJob.length === 0) {
-      throw conflict("no available transporter job for this batch");
-    }
+    const job = await transporterJobRepository.findClaimableForTransporter(
+      batchId,
+      user.address.toLowerCase(),
+    );
+    if (!job) throw conflict("no open transporter job for this batch");
 
     const productType = batch.stage === "Farm" ? "olive" : "oil";
     const schema =

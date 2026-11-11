@@ -93,10 +93,10 @@ async function as(role) {
 const call = async (role, method, path, body) =>
   api(method, path, { token: (await as(role)).token, body });
 
-// Prepares a transaction, signs and sends it from the role's wallet, then
-// saves the record. Throws on any unexpected status so a broken step stops the
-// run with the reason instead of cascading into confusing failures.
-async function step(label, role, preparePath, body, savePath, extraSave = {}) {
+// Prepares a transaction, then signs and sends it from the role's wallet.
+// Throws on any unexpected status so a broken step stops the run with the
+// reason instead of cascading into confusing failures.
+async function sendPrepared(label, role, preparePath, body) {
   const session = await as(role);
   const prepared = await api("POST", preparePath, {
     token: session.token,
@@ -119,6 +119,12 @@ async function step(label, role, preparePath, body, savePath, extraSave = {}) {
     nonce,
   });
   await tx.wait();
+  return { txHash: tx.hash, prepared: prepared.body };
+}
+
+// Prepares, signs and sends a transaction, then saves the record.
+async function step(label, role, preparePath, body, savePath, extraSave = {}) {
+  const { txHash } = await sendPrepared(label, role, preparePath, body);
 
   // Everything except the routing fields is the record that was hashed.
   const {
@@ -127,9 +133,10 @@ async function step(label, role, preparePath, body, savePath, extraSave = {}) {
     targetAddress: _target,
     ...record
   } = body;
-  const saved = await api("POST", savePath, {
-    token: session.token,
-    body: { txHash: tx.hash, ...record, ...extraSave },
+  const saved = await call(role, "POST", savePath, {
+    txHash,
+    ...record,
+    ...extraSave,
   });
   if (saved.status !== 201) {
     throw new Error(
@@ -138,7 +145,35 @@ async function step(label, role, preparePath, body, savePath, extraSave = {}) {
   }
 }
 
+// Reserving and releasing have no record: the save call carries only the
+// transaction hash. Each one adds an event to the batch's history, counted
+// here per batch for the history check.
+const reservationEvents = {};
+async function reservationCall(label, role, jobId, method) {
+  const { txHash, prepared } = await sendPrepared(
+    label,
+    role,
+    `/transporter-jobs/${jobId}/prepare-${label}`,
+  );
+  reservationEvents[prepared.batchId] =
+    (reservationEvents[prepared.batchId] ?? 0) + 1;
+  return call(role, method, `/transporter-jobs/${jobId}/reserve`, { txHash });
+}
+const reserve = (role, jobId) =>
+  reservationCall("reserve", role, jobId, "POST");
+const release = (role, jobId) =>
+  reservationCall("release", role, jobId, "DELETE");
+
 const ids = (response, key) => (response.body[key] ?? []).map((b) => b.batchId);
+const openJobs = async () =>
+  (await call("TRANSPORTER", "GET", "/transporter-jobs")).body.jobs ?? [];
+const ownJobs = async () =>
+  (await call("TRANSPORTER", "GET", "/transporter-jobs?mine=true")).body.jobs ??
+  [];
+const openJobId = async (batchId) =>
+  (await openJobs()).find(
+    (j) => j.batchId === batchId && j.status === "available",
+  )?.id;
 
 // ---- the run ---------------------------------------------------------------
 
@@ -222,6 +257,19 @@ async function supplyChain(batchId) {
   };
   const leg = async (kind, toRole) => {
     const olive = kind === "olive";
+    const alreadyReserved = (await ownJobs()).some(
+      (j) => j.batchId === batchId && j.status === "reserved",
+    );
+    if (!alreadyReserved) {
+      const reserved = await reserve("TRANSPORTER", await openJobId(batchId));
+      check(
+        `${kind} job reserved before pickup`,
+        reserved.status === 200 &&
+          reserved.body.status === "reserved" &&
+          reserved.body.reservedAt !== null,
+        JSON.stringify(reserved.body),
+      );
+    }
     await step(
       `${kind} claim`,
       "TRANSPORTER",
@@ -275,20 +323,14 @@ async function supplyChain(batchId) {
     ids(farmerBatches, "listedByMe").includes(batchId),
   );
 
-  const openJobs = await call("TRANSPORTER", "GET", "/transporter-jobs");
-  check(
-    "open job board shows it as available",
-    openJobs.body.jobs?.some(
-      (j) => j.batchId === batchId && j.status === "available",
-    ),
-  );
-  const ownJobs = async () =>
-    (await call("TRANSPORTER", "GET", "/transporter-jobs?mine=true")).body.jobs;
+  const jobId = await openJobId(batchId);
+  check("open job board shows it as available", jobId !== undefined);
   check(
     "transporter has no job for this batch yet",
     !(await ownJobs()).some((j) => j.batchId === batchId),
   );
 
+  await reservationRules(batchId, jobId, olivePickup);
   await leg("olive", "MILL");
 
   check(
@@ -467,16 +509,104 @@ async function supplyChain(batchId) {
   );
 }
 
+async function reservationRules(batchId, jobId, pickup) {
+  console.log("\n# reservation");
+  const unreserved = await call(
+    "TRANSPORTER",
+    "POST",
+    "/batches/prepare-claim",
+    {
+      batchId,
+      ...pickup,
+    },
+  );
+  check(
+    "claiming without a reservation is refused (409)",
+    unreserved.status === 409 && /not reserved/.test(unreserved.body.error),
+    JSON.stringify(unreserved.body),
+  );
+
+  const reserved = await reserve("TRANSPORTER", jobId);
+  check(
+    "reserving returns the job as reserved with reservedAt",
+    reserved.status === 200 &&
+      reserved.body.id === jobId &&
+      reserved.body.status === "reserved" &&
+      typeof reserved.body.reservedAt === "string",
+    JSON.stringify(reserved.body),
+  );
+  check(
+    "the reserved job leaves the open board and shows under mine=true",
+    !(await openJobs()).some((j) => j.id === jobId) &&
+      (await ownJobs()).find((j) => j.id === jobId)?.status === "reserved",
+  );
+  const chain = await api("GET", `/batches/${batchId}/chain`);
+  check(
+    "chain state is Reserved with the transporter as reservedBy",
+    chain.body.status === "Reserved" &&
+      chain.body.reservedBy.toLowerCase() ===
+        address("TRANSPORTER").toLowerCase(),
+    JSON.stringify(chain.body),
+  );
+  check(
+    "the farmer still sees it under listedByMe",
+    ids(await call("FARMER", "GET", "/me/batches"), "listedByMe").includes(
+      batchId,
+    ),
+  );
+  const again = await call(
+    "TRANSPORTER",
+    "POST",
+    `/transporter-jobs/${jobId}/prepare-reserve`,
+  );
+  check(
+    "a reserved job cannot be reserved again (409)",
+    again.status === 409 && again.body.error === "job is not available",
+    JSON.stringify(again.body),
+  );
+
+  const byTransporter = await release("TRANSPORTER", jobId);
+  check(
+    "the transporter can release its reservation",
+    byTransporter.status === 200 &&
+      byTransporter.body.status === "available" &&
+      byTransporter.body.reservedAt === null &&
+      (await openJobs()).some((j) => j.id === jobId),
+    JSON.stringify(byTransporter.body),
+  );
+
+  await reserve("TRANSPORTER", jobId);
+  const byFarmer = await release("FARMER", jobId);
+  check(
+    "the facility that listed the batch can release it too",
+    byFarmer.status === 200 && byFarmer.body.status === "available",
+    JSON.stringify(byFarmer.body),
+  );
+
+  await reserve("TRANSPORTER", jobId);
+  const byMill = await call(
+    "MILL",
+    "POST",
+    `/transporter-jobs/${jobId}/prepare-release`,
+  );
+  check(
+    "another participant cannot release it (403)",
+    byMill.status === 403,
+    JSON.stringify(byMill.body),
+  );
+}
+
 async function journeyHistory(batchId) {
   console.log("\n# history and facility names");
   const history = await api("GET", `/batches/${batchId}/history`);
   const events = history.body.events ?? [];
   const names = history.body.participants ?? {};
+  const expected = 20 + (reservationEvents[batchId] ?? 0);
 
   check(
-    "history holds this batch's 20 events and nothing from other batches",
+    `history holds this batch's ${expected} events and nothing from other batches`,
     history.status === 200 &&
-      events.length === 20 &&
+      events.length === expected &&
       events.every((e) => e.args.batchId !== undefined),
     `status ${history.status}, ${events.length} events`,
   );
@@ -558,8 +688,8 @@ async function availabilityRules(batchId) {
       (await call("FARMER", "POST", "/batches/prepare", farm)).status === 200,
   );
 
-  // An unavailable transporter cannot claim, and an unavailable facility
-  // cannot stop a delivery that is already on its way.
+  // An unavailable transporter cannot reserve or claim, and an unavailable
+  // facility cannot stop a delivery that is already on its way.
   await step(
     "availability farm",
     "FARMER",
@@ -577,6 +707,23 @@ async function availabilityRules(batchId) {
     pickup_condition: "good",
     olive_condition: "fresh",
   };
+  const jobId = await openJobId(farm.batchId);
+  try {
+    await setAvailability("TRANSPORTER", "unavailable");
+    const refused = await call(
+      "TRANSPORTER",
+      "POST",
+      `/transporter-jobs/${jobId}/prepare-reserve`,
+    );
+    check(
+      "unavailable transporter cannot reserve (409)",
+      refused.status === 409 && /unavailable/.test(refused.body.error),
+      JSON.stringify(refused.body),
+    );
+  } finally {
+    await setAvailability("TRANSPORTER", "available");
+  }
+  await reserve("TRANSPORTER", jobId);
   try {
     await setAvailability("TRANSPORTER", "unavailable");
     const refused = await call(

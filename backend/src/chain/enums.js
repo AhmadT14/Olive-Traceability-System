@@ -1,6 +1,12 @@
 import { id } from "ethers";
 
-export const Status = ["None", "Created", "Listed", "PendingHandover"];
+export const Status = [
+  "None",
+  "Created",
+  "Listed",
+  "PendingHandover",
+  "Reserved",
+];
 export const Stage = [
   "Farm",
   "Mill",
@@ -33,3 +39,6 @@ export const StageRole = {
 };
 
 export const batchExists = (batch) => batch.status !== Status[0];
+
+export const isListedForPickup = (batch) =>
+  batch.status === "Listed" || batch.status === "Reserved";

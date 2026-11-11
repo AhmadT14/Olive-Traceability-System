@@ -88,6 +88,7 @@ test("the created-batches response schema accepts the service output", () => {
     custodian: wallet,
     pendingTarget: "0x0000000000000000000000000000000000000000",
     destination: wallet,
+    reservedBy: "0x0000000000000000000000000000000000000000",
     harvestDate: null,
     quantity: null,
     olive_type: null,

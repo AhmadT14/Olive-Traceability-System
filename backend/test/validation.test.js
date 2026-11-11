@@ -89,6 +89,7 @@ test("response schemas accept the shapes the services return", () => {
       custodian: "0x1",
       pendingTarget: "0x2",
       destination: "0x3",
+      reservedBy: "0x0",
     }).success,
     true,
   );

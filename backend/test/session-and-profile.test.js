@@ -37,6 +37,7 @@ const batch = (over) => ({
   custodian: OTHER,
   pendingTarget: NOBODY,
   destination: NOBODY,
+  reservedBy: NOBODY,
   ...over,
 });
 
@@ -51,12 +52,10 @@ test("session and login responses carry isAdmin and the token expiry", () => {
   assert.ok(
     loginResponseSchema.safeParse({ ...session, token: "a.b.c" }).success,
   );
-  // Both fields are required on a session...
   assert.equal(
     sessionSchema.safeParse({ address: ME, roles: [] }).success,
     false,
   );
-  // ...but the public roles lookup stays as it was.
   assert.ok(
     participantRolesResponseSchema.safeParse({ address: ME, roles: [] })
       .success,
@@ -116,6 +115,21 @@ test("classifyBatchForParticipant sorts a batch by who holds it", () => {
     classifyBatchForParticipant(batch({ custodian: ME, status: "Listed" }), ME),
     "listedByMe",
   );
+  // A reserved batch is still listed by its custodian until it is claimed.
+  assert.equal(
+    classifyBatchForParticipant(
+      batch({ custodian: ME, status: "Reserved", reservedBy: OTHER }),
+      ME,
+    ),
+    "listedByMe",
+  );
+  assert.equal(
+    classifyBatchForParticipant(
+      batch({ custodian: ME, status: "Reserved", reservedBy: OTHER }),
+      OTHER,
+    ),
+    null,
+  );
   // A transporter that named the facility still holds the batch.
   assert.equal(
     classifyBatchForParticipant(
@@ -124,7 +138,6 @@ test("classifyBatchForParticipant sorts a batch by who holds it", () => {
     ),
     "holding",
   );
-  // The named facility sees it as waiting for its confirmation.
   assert.equal(
     classifyBatchForParticipant(
       batch({ status: "PendingHandover", pendingTarget: ME }),
@@ -132,7 +145,6 @@ test("classifyBatchForParticipant sorts a batch by who holds it", () => {
     ),
     "awaitingMyConfirmation",
   );
-  // Someone else's batch, or a batch that does not exist, is not listed.
   assert.equal(classifyBatchForParticipant(batch({}), ME), null);
   assert.equal(
     classifyBatchForParticipant(batch({ custodian: ME, status: "None" }), ME),
@@ -157,8 +169,6 @@ test("updateProfileSchema takes any subset of fields but not none", () => {
   assert.equal(updateProfileSchema.safeParse({}).success, false);
   assert.equal(updateProfileSchema.safeParse({ name: "   " }).success, false);
   assert.equal(updateProfileSchema.safeParse({ email: "nope" }).success, false);
-  // Availability has its own endpoint: sent alone it leaves nothing to
-  // update, and sent beside other fields it is ignored rather than applied.
   assert.equal(
     updateProfileSchema.safeParse({ availability: "available" }).success,
     false,

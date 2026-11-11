@@ -35,7 +35,7 @@ const events = stubModule("repositories/batchEvent.repository.js", [
   "insert",
 ]);
 const jobs = stubModule("repositories/transporterJob.repository.js", [
-  "findAvailableByBatch",
+  "findClaimableForTransporter",
   "findClaimedForTransporter",
   "findClaimedForHandover",
   "findPendingHandoverForDestination",
