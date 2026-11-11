@@ -12,9 +12,9 @@ import {
   HashMismatchError,
   verifyRecordAgainstChain,
 } from "../hashing/verify.js";
-import * as batchEventRepository from "../repositories/batchEvent.repository.js";
-import * as transporterJobRepository from "../repositories/transporterJob.repository.js";
-import { runInTransaction } from "../repositories/unitOfWork.js";
+import * as batchEventRepository from "../db/repositories/batchEvent.repository.js";
+import * as transporterJobRepository from "../db/repositories/transporterJob.repository.js";
+import { runInTransaction } from "../db/repositories/unitOfWork.js";
 import { parseBatchId, parseBody, parseTxHash } from "../validation/parse.js";
 import { receiptSchemas } from "../validation/receipt.schemas.js";
 import { sameAddress } from "../chain/addresses.js";

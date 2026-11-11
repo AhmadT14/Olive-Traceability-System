@@ -47,8 +47,6 @@ export const oilDeliverySchema = z.object({
   packaging_condition: z.string().optional(),
 });
 
-// A transaction hash only exists after the wallet has sent the transaction, so
-// the prepare step takes the record fields without one.
 export const prepareOlivePickupSchema = olivePickupSchema
   .omit({ txHash: true })
   .extend({ batchId: batchIdSchema });

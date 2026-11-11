@@ -5,11 +5,11 @@ import { stubModule } from "./support/stubModule.js";
 
 stubModule("db/db.js", [], { db: drizzle.mock() });
 const applications =
-  await import("../src/repositories/registrationApplication.repository.js");
+  await import("../src/db/repositories/registrationApplication.repository.js");
 const pendingSaves =
-  await import("../src/repositories/pendingSave.repository.js");
+  await import("../src/db/repositories/pendingSave.repository.js");
 const chainEvents =
-  await import("../src/repositories/chainEvent.repository.js");
+  await import("../src/db/repositories/chainEvent.repository.js");
 
 const offline = drizzle.mock();
 const WALLET = "0xaaaa000000000000000000000000000000000001";

@@ -2,7 +2,7 @@ import { id, ZeroHash } from "ethers";
 import { registry, batchCustody, provider } from "./contracts.js";
 import { ROLES, Status, Stage } from "./enums.js";
 import { sameAddress } from "./addresses.js";
-import * as chainEventRepository from "../repositories/chainEvent.repository.js";
+import * as chainEventRepository from "../db/repositories/chainEvent.repository.js";
 import { syncEvents } from "./eventIndex.js";
 
 export { ROLES };

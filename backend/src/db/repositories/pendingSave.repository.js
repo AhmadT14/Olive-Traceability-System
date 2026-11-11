@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, isNull, lt, sql } from "drizzle-orm";
-import { db } from "../db/db.js";
-import { pendingSaves } from "../db/schema.js";
+import { db } from "../db.js";
+import { pendingSaves } from "../schema.js";
 
 export function insert(values, exec = db) {
   return exec

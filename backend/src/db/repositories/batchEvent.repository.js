@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
-import { db } from "../db/db.js";
-import { batchEvents } from "../db/schema.js";
+import { db } from "../db.js";
+import { batchEvents } from "../schema.js";
 
 function findByTxHash(txHash, exec = db) {
   return exec

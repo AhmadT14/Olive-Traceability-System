@@ -9,7 +9,7 @@ import {
 
 const reader = stubReader();
 const applicationsRepo = stubModule(
-  "repositories/registrationApplication.repository.js",
+  "db/repositories/registrationApplication.repository.js",
   ["findLatestByWallet", "list"],
 );
 const { getMyApplication, listApplications } =

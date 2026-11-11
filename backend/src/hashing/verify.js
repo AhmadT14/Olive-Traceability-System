@@ -27,8 +27,6 @@ export class EventNotFoundError extends Error {
   }
 }
 
-// Maps each defined HASH_FIELDS stage key to the contract event that carries
-// its dataHash, and which argument on that event holds it.
 const HASH_EVENTS = {
   farm: { event: "BatchCreated", arg: "harvestDataHash" },
   transporter_olive: { event: "BatchClaimed", arg: "intakeDataHash" },
@@ -52,26 +50,6 @@ const HASH_EVENTS = {
   retail: { event: "ReceiptConfirmed", arg: "intakeDataHash" },
 };
 
-/**
- * Recomputes the hash of `record` and compares it against the dataHash
- * actually emitted on-chain in `txHash`, for the specific `batchId` the
- * caller claims this record belongs to. Does not write anything — callers
- * decide what "reject the write" means for their route.
- *
- * Checking batchId matters because it is NOT one of the hashed fields (see
- * HASH_FIELDS) — without this check, a previously-mined, legitimate txHash
- * could be replayed against a different batchId with identical hash-field
- * values and would otherwise pass.
- *
- * @param {string} stageKey - a key in HASH_EVENTS / HASH_FIELDS
- * @param {string} txHash - the mined tx that's supposed to carry this record's hash
- * @param {string} batchId - the batch this record is being written for
- * @param {Record<string, unknown>} record - the incoming payload to verify
- * @param {object} [decodedTx] - the already decoded tx, if the caller has it
- * @returns {Promise<{ onChainHash: string, computedHash: string, decoded: object }>}
- * @throws {EventNotFoundError} if the tx has no matching event for this batch
- * @throws {HashMismatchError} if the hashes don't match
- */
 export async function verifyRecordAgainstChain(
   stageKey,
   txHash,
@@ -98,8 +76,6 @@ export async function verifyRecordAgainstChain(
     });
   }
 
-  // topics[0] is the event signature hash; topics[1] is batchId, the first
-  // indexed param on every BatchCustody event this maps to.
   const match = decoded.events.find(
     (e) => e.name === mapping.event && e.topics[1] === expectedBatchTopic,
   );

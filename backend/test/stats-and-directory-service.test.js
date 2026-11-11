@@ -9,13 +9,14 @@ stubModule("chain/contracts.js", [], {
   batchCustody: {},
 });
 stubModule("config.js", [], { config: { CHAIN_ID: 31337 } });
-stubModule("repositories/unitOfWork.js", ["runInTransaction"]);
-const batchRepo = stubModule("repositories/batch.repository.js", ["listIds"]);
-const participantsRepo = stubModule("repositories/participant.repository.js", [
-  "findProfile",
-  "listDirectory",
-  "listWithNames",
+stubModule("db/repositories/unitOfWork.js", ["runInTransaction"]);
+const batchRepo = stubModule("db/repositories/batch.repository.js", [
+  "listIds",
 ]);
+const participantsRepo = stubModule(
+  "db/repositories/participant.repository.js",
+  ["findProfile", "listDirectory", "listWithNames"],
+);
 const { countBatchesPerStage } =
   await import("../src/services/stats.service.js");
 const { listParticipants } = await import("../src/services/admin.service.js");

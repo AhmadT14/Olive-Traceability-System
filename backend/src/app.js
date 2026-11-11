@@ -63,8 +63,6 @@ app.use(meRoutes);
 app.use(applicationsRoutes);
 app.use(signupRoutes);
 
-// Keep every failure — including unknown routes and malformed bodies — in the
-// same JSON shape: { error, details? }.
 app.use(notFoundHandler);
 app.use(errorHandler);
 

@@ -15,7 +15,7 @@ const schema = z.object({
   PORT: z.coerce.number().int().default(3000),
   JWT_SECRET: z.string().min(32),
   AUTH_DOMAIN: z.string().min(1).default("localhost:5173"),
-  AUTH_URI: z.string().url().default("http://localhost:5173"),
+  AUTH_URI: z.string().default("http://localhost:5173"),
   CORS_ORIGIN: z.string().optional().transform(parseCorsOrigins),
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
   EVENT_SYNC_INTERVAL_MS: z.coerce.number().int().min(0).default(5_000),

@@ -187,6 +187,7 @@ The demo uses publicly known Anvil development keys and is strictly for a local 
 | Stack stopped or restarted   | `docker compose up --build`. The chain and the database are both kept.                          |
 | You changed a contract       | `forge build`, then `npm run sync:abis` in `backend/`, then the reset routine below.           |
 | You want a clean demo        | The reset routine below.                                                                        |
+| The database lost its batch or job rows, or they no longer match the chain | `npm run db:rebuild` in `backend/` (see below). |
 
 ### Reset routine
 
@@ -203,6 +204,30 @@ no longer exist on the chain (or the other way round), so always reset both.
 Without Docker, start Anvil yourself, then run `bash scripts/deploy.sh` and
 `bash scripts/seed.sh` from the repo root, copy the printed addresses into
 `backend/.env`, and clear the old database rows.
+
+### Rebuilding batches and jobs from the chain
+
+The chain is the source of truth for which batches exist and where each
+transporter job stands; the database only indexes them. If those rows are lost
+or drift (a restored backup, a job stuck in the wrong state), rebuild them from
+the contract events:
+
+```sh
+npm run db:rebuild -- --dry-run   # in backend/: show what would change
+npm run db:rebuild                # write it
+```
+
+It brings the event index up to date, reads every batch id from its
+`createBatch` transaction, replays the listing, reservation, claim, handover and
+receipt events into transporter jobs, then adds the missing `batches` rows and
+replaces every `transporter_jobs` row in one transaction (job ids change). A
+wallet named by the events but missing from the participant directory gets a
+row without a profile; the script lists them. Record details were never on
+chain, so they are not restored: a job whose listing, claim, handover or
+receipt record is missing keeps `null` in that column, and the job board shows
+no `outgoingDetails` for it. The script stops if the event index is ahead of
+the chain (the chain was reset without the database); use the reset routine
+then.
 
 ### Checking that everything still works
 

@@ -3,18 +3,19 @@ import assert from "node:assert/strict";
 import { stubModule, stubReader } from "./support/stubModule.js";
 
 const reader = stubReader();
-const jobsRepo = stubModule("repositories/transporterJob.repository.js", [
+const jobsRepo = stubModule("db/repositories/transporterJob.repository.js", [
   "listAvailable",
   "listActiveForTransporter",
   "listCompletedForTransporter",
   "findById",
 ]);
-const eventsRepo = stubModule("repositories/batchEvent.repository.js", [
+const eventsRepo = stubModule("db/repositories/batchEvent.repository.js", [
   "findByTxHashes",
 ]);
-const participantsRepo = stubModule("repositories/participant.repository.js", [
-  "listWithNamesByWallets",
-]);
+const participantsRepo = stubModule(
+  "db/repositories/participant.repository.js",
+  ["listWithNamesByWallets"],
+);
 const { getJobView, listJobs } =
   await import("../src/services/jobs.service.js");
 const { parseJobId } = await import("../src/validation/parse.js");

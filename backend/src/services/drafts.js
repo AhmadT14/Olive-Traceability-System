@@ -1,6 +1,6 @@
 import { sameAddress } from "../chain/addresses.js";
 import { internalError } from "../errors.js";
-import * as pendingSaveRepository from "../repositories/pendingSave.repository.js";
+import * as pendingSaveRepository from "../db/repositories/pendingSave.repository.js";
 
 export async function saveDraft(user, batchId, detailsType, record, dataHash) {
   try {

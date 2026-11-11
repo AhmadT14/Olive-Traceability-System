@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import { db } from "../db/db.js";
-import { batches } from "../db/schema.js";
+import { db } from "../db.js";
+import { batches } from "../schema.js";
 
 function findById(batchId, exec = db) {
   return exec

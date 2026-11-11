@@ -16,8 +16,8 @@ import {
   isUniqueViolation,
   notFound,
 } from "../errors.js";
-import * as participantRepository from "../repositories/participant.repository.js";
-import * as transporterJobRepository from "../repositories/transporterJob.repository.js";
+import * as participantRepository from "../db/repositories/participant.repository.js";
+import * as transporterJobRepository from "../db/repositories/transporterJob.repository.js";
 import { reservationConfirmSchema } from "../validation/jobs.schemas.js";
 import { parseBody, parseJobId } from "../validation/parse.js";
 import { getJobView } from "./jobs.service.js";

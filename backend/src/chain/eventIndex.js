@@ -1,6 +1,6 @@
 import { config } from "../config.js";
-import * as chainEventRepository from "../repositories/chainEvent.repository.js";
-import { runInTransaction } from "../repositories/unitOfWork.js";
+import * as chainEventRepository from "../db/repositories/chainEvent.repository.js";
+import { runInTransaction } from "../db/repositories/unitOfWork.js";
 import { sameAddress } from "./addresses.js";
 import { batchCustody, provider, registry } from "./contracts.js";
 import { eventArgsToObject } from "./eventArgs.js";

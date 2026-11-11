@@ -2,9 +2,7 @@ import { randomBytes } from "node:crypto";
 import { getAddress } from "ethers";
 
 const TTL_MS = 5 * 60 * 1000;
-// /auth/nonce is public, so the store must not grow with the number of
-// addresses an anonymous caller makes up. One entry per address, and never
-// more than this many in total.
+
 const MAX_ENTRIES = 10_000;
 
 const STATEMENT = "Sign in to Olive Traceability.";
@@ -33,7 +31,6 @@ export function buildMessage({
   ].join("\n");
 }
 
-// The clock and limits can be replaced so the behaviour can be tested.
 export function createNonceStore({
   ttlMs = TTL_MS,
   maxEntries = MAX_ENTRIES,
@@ -51,7 +48,6 @@ export function createNonceStore({
   return {
     create(address) {
       const key = address.toLowerCase();
-      // Re-inserting puts a repeat request at the back of the eviction order.
       store.delete(key);
       if (store.size >= maxEntries) sweepExpired();
       // Still full of live entries: drop the oldest rather than grow.
@@ -68,7 +64,6 @@ export function createNonceStore({
       return entry;
     },
 
-    // A nonce works once: it is removed whether or not it was still valid.
     consume(address) {
       const key = address.toLowerCase();
       const entry = store.get(key);

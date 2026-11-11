@@ -4,25 +4,27 @@ import { id } from "ethers";
 import { stubModule, stubReader } from "./support/stubModule.js";
 
 const reader = stubReader();
-const eventsRepo = stubModule("repositories/batchEvent.repository.js", [
+const eventsRepo = stubModule("db/repositories/batchEvent.repository.js", [
   "findFarmEventsByTxHashes",
 ]);
-const batchRepo = stubModule("repositories/batch.repository.js", ["listIds"]);
-const participantsRepo = stubModule("repositories/participant.repository.js", [
-  "findProfile",
-  "updateProfile",
+const batchRepo = stubModule("db/repositories/batch.repository.js", [
+  "listIds",
 ]);
-const jobsRepo = stubModule("repositories/transporterJob.repository.js", [
+const participantsRepo = stubModule(
+  "db/repositories/participant.repository.js",
+  ["findProfile", "updateProfile"],
+);
+const jobsRepo = stubModule("db/repositories/transporterJob.repository.js", [
   "listReceivedByParty",
 ]);
-const savesRepo = stubModule("repositories/pendingSave.repository.js", [
+const savesRepo = stubModule("db/repositories/pendingSave.repository.js", [
   "listForWallet",
 ]);
 const eventIndex = stubModule("chain/eventIndex.js", [
   "syncEvents",
   "startEventSync",
 ]);
-const chainEventsRepo = stubModule("repositories/chainEvent.repository.js", [
+const chainEventsRepo = stubModule("db/repositories/chainEvent.repository.js", [
   "listBatchTopicsByAddress",
 ]);
 const {

@@ -1,8 +1,8 @@
 import { getBatch, hasRole, ROLES } from "../chain/reader.js";
 import { AppError, forbidden, internalError } from "../errors.js";
-import * as batchEventRepository from "../repositories/batchEvent.repository.js";
-import * as participantRepository from "../repositories/participant.repository.js";
-import * as transporterJobRepository from "../repositories/transporterJob.repository.js";
+import * as batchEventRepository from "../db/repositories/batchEvent.repository.js";
+import * as participantRepository from "../db/repositories/participant.repository.js";
+import * as transporterJobRepository from "../db/repositories/transporterJob.repository.js";
 import {
   pageOf,
   parseJobStatusQuery,

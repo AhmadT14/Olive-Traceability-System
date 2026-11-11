@@ -1,6 +1,6 @@
 import { and, arrayContains, asc, desc, eq, isNotNull, sql } from "drizzle-orm";
-import { db } from "../db/db.js";
-import { chainEvents, chainSyncState } from "../db/schema.js";
+import { db } from "../db.js";
+import { chainEvents, chainSyncState } from "../schema.js";
 
 export function insertMany(rows, exec = db) {
   if (rows.length === 0) return Promise.resolve([]);

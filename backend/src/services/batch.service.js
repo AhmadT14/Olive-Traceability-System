@@ -12,11 +12,11 @@ import {
   HashMismatchError,
   verifyRecordAgainstChain,
 } from "../hashing/verify.js";
-import * as batchRepository from "../repositories/batch.repository.js";
-import * as batchEventRepository from "../repositories/batchEvent.repository.js";
-import * as participantRepository from "../repositories/participant.repository.js";
-import * as transporterJobRepository from "../repositories/transporterJob.repository.js";
-import { runInTransaction } from "../repositories/unitOfWork.js";
+import * as batchRepository from "../db/repositories/batch.repository.js";
+import * as batchEventRepository from "../db/repositories/batchEvent.repository.js";
+import * as participantRepository from "../db/repositories/participant.repository.js";
+import * as transporterJobRepository from "../db/repositories/transporterJob.repository.js";
+import { runInTransaction } from "../db/repositories/unitOfWork.js";
 import { createBatchSchema } from "../validation/batch.schemas.js";
 import { txHashSchema } from "../validation/common.schemas.js";
 import {

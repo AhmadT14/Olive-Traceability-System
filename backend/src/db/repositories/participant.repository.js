@@ -1,6 +1,6 @@
 import { eq, inArray } from "drizzle-orm";
-import { db } from "../db/db.js";
-import { participantProfiles, participants } from "../db/schema.js";
+import { db } from "../db.js";
+import { participantProfiles, participants } from "../schema.js";
 
 function findByWallet(walletAddress, exec = db) {
   return exec

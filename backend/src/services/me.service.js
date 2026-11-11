@@ -10,12 +10,12 @@ import {
   notFound,
   unprocessable,
 } from "../errors.js";
-import * as batchEventRepository from "../repositories/batchEvent.repository.js";
-import * as chainEventRepository from "../repositories/chainEvent.repository.js";
-import * as batchRepository from "../repositories/batch.repository.js";
-import * as participantRepository from "../repositories/participant.repository.js";
-import * as pendingSaveRepository from "../repositories/pendingSave.repository.js";
-import * as transporterJobRepository from "../repositories/transporterJob.repository.js";
+import * as batchEventRepository from "../db/repositories/batchEvent.repository.js";
+import * as chainEventRepository from "../db/repositories/chainEvent.repository.js";
+import * as batchRepository from "../db/repositories/batch.repository.js";
+import * as participantRepository from "../db/repositories/participant.repository.js";
+import * as pendingSaveRepository from "../db/repositories/pendingSave.repository.js";
+import * as transporterJobRepository from "../db/repositories/transporterJob.repository.js";
 import {
   profileDetailsSchemaForRoles,
   updateAvailabilitySchema,

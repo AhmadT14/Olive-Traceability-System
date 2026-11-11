@@ -8,7 +8,7 @@ import {
   isUniqueViolation,
   notFound,
 } from "../errors.js";
-import * as applicationRepository from "../repositories/registrationApplication.repository.js";
+import * as applicationRepository from "../db/repositories/registrationApplication.repository.js";
 import { jobIdParamSchema } from "../validation/request.schemas.js";
 import { parseBody } from "../validation/parse.js";
 import {

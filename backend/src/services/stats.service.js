@@ -2,7 +2,7 @@ import { batchExists } from "../chain/enums.js";
 import { getBatch, hasAdminRole } from "../chain/reader.js";
 import { countByStage } from "../chain/stageCounts.js";
 import { AppError, forbidden, internalError } from "../errors.js";
-import * as batchRepository from "../repositories/batch.repository.js";
+import * as batchRepository from "../db/repositories/batch.repository.js";
 
 const CHAIN_READ_BATCH_SIZE = 25;
 

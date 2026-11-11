@@ -16,25 +16,25 @@ const transaction = stubModule("services/transaction.js", [
   "prepareTransaction",
 ]);
 const reader = stubReader();
-const drafts = stubModule("repositories/pendingSave.repository.js", [
+const drafts = stubModule("db/repositories/pendingSave.repository.js", [
   "insert",
   "findPendingByBatchAndHash",
   "resolve",
 ]);
-const participants = stubModule("repositories/participant.repository.js", [
+const participants = stubModule("db/repositories/participant.repository.js", [
   "findAvailability",
   "exists",
 ]);
-const batches = stubModule("repositories/batch.repository.js", [
+const batches = stubModule("db/repositories/batch.repository.js", [
   "existsById",
   "insert",
 ]);
-const events = stubModule("repositories/batchEvent.repository.js", [
+const events = stubModule("db/repositories/batchEvent.repository.js", [
   "existsByBatchAndType",
   "existsByTxHash",
   "insert",
 ]);
-const jobs = stubModule("repositories/transporterJob.repository.js", [
+const jobs = stubModule("db/repositories/transporterJob.repository.js", [
   "findClaimableForTransporter",
   "findClaimedForTransporter",
   "findClaimedForHandover",
@@ -42,7 +42,7 @@ const jobs = stubModule("repositories/transporterJob.repository.js", [
   "insert",
   "transition",
 ]);
-const unitOfWork = stubModule("repositories/unitOfWork.js", [
+const unitOfWork = stubModule("db/repositories/unitOfWork.js", [
   "runInTransaction",
 ]);
 

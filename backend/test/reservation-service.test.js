@@ -26,23 +26,25 @@ const transaction = stubModule("services/transaction.js", [
   "prepareTransaction",
 ]);
 const reader = stubReader();
-const participants = stubModule("repositories/participant.repository.js", [
+const participants = stubModule("db/repositories/participant.repository.js", [
   "findAvailability",
 ]);
-const jobs = stubModule("repositories/transporterJob.repository.js", [
+const jobs = stubModule("db/repositories/transporterJob.repository.js", [
   "findById",
   "findClaimableForTransporter",
   "transition",
   "releaseReservation",
 ]);
 const views = stubModule("services/jobs.service.js", ["getJobView"]);
-const drafts = stubModule("repositories/pendingSave.repository.js", [
+const drafts = stubModule("db/repositories/pendingSave.repository.js", [
   "insert",
   "findPendingByBatchAndHash",
   "resolve",
 ]);
-const events = stubModule("repositories/batchEvent.repository.js", ["insert"]);
-const unitOfWork = stubModule("repositories/unitOfWork.js", [
+const events = stubModule("db/repositories/batchEvent.repository.js", [
+  "insert",
+]);
+const unitOfWork = stubModule("db/repositories/unitOfWork.js", [
   "runInTransaction",
 ]);
 

@@ -5,12 +5,12 @@ import { stubModule, stubReader } from "./support/stubModule.js";
 import { computeRecordHash } from "../src/hashing/canonical.js";
 
 const reader = stubReader();
-const drafts = stubModule("repositories/pendingSave.repository.js", [
+const drafts = stubModule("db/repositories/pendingSave.repository.js", [
   "listPending",
   "resolve",
   "findByTxHash",
 ]);
-const events = stubModule("repositories/batchEvent.repository.js", [
+const events = stubModule("db/repositories/batchEvent.repository.js", [
   "existsByTxHash",
 ]);
 const batchWrites = stubModule("services/batch.service.js", [

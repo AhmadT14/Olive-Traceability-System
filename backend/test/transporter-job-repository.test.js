@@ -5,7 +5,7 @@ import { stubModule } from "./support/stubModule.js";
 
 stubModule("db/db.js", [], { db: drizzle.mock() });
 const repository =
-  await import("../src/repositories/transporterJob.repository.js");
+  await import("../src/db/repositories/transporterJob.repository.js");
 
 const offline = drizzle.mock();
 const CALLER = "0xaaaa000000000000000000000000000000000001";

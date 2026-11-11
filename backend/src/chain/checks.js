@@ -5,13 +5,9 @@ import { batchExists, Stage, StageRole } from "./enums.js";
 const allow = () => ({ allowed: true, reason: null });
 const deny = (reason) => ({ allowed: false, reason });
 
-// The zero address is how the chain says "nobody" (no pending target, no
-// custodian), so it never counts as a participant.
 const sameParticipant = (left, right) =>
   sameAddress(left, right) && left.toLowerCase() !== ZeroAddress;
 
-// The stage a batch moves to when the next participant confirms receipt, or
-// null at the final stage.
 export function getNextStage(stage) {
   const index = Stage.indexOf(stage);
   return index >= 0 && index < Stage.length - 1 ? Stage[index + 1] : null;

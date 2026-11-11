@@ -9,7 +9,7 @@ stubModule("chain/contracts.js", [], {
   provider: {},
 });
 const index = stubModule("chain/eventIndex.js", ["syncEvents"]);
-const repo = stubModule("repositories/chainEvent.repository.js", [
+const repo = stubModule("db/repositories/chainEvent.repository.js", [
   "listByBatchTopic",
   "listByEventAndAddress",
 ]);

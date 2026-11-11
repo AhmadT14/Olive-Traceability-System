@@ -1,6 +1,6 @@
 import { hasAdminRole } from "../chain/reader.js";
 import { AppError, forbidden, internalError } from "../errors.js";
-import * as applicationRepository from "../repositories/registrationApplication.repository.js";
+import * as applicationRepository from "../db/repositories/registrationApplication.repository.js";
 import {
   parseApplicationStatusQuery,
   parsePageQuery,

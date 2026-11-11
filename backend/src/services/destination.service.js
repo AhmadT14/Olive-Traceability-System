@@ -7,7 +7,7 @@ import {
   internalError,
   notFound,
 } from "../errors.js";
-import * as participantRepository from "../repositories/participant.repository.js";
+import * as participantRepository from "../db/repositories/participant.repository.js";
 import { parseBatchId, parseDestinationRole } from "../validation/parse.js";
 
 // Both lists leave out participants who have set themselves to "unavailable".

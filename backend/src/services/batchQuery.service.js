@@ -4,8 +4,8 @@ import {
 } from "../chain/reader.js";
 import { collectAddresses } from "../chain/addresses.js";
 import { internalError, notFound } from "../errors.js";
-import * as batchEventRepository from "../repositories/batchEvent.repository.js";
-import * as participantRepository from "../repositories/participant.repository.js";
+import * as batchEventRepository from "../db/repositories/batchEvent.repository.js";
+import * as participantRepository from "../db/repositories/participant.repository.js";
 import { parseBatchId } from "../validation/parse.js";
 import { batchExists } from "../chain/enums.js";
 

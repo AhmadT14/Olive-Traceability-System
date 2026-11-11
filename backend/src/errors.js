@@ -11,8 +11,6 @@ export class AppError extends Error {
 export const badRequest = (message, details) =>
   new AppError(400, message, { details });
 
-// The request was syntactically valid JSON but a field failed schema
-// validation (wrong type, bad format, missing required value).
 export const unprocessable = (message, details) =>
   new AppError(422, message, { details });
 

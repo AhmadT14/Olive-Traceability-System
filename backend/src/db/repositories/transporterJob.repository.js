@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
-import { db } from "../db/db.js";
-import { batchEvents, transporterJobs } from "../db/schema.js";
+import { db } from "../db.js";
+import { batchEvents, transporterJobs } from "../schema.js";
 
 const jobColumns = {
   id: transporterJobs.id,

@@ -241,4 +241,5 @@ curl http://localhost:3000/batches/B1/destinations \
 - Contract reads and transaction event decoding use the configured RPC connection and generated ABIs.
 - Contract events are copied into an event index in PostgreSQL (`chain_events`), from `DEPLOY_BLOCK` on, every `EVENT_SYNC_INTERVAL_MS` (default 5000; `0` turns the timer off). `GET /batches/:id/history`, `GET /me/batches/created` and the draft reconciler read events from it; each of these reads first brings the index up to the latest block, so a just-mined transaction is included. If the chain is reset but the database is kept, the sync stops with an error until `chain_events` and `chain_sync_state` are cleared (or the whole stack is reset with `docker compose down -v`).
 - Off chain details are inserted into PostgreSQL only after the API validates the matching on chain transaction and hash.
+- The batch list and the transporter jobs can be rebuilt from the contract events with `npm run db:rebuild` in `backend/` (record details cannot; see the README). Job ids change after a rebuild, so a client should not keep them beyond the current page.
 - The API currently has no pagination or versioned `/api` prefix.

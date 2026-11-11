@@ -1,8 +1,8 @@
 import { sameAddress } from "../chain/addresses.js";
 import { getBatchHistory } from "../chain/reader.js";
 import { verifyRecordAgainstChain } from "../hashing/verify.js";
-import * as batchEventRepository from "../repositories/batchEvent.repository.js";
-import * as pendingSaveRepository from "../repositories/pendingSave.repository.js";
+import * as batchEventRepository from "../db/repositories/batchEvent.repository.js";
+import * as pendingSaveRepository from "../db/repositories/pendingSave.repository.js";
 import { receiptSchemas } from "../validation/receipt.schemas.js";
 import {
   writeFarmBatch,

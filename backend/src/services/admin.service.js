@@ -14,8 +14,8 @@ import {
   internalError,
   notFound,
 } from "../errors.js";
-import * as participantRepository from "../repositories/participant.repository.js";
-import { runInTransaction } from "../repositories/unitOfWork.js";
+import * as participantRepository from "../db/repositories/participant.repository.js";
+import { runInTransaction } from "../db/repositories/unitOfWork.js";
 import {
   confirmRoleChangeSchema,
   prepareRoleChangeSchema,
@@ -140,9 +140,6 @@ export async function confirmRoleChange(user, body) {
   }
 }
 
-// The admin's directory: every participant the backend has a record for, with
-// the roles they hold on chain right now. A participant whose roles were all
-// revoked still appears, with an empty list, so they can be registered again.
 export async function listParticipants(user, query) {
   const page = parsePageQuery(query);
 

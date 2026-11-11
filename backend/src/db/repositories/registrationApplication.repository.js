@@ -1,6 +1,6 @@
 import { and, desc, eq, sql } from "drizzle-orm";
-import { db } from "../db/db.js";
-import { registrationApplications } from "../db/schema.js";
+import { db } from "../db.js";
+import { registrationApplications } from "../schema.js";
 
 export function insert(values, exec = db) {
   return exec

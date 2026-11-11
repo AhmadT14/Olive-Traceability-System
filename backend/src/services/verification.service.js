@@ -5,7 +5,7 @@ import {
   HashMismatchError,
   verifyRecordAgainstChain,
 } from "../hashing/verify.js";
-import * as batchEventRepository from "../repositories/batchEvent.repository.js";
+import * as batchEventRepository from "../db/repositories/batchEvent.repository.js";
 import { parseBatchId } from "../validation/parse.js";
 import { batchExists } from "../chain/enums.js";
 

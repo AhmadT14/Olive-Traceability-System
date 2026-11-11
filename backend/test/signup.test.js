@@ -4,7 +4,7 @@ import { stubModule, stubReader } from "./support/stubModule.js";
 
 const reader = stubReader();
 const applications = stubModule(
-  "repositories/registrationApplication.repository.js",
+  "db/repositories/registrationApplication.repository.js",
   ["insert", "findById", "resolve"],
 );
 const admin = stubModule("services/admin.service.js", [

@@ -1,6 +1,6 @@
 import { ROLES, hasRole } from "../chain/reader.js";
 import { AppError, internalError, notFound } from "../errors.js";
-import * as participantRepository from "../repositories/participant.repository.js";
+import * as participantRepository from "../db/repositories/participant.repository.js";
 import { parseWalletAddress } from "../validation/parse.js";
 
 // Reads every registry role an address currently holds.

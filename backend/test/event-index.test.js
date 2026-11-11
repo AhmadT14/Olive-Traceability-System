@@ -30,12 +30,12 @@ stubModule("chain/contracts.js", [], {
   registry: { target: REGISTRY, interface: registryInterface },
   provider,
 });
-const repo = stubModule("repositories/chainEvent.repository.js", [
+const repo = stubModule("db/repositories/chainEvent.repository.js", [
   "insertMany",
   "getCursor",
   "setCursor",
 ]);
-const unitOfWork = stubModule("repositories/unitOfWork.js", [
+const unitOfWork = stubModule("db/repositories/unitOfWork.js", [
   "runInTransaction",
 ]);
 
